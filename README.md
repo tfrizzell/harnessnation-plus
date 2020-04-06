@@ -1,6 +1,6 @@
 # harnessnation-plus
 HarnessNation+ Extension for Google Chrome
 
-## Bug Fixes
+## Features
 
-* `[v3.0.0]` Fixed the progeny list not being paginated, sortable, or filterable on the horse info page.
+See the [features page on our wiki](https://github.com/tfrizzell/harnessnation-plus/wiki/Features) for a complete list of features, bug fixes, and other enhancements.
