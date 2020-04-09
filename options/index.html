@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HarnessNation+ Settings</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="options.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <img class="icon" src="../icons/hn-plus-options.png" />
+        <h1>HarnessNation+</h1>
+    </header>
+
+    <main class="content">
+        <nav class="navigation">
+            <a href="#datatables">Data Tables</a>
+        </nav>
+
+        <form class="settings-form" name="settings">
+            <section class="form-page" id="datatables">
+                <a name="datatables"></a>
+                <h3 class="page-name">Data Tables</h3>
+
+                <fieldset>
+                    <legend>Main Stable</legend>
+
+                    <label>
+                        Save table settings:
+                        <input class="toggle" checked disabled type="checkbox" />
+                    </label>
+
+                    <label>
+                        Save table settings for:
+                        <i template-id="time-setting" name="setting:mainStable.stateDuration"></i>
+                    </label>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Breeding Stable</legend>
+
+                    <label>
+                        Save table settings:
+                        <input class="toggle" checked disabled type="checkbox" />
+                    </label>
+
+                    <label>
+                        Save table settings for:
+                        <i template-id="time-setting" name="setting:breedingStable.stateDuration"></i>
+                    </label>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Progeny List</legend>
+
+                    <label>
+                        Save table settings:
+                        <input class="toggle" checked disabled type="checkbox" />
+                    </label>
+
+                    <label>
+                        Save table settings for:
+                        <i template-id="time-setting" name="setting:progenyList.stateDuration"></i>
+                    </label>
+                </fieldset>
+            </section>
+
+            <footer class="stick-bottom">
+                <button title="Reset To Defaults" type="reset">
+                    <i class="material-icons">delete_sweep</i>
+                </button>
+
+                <button title="Save Current Settings" type="submit">
+                    <i class="material-icons">save</i>
+                </button>
+            </footer>
+        </form>
+    </main>
+
+    <template id="time-setting">
+        <section class="time-setting-input">
+            <select name="{{name}}.control" required role="control">
+                <option value="0" selected>Site Default</option>
+                <option value="1">Custom</option>
+            </select>
+
+            <input name="{{name}}.value" pattern="^\d+(\.\d+)?$" required role="value" type="text" />
+
+            <select name="{{name}}.units" required role="units">
+                <option value="60">Minute(s)</option>
+                <option value="3600">Hour(s)</option>
+                <option value="86400" selected>Day(s)</option>
+                <option value="604800">Week(s)</option>
+                <option value="31557600">Year(s)</option>
+            </select>
+        </section>
+    </template>
+
+    <script src="options.js"></script>
+</body>
+</html>

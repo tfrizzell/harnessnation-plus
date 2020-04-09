@@ -3,7 +3,7 @@
   "name": "HarnessNation+",
   "short_name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "author": "Trevor Frizzell",
   "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
   "key": "",
@@ -15,9 +15,10 @@
     "128": "icons/hn-plus128.png"
   },
   "permissions": [
-    "*://*.harnessnation.com/"
+    "*://*.harnessnation.com/",
+    "storage"
   ],
-  "options_page": "",
+  "options_page": "options/index.html",
   "content_scripts": [
     {
       "matches": [

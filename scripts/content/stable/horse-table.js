@@ -1,11 +1,15 @@
-new MutationObserver(mutations => {
-    mutations.filter(m => m.target.tagName === 'SCRIPT' && m.target.innerHTML.match(/\bfunction loadHorses\b/)).forEach(script => {
-        [].forEach.call(script.addedNodes, node => {
-            if (!node.data.match(/\bfunction loadHorses\b/)) return;
-            node.data = DataTables.extend(`'#horseTable_' + i`, node.data);
+'use strict';
+
+DataTables.getSettings(`${window.location.pathname.split('/').pop()}Stable`).then(settings => {
+    new MutationObserver(mutations => {
+        mutations.filter(m => m.target.tagName === 'SCRIPT' && m.target.innerHTML.match(/\bfunction loadHorses\b/)).forEach(script => {
+            [].forEach.call(script.addedNodes, node => {
+                if (!node.data.match(/\bfunction loadHorses\b/)) return;
+                node.data = DataTables.extend(`'#horseTable_' + i`, node.data, settings);
+            });
         });
+    }).observe(document, {
+        childList: true,
+        subtree: true
     });
-}).observe(document, {
-    childList: true,
-    subtree: true
 });

@@ -1,9 +1,11 @@
+'use strict';
+
 const DataTables = {
     extend: (selector, script, {
         indent,
         saveSearch,
-        saveState = true,
-        stateDuration = 31557600,
+        saveState,
+        stateDuration,
     } = {}) => {
         if (!selector.match(/^\s*["'`]/)) selector = `'${selector.replace(/'/g, `\\'`)}'`;
     
@@ -23,4 +25,15 @@ ${JSON.stringify({ saveState, stateDuration }, null, 4).replace(/(^\{[\r\n]*|[\r
     data.search.search = '';
 })` : ''}`.replace(/([\r\n]+)/g, `$1${indent ?? tIndent}`));
     },
+
+    getSettings: key => new Promise(resolve => {
+        chrome.storage.sync.get([
+            ...[`${key}.stateDuration.control`, `${key}.stateDuration.value`, `${key}.stateDuration.units`],
+        ], data => {
+            resolve({
+                saveState: true,
+                stateDuration: (+data[`${key}.stateDuration.control`]) * (+data[`${key}.stateDuration.value`]) * (+data[`${key}.stateDuration.units`])
+            });
+        });
+    }),
 };
