@@ -18,6 +18,12 @@
     "*://*.harnessnation.com/",
     "storage"
   ],
+  "background": {
+    "scripts": [
+      "scripts/background/install.js"
+    ],
+    "persistent": false
+  },
   "options_page": "options/index.html",
   "content_scripts": [
     {

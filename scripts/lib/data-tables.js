@@ -19,7 +19,7 @@ const DataTables = {
     // HarnessNation
 ${table[2].replace(/(^[\r\n]+|[,\s]+$)/g, '').replace(new RegExp(`(^|[\r\n]+)(\t|    )${tIndent}`, 'g'), `$1    `)},
     
-    // HN-Plus
+    // HarnessNation+
 ${JSON.stringify({ saveState, stateDuration }, null, 4).replace(/(^\{[\r\n]*|[\r\n]*$)/, '')
 })${saveSearch === false ? `.on('stateSaveParams.dt', (e, settings, data) => {
     data.search.search = '';

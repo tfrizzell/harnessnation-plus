@@ -29,7 +29,7 @@
     };
 
     const loadSettings = () => {
-        chrome.storage.sync.get(data => {
+        chrome.storage.sync.get((data = {}) => {
             Object.entries(data).forEach(([key, value]) => {
                 if (inputs[key]) {
                     inputs[key].value = value;
