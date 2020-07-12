@@ -21,6 +21,19 @@
   "content_scripts": [
     {
       "matches": [
+        "*://*.harnessnation.com/breeding/manage/stallions"
+      ],
+      "js": [
+        "scripts/lib/const.js",
+        "scripts/lib/func.js",
+        "scripts/content/breeding/manage-stallions.js"
+      ],
+      "css": [
+        "scripts/content/breeding/manage-stallions.css"
+      ]
+    },
+    {
+      "matches": [
         "*://*.harnessnation.com/horse/*"
       ],
       "js": [
@@ -42,5 +55,8 @@
       ],
       "run_at": "document_start"
     }
+  ],
+  "web_accessible_resources": [
+    "public/**"
   ]
 }

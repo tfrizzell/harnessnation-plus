@@ -1,0 +1,58 @@
+.plus-calculate-button {
+    background-color: #dfe5eb;
+    border-color: #ced4da;
+    border-radius: 0 .25rem .25rem 0;
+    border-style: solid;
+    border-width: 1px 1px 1px 0;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: block;
+    font-size: 0;
+    float: right;
+    height: calc(2.25rem + 2px);
+    object-fit: contain;
+    object-position: center center;
+    transition: border-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
+    width: calc(2.25rem + 2px);
+}
+
+.plus-calculate-button::before {
+    content: url('chrome-extension://aonknefdnheomhlfcnjdicnkbfdakcdo/public/icons/calculate.svg');
+    height: 100%;
+    max-width: 100%;
+}
+
+.plus-calculate-input,
+.form-control.plus-calculate-input {
+    border-radius: .25rem 0 0 .25rem;
+    border-right-width: 0;
+    display: inline-block;
+    width: calc(100% - 2.25rem - 2px);
+}
+
+.plus-calculate-input:focus:not([readonly]) + .plus-calculate-button,
+.form-control.plus-calculate-input:focus:not([readonly]) + .plus-calculate-button {
+    border-color: #dc3545 #dc3545 #dc3545 #ced4da;
+    box-shadow: 0 1px 0 0 #dc3545;
+    color: transparent;
+}
+
+.plus-calculating {
+	animation: plus-calculating 750ms linear infinite;
+	background-image: linear-gradient(135deg, #ffffff 25%, #455a64 25%, #455a64 50%, #ffffff 50%, #ffffff 75%, #455a64 75%, #455a64 100%);
+    background-size: 4rem 4rem;
+	color: transparent;
+}
+
+.plus-calculating + .plus-calculate-button {
+    cursor: none;
+}
+
+.plus-calculating + .plus-calculate-button::before {
+    opacity: 0.25;
+}
+
+@keyframes plus-calculating {
+	0% { background-position: 0 0 }
+	100% { background-position: 24% 0 }
+}
