@@ -45,27 +45,38 @@ async function calculateStudFee(id, formula = FORMULA_APEX) {
 }
 
 document.querySelectorAll('#inputStudFee, #inputStudFeeUpdate').forEach(input => {
-    let calculating = false;
     const button = document.createElement('i');
     button.classList.add('plus-calculate-button');
     button.textContent = 'calculate';
 
-    button.addEventListener('click', async () => {
+    input.classList.add('plus-calculate-input');
+    input.parentNode.appendChild(button);
+
+    let calculating = false;
+
+    button.addEventListener('click', () => {
         if (calculating) {
             return;
         }
 
-        input.classList.add('plus-calculating');
-        calculating = true;
+        chrome.storage.sync.get('studFee', async ({ studFee }) => {
+            input.classList.add('plus-calculating');
+            calculating = true;
 
-        try {
-            input.value = await calculateStudFee(input.form.elements.horse.value);
-        } finally {
-            calculating = false;
-            input.classList.remove('plus-calculating');
-        }
+            try {
+                input.value = '';
+                console.log(studFee?.formula);
+                input.value = await calculateStudFee(input.form.elements.horse.value, studFee?.formula);
+            } finally {
+                calculating = false;
+                input.classList.remove('plus-calculating');
+            }
+        });
     });
+});
 
-    input.classList.add('plus-calculate-input');
-    input.parentNode.appendChild(button);
+window.addEventListener('plus:installed', function handleInstalled() {
+    window.removeEventListener('plus:installed', handleInstalled);
+    document.querySelectorAll('.plus-calculate-button').forEach(el => el.remove());
+    document.querySelectorAll('.plus-calculate-input').forEach(el => el.classList.remove('plus-calculate-input', 'plus-calculating'));
 });

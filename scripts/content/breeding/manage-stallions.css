@@ -30,18 +30,16 @@
     width: calc(100% - 2.25rem - 2px);
 }
 
-.plus-calculate-input:focus:not([readonly]) + .plus-calculate-button,
-.form-control.plus-calculate-input:focus:not([readonly]) + .plus-calculate-button {
+.plus-calculate-input:focus:not([readonly]) + .plus-calculate-button {
     border-color: #dc3545 #dc3545 #dc3545 #ced4da;
     box-shadow: 0 1px 0 0 #dc3545;
-    color: transparent;
 }
 
-.plus-calculating {
+.plus-calculating,
+.form-control.plus-calculating {
 	animation: plus-calculating 750ms linear infinite;
 	background-image: linear-gradient(135deg, #ffffff 25%, #455a64 25%, #455a64 50%, #ffffff 50%, #ffffff 75%, #455a64 75%, #455a64 100%);
     background-size: 4rem 4rem;
-	color: transparent;
 }
 
 .plus-calculating + .plus-calculate-button {

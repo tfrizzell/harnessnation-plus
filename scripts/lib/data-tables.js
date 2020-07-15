@@ -28,13 +28,9 @@ ${JSON.stringify({ saveState, stateDuration }, null, 4).replace(/(^\{[\r\n]*|[\r
 
     getSettings(key) {
         return new Promise(resolve => {
-            chrome.storage.sync.get([
-                ...[`${key}.stateDuration.control`, `${key}.stateDuration.value`, `${key}.stateDuration.units`],
-            ], data => {
-                resolve({
-                    saveState: true,
-                    stateDuration: (+data[`${key}.stateDuration.control`]) * (+data[`${key}.stateDuration.value`]) * (+data[`${key}.stateDuration.units`])
-                });
+            chrome.storage.sync.get('dt', ({ dt }) => {
+                const { enabled, duration } = key?.split('.').reduce((data, key) => data?.[key], dt) ?? {};
+                resolve(enabled && { saveState: true, stateDuration: +duration });
             });
         });
     },
