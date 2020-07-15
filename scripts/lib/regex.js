@@ -1,4 +1,7 @@
+'use strict';
+
 const Regex = {
-    escape: string =>
-        string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+    escape(value) {
+        return value?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    },
 };
