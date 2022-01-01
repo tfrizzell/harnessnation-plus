@@ -14,6 +14,7 @@
     <main class="content">
         <nav class="navigation">
             <a href="#datatables">Data Tables</a>
+            <a href="#studfees">Stud Fees</a>
         </nav>
 
         <form class="settings-form" name="settings">
@@ -31,7 +32,7 @@
 
                     <label>
                         Save table settings for:
-                        <i template-id="time-setting" name="setting:mainStable.stateDuration"></i>
+                        <span template-id="time-setting" name="setting:mainStable.stateDuration"></span>
                     </label>
                 </fieldset>
 
@@ -45,7 +46,7 @@
 
                     <label>
                         Save table settings for:
-                        <i template-id="time-setting" name="setting:breedingStable.stateDuration"></i>
+                        <span template-id="time-setting" name="setting:breedingStable.stateDuration"></span>
                     </label>
                 </fieldset>
 
@@ -59,7 +60,25 @@
 
                     <label>
                         Save table settings for:
-                        <i template-id="time-setting" name="setting:progenyList.stateDuration"></i>
+                        <span template-id="time-setting" name="setting:progenyList.stateDuration"></span>
+                    </label>
+                </fieldset>
+            </section>
+
+            <section class="form-page" id="studfees">
+                <a name="studfees"></a>
+                <h3 class="page-name">Stud Fees</h3>
+
+                <fieldset>
+                    <legend>Formula</legend>
+
+                    <label>
+                        <select name="setting:studFee.formula">
+                            <option value="FORMULA_APEX">Apex Formula</option>
+                            <option value="FORMULA_RIDGE">Ridge Formula</option>
+                        </select>
+
+                        <i class="material-icons">help_outline</i>
                     </label>
                 </fieldset>
             </section>

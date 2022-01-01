@@ -95,6 +95,7 @@
     window.addEventListener('DOMContentLoaded', () => {
         document.forms.settings.style.visibility = 'hidden';
 
+        setActive();
         showPage(window.location.hash?.replace(/^#/, ''));
         renderTemplates();
         bindInputs();
@@ -104,7 +105,8 @@
         document.forms.settings.addEventListener('submit', saveSettings);
     });
 
-    window.addEventListener('hashchange', setActive);
-    window.addEventListener('scroll', setActive);
-    setActive();
+    window.addEventListener('hashchange', e => {
+        setActive();
+        showPage(window.location.hash?.replace(/^#/, ''));
+    });
 })();
