@@ -10,6 +10,12 @@
     padding: 0;
 }
 
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
 button {
     align-items: center;
     background-color: var(--gradient-bottom);
@@ -77,8 +83,9 @@ input[disabled], select[disabled], textarea[disabled] {
 
 .content {
     display: grid;
+    flex: 1;
     grid-column-gap: 2rem;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 5rem auto;
     padding: 0.25rem 0.5rem 0;
 }
 
@@ -117,6 +124,11 @@ input[disabled], select[disabled], textarea[disabled] {
 
 .navigation a + a {
     margin-top: 0.33rem;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
 }
 
 .settings-form > footer {
@@ -171,6 +183,7 @@ input[disabled], select[disabled], textarea[disabled] {
 }
 
 .stick-bottom {
+    margin-top: auto;
     bottom: 0.66rem;
     position: -webkit-sticky;
     position: sticky;

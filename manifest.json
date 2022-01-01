@@ -16,16 +16,32 @@
   },
   "permissions": [
     "*://*.harnessnation.com/",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "background": {
     "scripts": [
+      "scripts/lib/const.js",
       "scripts/background/install.js"
     ],
     "persistent": false
   },
   "options_page": "options/index.html",
+  "content_security_policy": "script-src 'self' https://unpkg.com; object-src 'self'",
   "content_scripts": [
+    {
+      "matches": [
+        "*://*.harnessnation.com/breeding/manage/stallions"
+      ],
+      "js": [
+        "scripts/lib/const.js",
+        "scripts/lib/func.js",
+        "scripts/content/breeding/manage-stallions.js"
+      ],
+      "css": [
+        "scripts/content/breeding/manage-stallions.css"
+      ]
+    },
     {
       "matches": [
         "*://*.harnessnation.com/horse/*"
@@ -49,5 +65,8 @@
       ],
       "run_at": "document_start"
     }
+  ],
+  "web_accessible_resources": [
+    "public/**"
   ]
 }

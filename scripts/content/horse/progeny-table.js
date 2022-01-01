@@ -1,6 +1,6 @@
 'use strict';
 
-DataTables.getSettings('progenyList').then(settings => {
+DataTables.getSettings('progeny').then(settings => {
     new MutationObserver(mutations => {
         mutations.filter(m => m.target.tagName === 'SCRIPT' && m.target.innerHTML.match(/\bfunction updateProgenyTableData\b/)).forEach(script => {
             script.addedNodes?.forEach(node => {
