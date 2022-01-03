@@ -1,5 +1,3 @@
-'use strict';
-
 async function calculateStudFee(id, formula = FORMULA_APEX) {
     const report = await (await fetch('/api/progeny/report', {
         method: 'POST',

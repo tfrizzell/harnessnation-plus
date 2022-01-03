@@ -22,7 +22,9 @@
   "background": {
     "scripts": [
       "scripts/lib/const.js",
-      "scripts/background/install.js"
+      "scripts/lib/settings.js",
+      "scripts/background/install.js",
+      "scripts/background/background.js"
     ],
     "persistent": false
   },
@@ -75,6 +77,7 @@
     }
   ],
   "web_accessible_resources": [
+    "data/stallions.json",
     "public/**"
   ]
 }

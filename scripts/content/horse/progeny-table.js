@@ -1,5 +1,3 @@
-'use strict';
-
 DataTables.getSettings('progeny').then(settings => {
     const observer = new MutationObserver(mutations => {
         mutations.filter(m => m.target.tagName === 'SCRIPT' && m.target.innerHTML.match(/\bfunction updateProgenyTableData\b/)).forEach(script => {

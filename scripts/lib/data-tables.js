@@ -1,5 +1,3 @@
-'use strict';
-
 const DataTables = {
     extend(selector, script, {
         indent,

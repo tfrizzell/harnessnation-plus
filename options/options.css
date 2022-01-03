@@ -24,20 +24,40 @@ body {
 
 button, input[type="button" i], input[type="reset" i], input[type="submit" i] {
     align-items: center;
-    background-color: var(--theme-primary);
+    background-color: var(--theme-tertiary);
     border: none;
-    border-radius: 50%;
+    border-radius: 1em;
     color: var(--theme-quarternary);
+    column-gap: 0.33em;
     cursor: pointer;
     display: flex;
-    height: 3.33rem;
     justify-content: center;
-    opacity: 0.3;
+    padding: 0.5em 1em;
+}
+
+button.icon-button {
+    border-radius: 50%;
+    height: 3.33rem;
+    opacity: 0.6;
     width: 3.33rem;
 }
 
-button:hover, input[type="button" i]:hover, input[type="reset" i]:hover, input[type="submit" i]:hover {
+button:hover, input[type="button" i]:hover, input[type="reset" i]:hover, input[type="submit" i]:hover,
+button:focus, input[type="button" i]:focus, input[type="reset" i]:focus, input[type="submit" i]:focus {
+    background-color: var(--theme-secondary);
+}
+
+button:active, input[type="button" i]:active, input[type="reset" i]:active, input[type="submit" i]:active {
+    background-color: var(--theme-primary);
+}
+
+button.icon-button:hover,
+button.icon-button:focus {
     opacity: 0.8;
+}
+
+button.icon-button:active {
+    opacity: 1;
 }
 
 input[type="date"],
@@ -57,7 +77,7 @@ select {
     background: transparent;
     border: 1px solid transparent;
     height: 2.4em;
-    min-width: 10em;
+    min-width: 11em;
     outline: none;
     padding: 0.4em;
 }
@@ -199,6 +219,14 @@ select:active {
     column-gap: 0.75em;
     display: grid;
     grid-template-columns: 12em 12em auto;
+}
+
+#settings-form .setting-row button:only-child,
+#settings-form .setting-row input[type="button" i]:only-child,
+#settings-form .setting-row input[type="reset" i]:only-child,
+#settings-form .setting-row input[type="submit" i]:only-child {
+    align-self: flex-start;
+    justify-self: flex-start;
 }
 
 .stud-fee-tooltip .tooltip {

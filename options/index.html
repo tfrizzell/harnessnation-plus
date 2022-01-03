@@ -125,13 +125,31 @@
                             <p>For example, searching for "Just Call Me Sparky" will match him, his sons, his sons' sons, and so on.</p>
                         </plus-tooltip>
                     </div>
+
+                    <div class="setting-row">
+                        <label>Maximum search depth:</label>
+
+                        <select name="stallions.registry.maxGenerations">
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4" selected>4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-row">
+                        <button id="clear-stallion-cache" title="Clear Stallion Cache" type="button">
+                            <i class="material-icons">clear_all</i>
+                            Clear Cache
+                        </button>
+                    </div>
                 </fieldset>
             </details>
         </form>
     </main>
 
     <footer id="footer">
-        <button form="settings-form" title="Reset To Defaults" type="reset">
+        <button class="icon-button" form="settings-form" title="Reset To Defaults" type="reset">
             <i class="material-icons">delete_sweep</i>
         </button>
     </footer>

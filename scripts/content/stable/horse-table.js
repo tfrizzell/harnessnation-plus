@@ -1,5 +1,3 @@
-'use strict';
-
 DataTables.getSettings(window.location.pathname.split('/').pop()).then(settings => {
     const observer = new MutationObserver(mutations => {
         mutations.filter(m => m.target.tagName === 'SCRIPT' && m.target.innerHTML.match(/\bfunction loadHorses\b/)).forEach(script => {

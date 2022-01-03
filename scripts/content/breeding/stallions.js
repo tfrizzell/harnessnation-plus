@@ -1,21 +1,51 @@
-'use strict';
-
 function createSearchRegex(search) {
     return new Promise(resolve => {
-        chrome.storage.sync.get('stallions', ({ stallions: settings }) => {
+        chrome.storage.sync.get('stallions', async ({ stallions: settings }) => {
             if (!settings.registry.bloodlineSearch) return resolve(null);
 
-            chrome.storage.local.get(async ({ stallions }) => {
-                const name = search.toLowerCase();
-                const studs = stallions.data.filter(s => s.name.toLowerCase().includes(name));
-                if (!studs.length) return;
+            function addGeneration(stallion, generation = 1) {
+                stallion.generation = generation;
+                return stallion;
+            }
 
-                for (const stud of studs)
-                    studs.push(...stallions.data.filter(s => s.sireId == stud.id && !studs.includes(s)));
+            const stallions = (await getStallions()).data;
+            const name = search.toLowerCase();
 
-                const names = studs.map(stud => stud.name);
-                resolve(`(${names.map(Regex.escape).join('|')})`);
+            const matches = stallions.filter(s => s.name.toLowerCase().includes(name)).map(s => addGeneration(s));
+            if (!matches.length) return resolve(null);
+
+            for (const match of matches) {
+                if (match.generation < settings.registry.maxGenerations)
+                    matches.push(...stallions.filter(s => s.sireId == match.id && !matches.includes(s)).map(s => addGeneration(s, match.generation + 1)));
+            }
+
+            const names = matches.map(stud => stud.name);
+            resolve(`(${names.map(Regex.escape).join('|')})`);
+        });
+    });
+}
+
+function getStallions() {
+    return new Promise(resolve => {
+        chrome.storage.local.get('stallions', async ({ stallions }) => {
+            stallions?.data || (stallions = {
+                data: await fetch(chrome.extension.getURL('/data/stallions.json')).then(res => res.json()),
+                expiresAt: 0,
             });
+
+            if (!stallions?.data || stallions?.expiresAt <= Date.now()) {
+                stallions = {
+                    data: Object.values({
+                        ...stallions.data.reduce((map, stallion) => ({ ...map, [stallion.id]: stallion }), {}),
+                        ...await loadStallionList(),
+                    }),
+                    expiresAt: Date.now() + 3600000
+                };
+
+                chrome.storage.local.set({ stallions });
+            }
+
+            resolve(stallions);
         });
     });
 }
@@ -41,7 +71,7 @@ function getStallionList(html) {
         });
     }
 
-    return Object.values(stallions);
+    return stallions;
 }
 
 async function loadStallionList() {
@@ -72,31 +102,22 @@ async function loadStallionList() {
     return getStallionList(await res.text());
 }
 
-chrome.storage.local.get('stallions', async ({ stallions }) => {
-    if (!stallions?.data || stallions?.expiresAt <= Date.now()) {
-        stallions = {
-            data: await loadStallionList(),
-            expiresAt: Date.now() + 900000
-        };
+(async () => await getStallions())();
 
-        chrome.storage.local.set({ stallions });
-    }
+async function handleSearch(e) {
+    if (typeof e?.data !== 'object' || !('search' in e.data && 'id' in e.data) || 'regex' in e.data) return;
 
-    async function handleSearch(e) {
-        if (typeof e?.data !== 'object' || !('search' in e.data && 'id' in e.data) || 'regex' in e.data) return;
-
-        window.postMessage({
-            ...e.data,
-            regex: await createSearchRegex(e.data.search),
-        });
-    }
-
-    window.addEventListener('message', handleSearch);
-
-    window.addEventListener('plus:installed', function handleInstalled() {
-        window.removeEventListener('plus:installed', handleInstalled);
-        window.removeEventListener('message', handleSearch);
+    window.postMessage({
+        ...e.data,
+        regex: await createSearchRegex(e.data.search),
     });
+}
+
+window.addEventListener('message', handleSearch);
+
+window.addEventListener('plus:installed', function handleInstalled() {
+    window.removeEventListener('plus:installed', handleInstalled);
+    window.removeEventListener('message', handleSearch);
 });
 
 const script = document.createElement('script');
