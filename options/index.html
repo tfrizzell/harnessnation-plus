@@ -4,115 +4,137 @@
     <title>HarnessNation+ Settings</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="options.css" rel="stylesheet">
+    <script src="components.js" type="module"></script>
 </head>
 <body>
-    <header class="header">
+    <header id="header">
         <img class="icon" src="../icons/hn-plus-options.png" />
         <h1>HarnessNation+</h1>
     </header>
 
-    <main class="content">
-        <nav class="navigation">
-            <a href="#datatables">Data Tables</a>
-            <a href="#studfees">Stud Fees</a>
-        </nav>
-
-        <form class="settings-form" name="settings">
-            <section class="form-page" id="datatables">
-                <a name="datatables"></a>
-                <h3 class="page-name">Data Tables</h3>
+    <main id="content">
+        <form id="settings-form" name="settings">
+            <details class="form-section" open>
+                <summary>Data Tables</summary>
+                <a name="data-tables"></a>
 
                 <fieldset>
                     <legend>Main Stable</legend>
 
-                    <label>
-                        Save table settings:
-                        <input class="toggle" checked disabled type="checkbox" />
-                    </label>
+                    <div class="setting-row">
+                        <label>Save table settings:</label>
+                        <input is="plus-toggle" name="dt.main.enabled" type="checkbox" />
+                    </div>
 
-                    <label>
-                        Save table settings for:
-                        <span template-id="time-setting" name="setting:mainStable.stateDuration"></span>
-                    </label>
+                    <div class="setting-row">
+                        <label>Save table settings for:</label>
+                        <plus-dt-state-duration name="dt.main" />
+                    </div>
                 </fieldset>
 
                 <fieldset>
                     <legend>Breeding Stable</legend>
 
-                    <label>
-                        Save table settings:
-                        <input class="toggle" checked disabled type="checkbox" />
-                    </label>
+                    <div class="setting-row">
+                        <label>Save table settings:</label>
+                        <input is="plus-toggle" name="dt.breeding.enabled" type="checkbox" />
+                    </div>
 
-                    <label>
-                        Save table settings for:
-                        <span template-id="time-setting" name="setting:breedingStable.stateDuration"></span>
-                    </label>
+                    <div class="setting-row">
+                        <label>Save table settings for:</label>
+                        <plus-dt-state-duration name="dt.breeding" />
+                    </div>
                 </fieldset>
 
                 <fieldset>
                     <legend>Progeny List</legend>
 
-                    <label>
-                        Save table settings:
-                        <input class="toggle" checked disabled type="checkbox" />
-                    </label>
+                    <div class="setting-row">
+                        <label>Save table settings:</label>
+                        <input is="plus-toggle" name="dt.progeny.enabled" type="checkbox" />
+                    </div>
 
-                    <label>
-                        Save table settings for:
-                        <span template-id="time-setting" name="setting:progenyList.stateDuration"></span>
-                    </label>
+                    <div class="setting-row">
+                        <label>Save table settings for:</label>
+                        <plus-dt-state-duration name="dt.progeny" />
+                    </div>
                 </fieldset>
-            </section>
-
-            <section class="form-page" id="studfees">
-                <a name="studfees"></a>
-                <h3 class="page-name">Stud Fees</h3>
+            </details>
+            
+            <details class="form-section" open>
+                <summary>Stallion Management</summary>
+                <a name="stallion-management"></a>
 
                 <fieldset>
-                    <legend>Formula</legend>
+                    <legend>Stud Fees</legend>
 
-                    <label>
-                        <select name="setting:studFee.formula">
+                    <div class="setting-row">
+                        <label>Formula:</label>
+
+                        <select name="stallions.management.formula">
                             <option value="FORMULA_APEX">Apex Formula</option>
                             <option value="FORMULA_RIDGE">Ridge Formula</option>
                         </select>
+                        
+                        <plus-tooltip class="stud-fee-tooltip">
+                            <p>Select which stud fee formulas you prefer to use:</p>
 
-                        <i class="material-icons">help_outline</i>
-                    </label>
+                            <h4>Apex Formula</h4>
+                            <ul>
+                                <li>
+                                    If the stud has racing offspring:<br />
+                                    <code style="white-space:nowrap">[average earanings per starter] / 4</code>
+                                </li>
+
+                                <li>
+                                    If the stud does not have racing offspring:<br />
+                                    <code style="white-space:nowrap">[lifetime earnings] / [lifetime starts]</code>
+                                </li>
+                            </ul>
+
+                            <h4>Ridge Formula</h4>
+                            <ul>
+                                <li>
+                                    If the stud has racing offspring:<br />
+                                    <code style="white-space:nowrap">5000 + ([average earanings per starter] / 2)</code>
+                                </li>
+
+                                <li>
+                                    If the stud does not have racing offspring:<br />
+                                    <code style="white-space:nowrap">5000 + ([lifetime earnings] / 20)</code>
+                                </li>
+                            </ul>
+                        </plus-tooltip>
+                    </div>
                 </fieldset>
-            </section>
+            </details>
+            
+            <details class="form-section" open>
+                <summary>Stallion Registry</summary>
+                <a name="stallion-registry"></a>
 
-            <footer class="stick-bottom">
-                <button title="Reset To Defaults" type="reset">
-                    <i class="material-icons">delete_sweep</i>
-                </button>
+                <fieldset>
+                    <legend>Search</legend>
 
-                <button title="Save Current Settings" type="submit">
-                    <i class="material-icons">save</i>
-                </button>
-            </footer>
+                    <div class="setting-row">
+                        <label>Use bloodline search:</label>
+                        <input is="plus-toggle" name="stallions.registry.bloodlineSearch" type="checkbox" />
+                            
+                        <plus-tooltip>
+                            <p>Use this option to enable bloodline searching in the public stallion registry. This will allow you to search for an ancestor in the stallion's sire line.</p>
+                            <p>For example, searching for "Just Call Me Sparky" will match him, his sons, his sons' sons, and so on.</p>
+                        </plus-tooltip>
+                    </div>
+                </fieldset>
+            </details>
         </form>
     </main>
 
-    <template id="time-setting">
-        <section class="time-setting-input">
-            <select name="{{name}}.control" required role="control">
-                <option value="0" selected>Site Default</option>
-                <option value="1">Custom</option>
-            </select>
-
-            <input name="{{name}}.value" pattern="^\d+(\.\d+)?$" required role="value" type="text" />
-
-            <select name="{{name}}.units" required role="units">
-                <option value="60">Minute(s)</option>
-                <option value="3600">Hour(s)</option>
-                <option value="86400" selected>Day(s)</option>
-                <option value="604800">Week(s)</option>
-                <option value="31557600">Year(s)</option>
-            </select>
-        </section>
-    </template>
+    <footer id="footer">
+        <button form="settings-form" title="Reset To Defaults" type="reset">
+            <i class="material-icons">delete_sweep</i>
+        </button>
+    </footer>
 
     <script src="options.js"></script>
 </body>

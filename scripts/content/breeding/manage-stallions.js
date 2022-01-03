@@ -59,14 +59,13 @@ document.querySelectorAll('#inputStudFee, #inputStudFeeUpdate').forEach(input =>
             return;
         }
 
-        chrome.storage.sync.get('studFee', async ({ studFee }) => {
+        chrome.storage.sync.get('stallions', async ({ stallions }) => {
             input.classList.add('plus-calculating');
             calculating = true;
 
             try {
                 input.value = '';
-                console.log(studFee?.formula);
-                input.value = await calculateStudFee(input.form.elements.horse.value, studFee?.formula);
+                input.value = await calculateStudFee(input.form.elements.horse.value, stalions?.management?.formula);
             } finally {
                 calculating = false;
                 input.classList.remove('plus-calculating');

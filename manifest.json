@@ -27,8 +27,16 @@
     "persistent": false
   },
   "options_page": "options/index.html",
-  "content_security_policy": "script-src 'self' https://unpkg.com; object-src 'self'",
   "content_scripts": [
+    {
+      "matches": [
+        "*://*.harnessnation.com/breeding/stallions"
+      ],
+      "js": [
+        "scripts/lib/regex.js",
+        "scripts/content/breeding/stallions.js"
+      ]
+    },
     {
       "matches": [
         "*://*.harnessnation.com/breeding/manage/stallions"

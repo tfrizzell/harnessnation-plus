@@ -1,112 +1,121 @@
 'use strict';
 
 (() => {
-    const inputs = {};
+    function loadSettings() {
+        return new Promise(resolve => {
+            chrome.storage.sync.get((data = {}) => {
+                const form = document.forms.settings;
+    
+                for (const input of [].filter.call(form.elements, el => el.name)) {
+                    const value = input.name.split('.').reduce((obj, key) => obj?.[key], data);
+                    if (value == null) continue;
+    
+                    if (input.type === 'checkbox')
+                        input.checked = value;
+                    else if (input.type === 'radio')
+                        input.checked = (input.value == value);
+                    else
+                        input.value = value;
 
-    const bindInputs = () => {
-        document.querySelectorAll('[name^="setting:"]').forEach(el => {
-            inputs[el.name.replace(/^setting:/, '')] = el;
-        });
-
-        document.querySelectorAll('.time-setting-input').forEach(el => {
-            const control = el.querySelector('[role=control]');
-            const value = el.querySelector('[role=value]');
-            const units = el.querySelector('[role=units]');
-
-            control.addEventListener('change', function (e) {
-                if (+e.target.value === 1) {
-                    value.offsetParent || el.appendChild(value);
-                    units.offsetParent || el.appendChild(units);
-                } else {
-                    units.offsetParent && el.removeChild(units);
-                    value.offsetParent && el.removeChild(value);
+                    input.addEventListener('input', e => saveInput(e.target));
                 }
-            });
 
-            el.removeChild(units);
-            el.removeChild(value);
-        });
-    };
+                for (const custom of form.querySelectorAll('plus-dt-state-duration[name]')) {
+                    const value = custom.name.split('.').reduce((obj, key) => obj?.[key], data);
+                    if (value == null) continue;
 
-    const loadSettings = () => {
-        chrome.storage.sync.get((data = {}) => {
-            Object.entries(data).forEach(([key, value]) => {
-                if (inputs[key]) {
-                    inputs[key].value = value;
-                    inputs[key].dispatchEvent(new Event('change'));
+                    custom.value = value;
+                    custom.addEventListener('input', e => saveInput(e.target));
                 }
+    
+                resolve();
             });
-
-            document.forms.settings.style.visibility = '';
         });
-    };
+    }
 
-    const renderTemplates = () => {
-        document.querySelectorAll(':not(template) [template-id]').forEach(el => {
-            const node = document.importNode(document.querySelector(`template#${el.getAttribute('template-id')}`).content, true);
+    function resetSettings() {
+        return new Promise((resolve, reject) => {
+            if (confirm('You are about to reset all settings to their default values. Are you sure you want to do this?')) {
+                chrome.storage.sync.onChanged.addListener(async function waitForDefaults(data) {
+                    if (!Object.values(data).find(d => !d.oldValue && d.newValue)) return;
 
-            [].forEach.call(node.children, child => {
-                child.innerHTML = child.innerHTML.replace(/\{\{(.*?)\}\}/g, (_, attr) => el.getAttribute(attr) ?? '');
+                    chrome.storage.sync.onChanged.removeListener(waitForDefaults);
+                    await loadSettings();
+                    resolve();
+                });
+
+                chrome.storage.sync.clear();
+            } else
+                reject();
+        });
+    }
+
+    function saveInput(input) {
+        return new Promise(resolve => {
+            const data = {};
+            const [key, ...keys] = input.name.split('.').reverse();
+            const obj = keys.reverse().reduce((obj, key) => obj[key] ?? (obj[key] = {}), data);
+
+            if (input.type === 'checkbox')
+                obj[key] = input.checked;
+            else if (input.type === 'radio')
+                input.checked && (obj[key] = input.value);
+            else
+                obj[key] = input.value;
+
+            chrome.storage.sync.set(data, () => {
+                resolve();
             });
-
-            el.parentNode.replaceChild(node, el);
         });
-    };
+    }
 
-    const resetSettings = e => {
-        e.preventDefault();
+    function saveSettings() {
+        return new Promise(resolve => {
+            const form = document.forms.settings;
+            const data = {};
 
-        if (confirm('You are about to reset all settings to their default values. Are you sure you want to do this?')) {
-            chrome.storage.sync.clear(() => {
-                loadSettings();
-                alert('Your settings have been reset successfully!');
+            for (const custom of form.querySelectorAll('plus-dt-state-duration[name]')) {
+                const [key, ...keys] = custom.name.split('.').reverse();
+                const obj = keys.reverse().reduce((obj, key) => obj[key] ?? (obj[key] = {}), data);
+
+                obj[key] = custom.value;
+            }
+
+            for (const input of [].filter.call(form.elements, el => el.name)) {
+                const [key, ...keys] = input.name.split('.').reverse();
+                const obj = keys.reverse().reduce((obj, key) => obj[key] ?? (obj[key] = {}), data);
+
+                if (input.type === 'checkbox')
+                    obj[key] = input.checked;
+                else if (input.type === 'radio')
+                    input.checked && (obj[key] = input.value);
+                else
+                obj[key] = input.value;
+            }
+
+            chrome.storage.sync.set(data, () => {
+                resolve();
             });
-        }
-    };
-
-    const saveSettings = e => {
-        e.preventDefault();
-
-        chrome.storage.sync.set(Object.entries(inputs).reduce((data, [key, el]) => ({ ...data, [key]: el.value }), {}), () => {
-            alert('Your settings have been saved successfully!');
         });
-    };
+    }
 
-    const setActive = () => {
-        const anchors = document.querySelectorAll('.settings-form a[name]');
-        const target = `#${([].find.call(anchors, el => el.offsetTop >= window.scrollY) ?? anchors[0]).getAttribute('name')}`;
-
-        document.querySelectorAll('.navigation > a').forEach(el => {
-            el.classList.remove('active');
-            (el.getAttribute('href') === target) && el.classList.add('active');
-        });
-    };
-
-    const showPage = (page) => {
-        document.querySelectorAll('.navigation > a').forEach((el, i) => {
-            el.classList[((el.getAttribute('href') === `#${page}`) || (!page && i === 0)) ? 'add' : 'remove']('active');
-        });
-
-        document.forms.settings.querySelectorAll('.form-page').forEach((el, i) => {
-            el.style.display = ((el.id === page) || (!page && i === 0)) ? '' : 'none';
-        });
-    };
-
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
         document.forms.settings.style.visibility = 'hidden';
 
-        setActive();
-        showPage(window.location.hash?.replace(/^#/, ''));
-        renderTemplates();
-        bindInputs();
-        loadSettings();
+        await loadSettings();
 
-        document.forms.settings.addEventListener('reset', resetSettings);
-        document.forms.settings.addEventListener('submit', saveSettings);
-    });
+        document.forms.settings.addEventListener('reset', async e => {
+            e.preventDefault();
+            await resetSettings(e);
+            setTimeout(() => alert('Your settings have been reset to the defaults!'), 1);
+        });
 
-    window.addEventListener('hashchange', e => {
-        setActive();
-        showPage(window.location.hash?.replace(/^#/, ''));
+        document.forms.settings.addEventListener('submit', async e => {
+            e.preventDefault();
+            // await saveSettings(e);
+            // setTimeout(() => alert('Your settings have been saved successfully!'), 1);
+        });
+
+        document.forms.settings.style.visibility = '';
     });
 })();
