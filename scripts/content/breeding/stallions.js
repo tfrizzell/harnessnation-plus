@@ -1,4 +1,4 @@
-function createSearchRegex(search) {
+function createSearchPattern(search) {
     return new Promise(resolve => {
         chrome.storage.sync.get('stallions', async ({ stallions: settings }) => {
             if (!settings.registry.bloodlineSearch) return resolve(null);
@@ -9,9 +9,9 @@ function createSearchRegex(search) {
             }
 
             const stallions = (await getStallions()).data;
-            const name = search.toLowerCase();
+            const pattern = new RegExp(search.replace(/\s+/g, '\\s*'), 'i')
 
-            const matches = stallions.filter(s => s.name.toLowerCase().includes(name)).map(s => addGeneration(s));
+            const matches = stallions.filter(s => pattern.test(s.name)).map(s => addGeneration(s));
             if (!matches.length) return resolve(null);
 
             for (const match of matches) {
@@ -105,11 +105,11 @@ async function loadStallionList() {
 (async () => await getStallions())();
 
 async function handleSearch(e) {
-    if (typeof e?.data !== 'object' || !('search' in e.data && 'id' in e.data) || 'regex' in e.data) return;
+    if (typeof e?.data !== 'object' || !('search' in e.data && 'id' in e.data) || 'pattern' in e.data) return;
 
     window.postMessage({
         ...e.data,
-        regex: await createSearchRegex(e.data.search),
+        pattern: await createSearchPattern(e.data.search),
     });
 }
 
@@ -135,14 +135,14 @@ script.innerHTML = `(() => {
             const id = parseInt(performance.now()).toString();
 
             window.addEventListener('message', function _search(e) {
-                if (typeof e?.data !== 'object' || !('regex' in e.data && 'id' in e.data) || e.data.id !== id) return;
+                if (typeof e?.data !== 'object' || !('pattern' in e.data && 'id' in e.data) || e.data.id !== id) return;
 
                 window.removeEventListener('message', _search);
-                e.data.regex && dt.search(e.data.regex, true, false).draw();
+                e.data.pattern && dt.search(e.data.pattern, true, false).draw();
             });
 
             window.postMessage({ id, search: e.target.value });
-        }, 150);
+        }, 200);
     });
 })();`
 
