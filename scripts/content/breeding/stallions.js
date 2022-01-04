@@ -20,7 +20,39 @@ function createSearchPattern(search) {
             }
 
             const names = matches.map(stud => stud.name);
-            resolve(`(${names.map(Regex.escape).join('|')})`);
+            resolve(`(${names.map(name => name.trim()).map(Regex.escape).join('|')})`);
+        });
+    });
+}
+
+async function fillMissingSires(stallions) {
+    while (true) {
+        const missing = stallions.filter(s => !s.sireId);
+        if (!missing.length) break;
+
+        await Promise.all(missing.slice(0, 60)
+            .map((s, i) => new Promise(resolve => {
+                setTimeout(async () => {
+                    const html = await fetch(`https://www.harnessnation.com/horse/${s.id}`).then(res => res.text());
+                    const match = html.match(/<b[^>]*>\s*Sire:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is);
+                    s.sireId = match ? +match[1] : -1;
+                    resolve();
+                }, i * 1000);
+            }))
+        );
+
+        await new Promise(resolve => setTimeout(resolve, 15000));
+    }
+
+    chrome.storage.local.get('stallions', ({ stallions: _stallions }) => {
+        chrome.storage.local.set({
+            stallions: {
+                ..._stallions,
+                data: Object.values({
+                    ..._stallions.data.reduce((map, s) => ({ ...map, [s.id]: s }), {}),
+                    ...stallions,
+                }),
+            },
         });
     });
 }
@@ -37,7 +69,7 @@ function getStallions() {
                 stallions = {
                     data: Object.values({
                         ...stallions.data.reduce((map, stallion) => ({ ...map, [stallion.id]: stallion }), {}),
-                        ...await loadStallionList(),
+                        ...await loadStallionList(stallions?.data?.reduce((lookup, sire) => ({ ...lookup, [sire.id]: sire.sireId }), {})),
                     }),
                     expiresAt: Date.now() + 3600000
                 };
@@ -50,7 +82,7 @@ function getStallions() {
     });
 }
 
-function getStallionList(html) {
+async function getStallionList(html, lookup) {
     const pattern = /<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?(?:Unknown\s*x\s*Unknown|<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>\s*x\s*<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>)/gs;
     const stallions = {};
     let data;
@@ -61,20 +93,20 @@ function getStallionList(html) {
         stallions[id] = {
             id: +id,
             name,
-            sireId: +sireId || null,
+            sireId: lookup?.[id] ?? null,
         };
 
         sireId && (stallions[sireId] ??= {
             id: +sireId,
             name: sireName,
-            sireId: null,
+            sireId: lookup?.[sireId] ?? null,
         });
     }
 
     return stallions;
 }
 
-async function loadStallionList() {
+async function loadStallionList(lookup) {
     const csrf = document.querySelector('input[name="_token"]').value;
 
     const data = new FormData();
@@ -99,7 +131,7 @@ async function loadStallionList() {
         body: data,
     });
 
-    return getStallionList(await res.text());
+    return await getStallionList(await res.text(), lookup);
 }
 
 (async () => await getStallions())();

@@ -297,7 +297,7 @@
     {
         "id": 9703,
         "name": "Emission Control",
-        "sireId": null
+        "sireId": 4426
     },
     {
         "id": 9824,
@@ -322,7 +322,7 @@
     {
         "id": 10867,
         "name": "Long Road Ahead",
-        "sireId": null
+        "sireId": 5499
     },
     {
         "id": 11064,
@@ -432,7 +432,7 @@
     {
         "id": 13216,
         "name": "JUST PLAIN CLYDE",
-        "sireId": null
+        "sireId": 4590
     },
     {
         "id": 13319,
@@ -447,7 +447,7 @@
     {
         "id": 13402,
         "name": "Chocolate Tier",
-        "sireId": null
+        "sireId": 2503
     },
     {
         "id": 13435,
@@ -552,7 +552,7 @@
     {
         "id": 15939,
         "name": "BD Wild Turkey",
-        "sireId": null
+        "sireId": 253
     },
     {
         "id": 16060,
