@@ -1,4 +1,5 @@
-import { setDefaultData } from '../modules/settings.js';
+import defaultSettings from '../../data/settings.json' assert { type: "json" };
+import '../lib/const.js';
 
 chrome.runtime.onInstalled.addListener(data => {
     if (data.reason !== 'install' && data.reason !== 'update') {
@@ -7,7 +8,40 @@ chrome.runtime.onInstalled.addListener(data => {
 
     chrome.storage.sync.get(data => {
         chrome.storage.sync.clear(async () => {
-            chrome.storage.sync.set(await setDefaultData(data), () => {
+            chrome.storage.sync.set({
+                ...defaultSettings,
+                dt: {
+                    ...defaultSettings?.dt,
+                    breeding: {
+                        ...defaultSettings?.dt?.breeding,
+                        ...data?.dt?.breeding,
+                    },
+                    main: {
+                        ...defaultSettings?.dt?.main,
+                        ...data?.dt?.main,
+                    },
+                    progeny: {
+                        ...defaultSettings?.dt?.progeny,
+                        ...data?.dt?.progeny,
+                    },
+                    ...data?.dt,
+                },
+                stallions: {
+                    ...defaultSettings?.stallions,
+                    management: {
+                        ...defaultSettings?.stallions?.management,
+                        formula: data?.studFee?.formula ?? defaultSettings?.stallions?.management?.formula ?? FORMULA_APEX,
+                        ...data?.stallions?.management,
+                    },
+                    registry: {
+                        ...defaultSettings?.stallions?.registry,
+                        bloodlineSearch: data?.stallions?.bloodlineSearch ?? defaultSettings?.stallions?.registry?.bloodlineSearch ?? true,
+                        ...data?.stallions?.registry,
+                    },
+                    ...data?.stallions,
+                },
+                ...data,
+            }, () => {
                 chrome.runtime.getManifest().content_scripts.forEach(({ css = [], js = [], matches = [], run_at: runAt }) => {
                     chrome.tabs.query({ url: matches }, tabs => {
                         tabs.forEach(tab => {

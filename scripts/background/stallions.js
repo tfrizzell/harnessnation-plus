@@ -4,12 +4,8 @@ import { getHorses } from './horses.js';
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     switch (request?.action) {
-        case 'CALCULATE_STUD_FEE':
-            calculateStudFee(request.data.id, request.data.formula).then(sendResponse); break;
-
-        case 'SEARCH_STALLIONS':
-            createStallionSearchPattern(request.data.term).then(sendResponse); break;
-
+        case 'CALCULATE_STUD_FEE': calculateStudFee(request.data.id, request.data.formula).then(sendResponse); break;
+        case 'SEARCH_STALLIONS': createStallionSearchPattern(request.data.term).then(sendResponse); break;
         default: return;
     }
 

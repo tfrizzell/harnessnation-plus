@@ -1,4 +1,5 @@
-import { firestore as db } from '../modules/firestore.js';
+import * as firestore from '../modules/firestore.js';
+let db = firestore.firestore;
 
 import {
     collection,
@@ -13,22 +14,24 @@ import {
     serverTimestamp,
     setDoc,
     where,
-    writeBatch,
+    writeBatch
 } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     switch (request?.action) {
-        case 'GET_HORSES':
-            getHorses().then(sendResponse); break;
-
-        case 'SAVE_HORSES':
-            saveHorses(request.data.horses).then(sendResponse); break;
-
+        case 'CLEAR_HORSE_CACHE': clearCache().then(sendResponse); break;
+        case 'GET_HORSES': getHorses().then(sendResponse); break;
+        case 'SAVE_HORSES': saveHorses(request.data.horses).then(sendResponse); break;
         default: return;
     }
 
     return true;
 });
+
+async function clearCache() {
+    await firestore.clearCache(db);
+    db = await firestore.connect();
+}
 
 async function fetchHorseInfo(id) {
     const html = await fetch(`https://www.harnessnation.com/horse/${id}`).then(res => res.text());
@@ -48,7 +51,7 @@ export async function getHorses() {
 
     const qRemote = query(colRef, where('lastModified', '>', lastModified));
     const qsRemote = await getDocsFromServer(qRemote);
-    qsRemote.size && console.debug(`%chorses.js%c     Fetched ${qsRemote.size} new horse recor${qsRemote.size === 1 ? 's' : ''} from firestore`, 'color:#406e8e;font-weight:bold;', '');
+    qsRemote.size && console.debug(`%chorses.js%c     Fetched ${qsRemote.size} new horse record${qsRemote.size === 1 ? 's' : ''} from firestore`, 'color:#406e8e;font-weight:bold;', '');
 
     const querySnapshot = await getDocsFromCache(colRef);
     const horses = [];
