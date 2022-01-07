@@ -57,8 +57,8 @@ class DTStateDuration extends HTMLElement {
 
         for (const opt of modeOptions) {
             const option = document.createElement('option');
-            option.innerHTML = opt.name;
             option.setAttribute('value', opt.value);
+            option.innerHTML = opt.name;
             this.#modeInput.appendChild(option);
 
             if (opt.default)
@@ -137,8 +137,8 @@ class DTStateDuration extends HTMLElement {
 
         for (const opt of unitOptions) {
             const option = document.createElement('option');
-            option.innerHTML = opt.name;
             option.setAttribute('value', opt.value);
+            option.innerHTML = opt.name;
             this.#unitsInput.appendChild(option);
 
             if (opt.default)

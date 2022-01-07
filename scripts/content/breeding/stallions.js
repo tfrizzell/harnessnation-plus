@@ -40,7 +40,7 @@ window.addEventListener(`${chrome.runtime.id}.installed`, function handleInstall
 
 const script = document.createElement('script');
 script.type = 'text/javascript';
-script.innerHTML = `(() => {
+script.textContent = `(() => {
     const dt = $('#saleTable').DataTable();
     const search = document.querySelector('#saleTable_filter input[type="search"]');
     let debounce;

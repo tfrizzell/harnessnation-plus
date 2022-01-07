@@ -1,5 +1,5 @@
-import defaultSettings from '../../data/settings.json' assert { type: "json" };
 import '../lib/const.js';
+const defaultSettings = await fetch(chrome.runtime.getURL('/data/settings.json')).then(res => res.json());
 
 chrome.runtime.onInstalled.addListener(data => {
     if (data.reason !== 'install' && data.reason !== 'update') {

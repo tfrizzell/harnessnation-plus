@@ -71,13 +71,13 @@ class Tooltip extends HTMLElement {
         icon.classList.add('icon');
         icon.innerHTML = '&#x1f6c8;';
 
-        this.tooltip = document.createElement('div');
-        this.tooltip.classList.add('tooltip');
-        this.tooltip.innerHTML = this.innerHTML;
+        const tooltip = document.createElement('div');
+        tooltip.classList.add('tooltip');
+        tooltip.innerHTML = this.innerHTML;
 
         this.innerHTML = '';
         this.appendChild(icon);
-        this.appendChild(this.tooltip);
+        this.appendChild(tooltip);
 
         if (!style.isConnected)
             document.head.appendChild(style);

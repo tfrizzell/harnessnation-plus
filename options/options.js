@@ -52,7 +52,7 @@
     function resetSettings() {
         return new Promise((resolve, reject) => {
             if (confirm('You are about to reset all settings to their default values. Are you sure you want to do this?'))
-                fetch(chrome.extension.getURL('/data/settings.json'))
+                fetch(chrome.runtime.getURL('/data/settings.json'))
                     .then(res => res.json())
                     .then(defaultSettings => {
                         chrome.storage.sync.clear(() => {
