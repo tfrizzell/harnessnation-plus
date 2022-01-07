@@ -1,0 +1,31 @@
+{
+    "dt": {
+        "breeding": {
+            "displayUnits": "YEARS",
+            "duration": 31557600,
+            "enabled": true,
+            "mode": 0
+        },
+        "main": {
+            "displayUnits": "YEARS",
+            "duration": 31557600,
+            "enabled": true,
+            "mode": 0
+        },
+        "progeny": {
+            "displayUnits": "YEARS",
+            "duration": 31557600,
+            "enabled": true,
+            "mode": 0
+        }
+    },
+    "stallions": {
+        "management": {
+            "formula": "FORMULA_APEX"
+        },
+        "registry": {
+            "bloodlineSearch": true,
+            "maxGenerations": 4
+        }
+    }
+}
