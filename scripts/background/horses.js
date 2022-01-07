@@ -80,11 +80,9 @@ async function saveHorse(horse, batch) {
     }
 
     if (!_doc.exists()) {
-        if (horse.sireId == null || horse.retired == null) {
-            const { sireId, retired } = await fetchHorseInfo(horse.id);
-            horse.sireId = sireId;
-            horse.retired = retired;
-        }
+        const { sireId, retired } = await fetchHorseInfo(horse.id);
+        horse.sireId = sireId;
+        horse.retired = retired;
 
         console.debug(`[horses.js] Creating horse ${horse.id}${batch ? ' (batch)' : ''}`);
         batch ? batch.set(docRef, { ...horse, lastModified: serverTimestamp() })

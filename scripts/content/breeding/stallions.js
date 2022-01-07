@@ -19,6 +19,7 @@ function getStallions(html) {
             id: +id,
             name,
             sireId: +sireId || null,
+            reited: false,
         };
 
         sireId && (stallions[sireId] ??= {
