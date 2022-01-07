@@ -128,8 +128,8 @@
                 $alert('The stallion bloodline cache has been cleared!');
             } catch (error) {
                 if (error) {
-                    console.error(error);
-                    $alert(`An unexpected error has occurred: ${error}`);
+                    console.error(`%coptions.js     ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                    $alert(`An unexpected error has occurred: ${error.message}`);
                 }
             }
         });
@@ -142,8 +142,8 @@
                 $alert('Your settings have been reset to the defaults!');
             } catch (error) {
                 if (error) {
-                    console.error(error);
-                    $alert(`An unexpected error has occurred: ${error}`);
+                    console.error(`%coptions.js%c     ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                    $alert(`An unexpected error has occurred: ${error.message}`);
                 }
             }
         });
@@ -156,8 +156,8 @@
                 $alert('Your settings have been saved!');
             } catch (error) {
                 if (error) {
-                    console.error(error);
-                    $alert(`An unexpected error has occurred: ${error}`);
+                    console.error(`%coptions.js%c     ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                    $alert(`An unexpected error has occurred: ${error.message}`);
                 }
             }
         });

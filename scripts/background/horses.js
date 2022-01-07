@@ -48,7 +48,7 @@ export async function getHorses() {
 
     const qRemote = query(colRef, where('lastModified', '>', lastModified));
     const qsRemote = await getDocsFromServer(qRemote);
-    qsRemote.size && console.debug(`Fetched ${qsRemote.size} new horse records from firestore`);
+    qsRemote.size && console.debug(`%chorses.js%c     Fetched ${qsRemote.size} new horse recor${qsRemote.size === 1 ? 's' : ''} from firestore`, 'color:#406e8e;font-weight:bold;', '');
 
     const querySnapshot = await getDocsFromCache(colRef);
     const horses = [];
@@ -72,7 +72,7 @@ async function saveHorse(horse, batch) {
         _doc = await getDocFromCache(docRef);
     } catch (e) {
         if (!e.message.includes('Failed to get document from cache.')) {
-            console.error(`[horses.js] Failed to save horse ${s.id}: ${e.message}`);
+            console.error(`%chorses.js%c     Failed to save horse ${s.id}: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
             return;
         }
 
@@ -84,7 +84,7 @@ async function saveHorse(horse, batch) {
         horse.sireId = sireId;
         horse.retired = retired;
 
-        console.debug(`[horses.js] Creating horse ${horse.id}${batch ? ' (batch)' : ''}`);
+        console.debug(`%chorses.js%c     Creating horse ${horse.id}${batch ? ' (batch)' : ''}`, 'color:#406e8e;font-weight:bold;', '');
         batch ? batch.set(docRef, { ...horse, lastModified: serverTimestamp() })
             : await setDoc(docRef, { ...horse, lastModified: serverTimestamp() });
     } else {
@@ -96,9 +96,9 @@ async function saveHorse(horse, batch) {
         if (!Object.entries(data).find(([key, value]) => !(key in docData) || value !== docData[key]))
             return;
 
-        console.debug(`[horses.js] Updating horse ${horse.id}${batch ? ' (batch)' : ''}`);
+        console.debug(`%chorses.js%c     Updating horse ${horse.id}${batch ? ' (batch)' : ''}`, 'color:#406e8e;font-weight:bold;', '');
         batch ? batch.update(docRef, { ...data, lastModified: serverTimestamp() })
-            : await setDoc(docRef, { ...data, lastModified: serverTimestamp() }, { merge: true });
+            : await updateDoc(docRef, { ...data, lastModified: serverTimestamp() });
     }
 }
 
