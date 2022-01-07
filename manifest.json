@@ -6,7 +6,7 @@
   "version": "3.2.0",
   "author": "Trevor Frizzell",
   "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlgLMlSQ85tFk3aMjshLqBMatNeMFUoCJj3UmkTVM9CQ31vHyX6VIPh4VGyLqLB5fgU+iXDVeaAwXK/CPo+0Q46U0pANOhPX2QKUxLVoUl4tjiwEUdq3k9gdnCcD7QV4ohmBr4GP57ZWdoiEpHgz1TDJ4hAKkpVrgJxjaRJApeBHSBWatyM1RBlMa1pjYBse67qdshhojcxn5u1OyLJdxF16JBEagFGOEdd/s5D+qGO4HmOtf+lynMZactk5NxlFiFLuhDWQjPacRnAeTmKwl9fIn4fATqvPonY+e2GJQ9XxuJG4wzf5MmQlaajvNhHd8RYzlodvOuA51knnMZksrrwIDAQAB",
+  "key": "",
   "icons": {
     "16": "icons/hn-plus16.png",
     "32": "icons/hn-plus32.png",
@@ -19,11 +19,6 @@
     "storage",
     "tabs"
   ],
-  "externally_connectable": {
-    "matches": [
-      "*://*.harnessnation.com/"
-    ]
-  },
   "background": {
     "page": "background.html",
     "persistent": false
@@ -37,7 +32,8 @@
       ],
       "js": [
         "scripts/content/breeding/stallions.js"
-      ]
+      ],
+      "run_at": "document_start"
     },
     {
       "matches": [
@@ -75,7 +71,6 @@
     }
   ],
   "web_accessible_resources": [
-    "data/stallions.json",
     "public/**"
   ]
 }
