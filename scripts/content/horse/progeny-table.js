@@ -2,19 +2,21 @@ DataTables.getSettings('progeny').then(settings => {
     const observer = new MutationObserver(mutations => {
         mutations.filter(m => m.target.tagName === 'SCRIPT' && m.target.innerHTML.match(/\bfunction updateProgenyTableData\b/)).forEach(script => {
             script.addedNodes?.forEach(node => {
-                if (!node.data.match(/\bfunction updateProgenyTableData\b/)) return;
+                if (!node.data.match(/\bfunction updateProgenyTableData\b/))
+                    return;
+
                 node.data = DataTables.extend('#progenyListTable', node.data.replace(/\bsaleTable\b/g, 'progenyListTable'), { ...settings, saveSearch: false });
             });
         });
     });
-    
+
     observer.observe(document, {
         childList: true,
         subtree: true
     });
 
-    window.addEventListener('plus:installed', function handleInstalled() {
-        window.removeEventListener('plus:installed', handleInstalled);
+    window.addEventListener(`${chrome.runtime.id}.installed`, function handleInstalled() {
+        window.removeEventListener(`${chrome.runtime.id}.installed`, handleInstalled);
         observer.disconnect();
     });
 });

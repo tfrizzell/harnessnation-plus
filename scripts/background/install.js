@@ -1,3 +1,5 @@
+import { setDefaultData } from '../modules/settings.js';
+
 chrome.runtime.onInstalled.addListener(data => {
     if (data.reason !== 'install' && data.reason !== 'update') {
         return

@@ -3,10 +3,10 @@
   "name": "HarnessNation+",
   "short_name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "author": "Trevor Frizzell",
   "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
-  "key": "",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlgLMlSQ85tFk3aMjshLqBMatNeMFUoCJj3UmkTVM9CQ31vHyX6VIPh4VGyLqLB5fgU+iXDVeaAwXK/CPo+0Q46U0pANOhPX2QKUxLVoUl4tjiwEUdq3k9gdnCcD7QV4ohmBr4GP57ZWdoiEpHgz1TDJ4hAKkpVrgJxjaRJApeBHSBWatyM1RBlMa1pjYBse67qdshhojcxn5u1OyLJdxF16JBEagFGOEdd/s5D+qGO4HmOtf+lynMZactk5NxlFiFLuhDWQjPacRnAeTmKwl9fIn4fATqvPonY+e2GJQ9XxuJG4wzf5MmQlaajvNhHd8RYzlodvOuA51knnMZksrrwIDAQAB",
   "icons": {
     "16": "icons/hn-plus16.png",
     "32": "icons/hn-plus32.png",
@@ -19,23 +19,23 @@
     "storage",
     "tabs"
   ],
+  "externally_connectable": {
+    "matches": [
+      "*://*.harnessnation.com/"
+    ]
+  },
   "background": {
-    "scripts": [
-      "scripts/lib/const.js",
-      "scripts/lib/settings.js",
-      "scripts/background/install.js",
-      "scripts/background/background.js"
-    ],
+    "page": "background.html",
     "persistent": false
   },
   "options_page": "options/index.html",
+  "content_security_policy": "script-src 'self' https://www.gstatic.com/ https://*.firebaseio.com https://www.googleapis.com; object-src 'self'",
   "content_scripts": [
     {
       "matches": [
         "*://*.harnessnation.com/breeding/stallions"
       ],
       "js": [
-        "scripts/lib/regex.js",
         "scripts/content/breeding/stallions.js"
       ]
     },
@@ -44,8 +44,6 @@
         "*://*.harnessnation.com/breeding/manage/stallions"
       ],
       "js": [
-        "scripts/lib/const.js",
-        "scripts/lib/func.js",
         "scripts/content/breeding/manage-stallions.js"
       ],
       "css": [

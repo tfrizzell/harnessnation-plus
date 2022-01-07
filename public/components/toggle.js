@@ -42,7 +42,8 @@ style.textContent = `
 class Toggle extends HTMLInputElement {
     constructor() {
         super();
-        if (this.type !== 'checkbox') return;
+        if (this.type !== 'checkbox')
+            return;
 
         this.classList.add('plus-toggle');
 
