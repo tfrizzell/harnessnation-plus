@@ -24,7 +24,7 @@ body {
 
 button, input[type="button" i], input[type="reset" i], input[type="submit" i] {
     align-items: center;
-    background-color: var(--theme-tertiary);
+    background-color: var(--theme-secondary);
     border: none;
     border-radius: 1em;
     color: var(--theme-quarternary);
@@ -44,11 +44,11 @@ button.icon-button {
 
 button:hover, input[type="button" i]:hover, input[type="reset" i]:hover, input[type="submit" i]:hover,
 button:focus, input[type="button" i]:focus, input[type="reset" i]:focus, input[type="submit" i]:focus {
-    background-color: var(--theme-secondary);
+    background-color: var(--theme-primary);
 }
 
 button:active, input[type="button" i]:active, input[type="reset" i]:active, input[type="submit" i]:active {
-    background-color: var(--theme-primary);
+    background-color: var(--theme-tertiary);
 }
 
 button.icon-button:hover,

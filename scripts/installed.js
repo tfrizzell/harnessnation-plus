@@ -1,1 +1,1 @@
-window.dispatchEvent(new CustomEvent(`${chrome.runtime.id}.installed`));
+window.dispatchEvent(new CustomEvent(`installed.${chrome.runtime.id}`));

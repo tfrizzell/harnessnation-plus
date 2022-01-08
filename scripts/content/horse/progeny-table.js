@@ -15,8 +15,7 @@ DataTables.getSettings('progeny').then(settings => {
         subtree: true
     });
 
-    window.addEventListener(`${chrome.runtime.id}.installed`, function handleInstalled() {
-        window.removeEventListener(`${chrome.runtime.id}.installed`, handleInstalled);
+    window.addEventListener(`installed.${chrome.runtime.id}`, () => {
         observer.disconnect();
-    });
+    }, { once: true });
 });

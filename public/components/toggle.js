@@ -1,6 +1,6 @@
 const style = document.createElement('style');
 style.textContent = `
-    .plus-toggle {
+    .hn-plus-toggle {
         --toggle-width: 3.6em;
         appearance: none;
         align-items: center;
@@ -13,7 +13,7 @@ style.textContent = `
         width: var(--toggle-width);
     }
 
-    .plus-toggle:before {
+    .hn-plus-toggle:before {
         background-color: var(--logo-color, #ffffff);
         border: none;
         border-radius: 50%;
@@ -24,15 +24,15 @@ style.textContent = `
         width: 1.2em;
     }
 
-    .plus-toggle:checked {
+    .hn-plus-toggle:checked {
         background-color: var(--theme-secondary, #406e8e);
     }
 
-    .plus-toggle:checked:before {
+    .hn-plus-toggle:checked:before {
         transform: translateX(calc(var(--toggle-width) - 100% - 4px));
     }
 
-    .plus-toggle:disabled {
+    .hn-plus-toggle:disabled {
         cursor: default;
         filter: grayscale(1);
         opacity: 0.5;
@@ -45,11 +45,12 @@ class Toggle extends HTMLInputElement {
         if (this.type !== 'checkbox')
             return;
 
-        this.classList.add('plus-toggle');
+        this.classList.add('hn-plus-toggle');
 
         if (!style.isConnected)
             document.head.appendChild(style);
     }
 }
 
-customElements.define('plus-toggle', Toggle, { extends: 'input' });
+customElements.define('hn-plus-toggle', Toggle, { extends: 'input' });
+console.log('defined');

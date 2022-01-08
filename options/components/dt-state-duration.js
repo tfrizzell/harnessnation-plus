@@ -155,4 +155,4 @@ class DTStateDuration extends HTMLElement {
     }
 }
 
-customElements.define('plus-dt-state-duration', DTStateDuration);
+customElements.define('hn-plus-dt-state-duration', DTStateDuration);

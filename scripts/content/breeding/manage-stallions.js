@@ -1,9 +1,9 @@
 document.querySelectorAll('#inputStudFee, #inputStudFeeUpdate').forEach(input => {
     const button = document.createElement('i');
-    button.classList.add('plus-calculate-button');
+    button.classList.add('hn-plus-calculate-button');
     button.textContent = 'calculate';
 
-    input.classList.add('plus-calculate-input');
+    input.classList.add('hn-plus-calculate-input');
     input.parentNode.appendChild(button);
 
     let calculating = false;
@@ -14,12 +14,10 @@ document.querySelectorAll('#inputStudFee, #inputStudFeeUpdate').forEach(input =>
         }
 
         chrome.storage.sync.get('stallions', async ({ stallions }) => {
-            input.classList.add('plus-calculating');
+            input.classList.add('hn-plus-calculating');
             calculating = true;
 
             try {
-                input.value = '';
-
                 await new Promise(resolve => {
                     chrome.runtime.sendMessage({
                         action: 'CALCULATE_STUD_FEE',
@@ -34,14 +32,13 @@ document.querySelectorAll('#inputStudFee, #inputStudFeeUpdate').forEach(input =>
                 });
             } finally {
                 calculating = false;
-                input.classList.remove('plus-calculating');
+                input.classList.remove('hn-plus-calculating');
             }
         });
     });
 });
 
-window.addEventListener(`${chrome.runtime.id}.installed`, function handleInstalled() {
-    window.removeEventListener(`${chrome.runtime.id}.installed`, handleInstalled);
-    document.querySelectorAll('.plus-calculate-button').forEach(el => el.remove());
-    document.querySelectorAll('.plus-calculate-input').forEach(el => el.classList.remove('plus-calculate-input', 'plus-calculating'));
-});
+window.addEventListener(`installed.${chrome.runtime.id}`, () => {
+    document.querySelectorAll('.hn-plus-calculate-button').forEach(el => el.remove());
+    document.querySelectorAll('.hn-plus-calculate-input').forEach(el => el.classList.remove('hn-plus-calculate-input', 'hn-plus-calculating'));
+}, { once: true });

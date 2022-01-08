@@ -64,15 +64,15 @@ async function calculateStudFee(id, formula = FORMULA_APEX) {
 function createStallionSearchPattern(term) {
     return new Promise(resolve => {
         chrome.storage.sync.get('stallions', async ({ stallions: settings }) => {
-            if (!settings.registry.bloodlineSearch)
-                return resolve(null);
+            if (!settings.registry.bloodlineSearch || !term?.trim())
+                return resolve(term ?? '');
 
             const horses = await getHorses();
-            const pattern = new RegExp(term.replace(/\s+/g, '\\s*'), 'i')
+            const pattern = new RegExp(term.replace(/\s+/g, '\\s*'), 'i');
             const matches = horses.filter(s => pattern.test(s.name)).map(s => addGeneration(s));
 
             if (!matches.length)
-                return resolve(null);
+                return resolve(term);
 
             for (const match of matches) {
                 if (match.generation < settings.registry.maxGenerations)

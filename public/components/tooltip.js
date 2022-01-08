@@ -1,24 +1,24 @@
 const style = document.createElement('style');
 style.textContent = `
-    plus-tooltip, plus-tooltip * {
+    hn-plus-tooltip, hn-plus-tooltip * {
         all: revert;
         box-sizing: border-box;
         margin: 0;
         padding: 0;
     }
 
-    plus-tooltip {
+    hn-plus-tooltip {
         display: inline-block;
         position: relative;
     }
 
-    plus-tooltip .icon {
+    hn-plus-tooltip .icon {
         color: var(--theme-secondary, #406e8e);
         font-size: 24px;
         font-style: normal;
     }
 
-    plus-tooltip .tooltip {
+    hn-plus-tooltip .tooltip {
         background: #ffffff;
         border: 1px solid var(--theme-primary, #23395b);
         border-radius: 5px;
@@ -37,7 +37,7 @@ style.textContent = `
         z-index: 2;
     }
 
-    plus-tooltip .tooltip:after {
+    hn-plus-tooltip .tooltip:after {
         border-color: transparent;
         border-style: solid;
         border-width: 1rem;
@@ -49,16 +49,16 @@ style.textContent = `
         transform: translateX(-50%);
     }
 
-    plus-tooltip .icon:hover + .tooltip,
-    plus-tooltip .tooltip:hover {
+    hn-plus-tooltip .icon:hover + .tooltip,
+    hn-plus-tooltip .tooltip:hover {
         display: flex;
     }
 
-    plus-tooltip .tooltip ul {
+    hn-plus-tooltip .tooltip ul {
         margin-left: 2em;
     }
 
-    plus-tooltip .tooltip ul > li + li {
+    hn-plus-tooltip .tooltip ul > li + li {
         margin-top: 1em;
     }
 `;
@@ -84,4 +84,4 @@ class Tooltip extends HTMLElement {
     }
 }
 
-customElements.define('plus-tooltip', Tooltip);
+customElements.define('hn-plus-tooltip', Tooltip);

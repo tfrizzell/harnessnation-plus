@@ -1,99 +1,104 @@
-function handleSearch(e) {
-    if (typeof e?.data !== 'object' || !('term' in e.data && 'id' in e.data) || 'pattern' in e.data)
-        return;
+(() => {
+    function getStallions(html) {
+        const pattern = /<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?(?:Unknown\s*x\s*Unknown|<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>\s*x\s*<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>)/gs;
+        const stallions = {};
+        let data;
 
-    chrome.runtime.sendMessage({ action: 'SEARCH_STALLIONS', data: { term: e.data.term } }, pattern => {
-        window.postMessage({ ...e.data, pattern, });
-    });
-}
+        while (data = pattern.exec(html)) {
+            const [id, name, sireId, sireName] = data.slice(1);
 
-function getStallions(html) {
-    const pattern = /<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?(?:Unknown\s*x\s*Unknown|<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>\s*x\s*<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>)/gs;
-    const stallions = {};
-    let data;
+            stallions[id] = {
+                id: +id,
+                name,
+                sireId: +sireId || null,
+                reited: false,
+            };
 
-    while (data = pattern.exec(html)) {
-        const [id, name, sireId, sireName] = data.slice(1);
+            sireId && (stallions[sireId] ??= {
+                id: +sireId,
+                name: sireName,
+            });
+        }
 
-        stallions[id] = {
-            id: +id,
-            name,
-            sireId: +sireId || null,
-            reited: false,
-        };
+        return Object.values(stallions);
+    }
 
-        sireId && (stallions[sireId] ??= {
-            id: +sireId,
-            name: sireName,
+    const handleSearch = (() => {
+        async function doSearch(e) {
+            window.dispatchEvent(new CustomEvent(`search.${chrome.runtime.id}`, {
+                detail: {
+                    pattern: await new Promise(resolve => {
+                        chrome.runtime.sendMessage({ action: 'SEARCH_STALLIONS', data: { term: e.target.value } }, resolve);
+                    }),
+                },
+            }));
+        }
+
+        let debounce;
+
+        return (...args) => {
+            clearTimeout(debounce);
+            debounce = setTimeout(doSearch, 200, ...args);
+        }
+    })();
+
+    function bindSearch() {
+        const unbind = document.createElement('script');
+        unbind.setAttribute('type', 'text/javascript');
+        unbind.textContent = `(() => { $('#saleTable_filter input[type="search"]').unbind(); })();`
+        document.body.appendChild(unbind);
+
+        const search = document.querySelector('#saleTable_filter input[type="search"]');
+        search.addEventListener('input', handleSearch);
+
+        window.addEventListener(`installed.${chrome.runtime.id}`, () => {
+            search.removeEventListener('input', handleSearch);
+        }, { once: true });
+    }
+
+    function updateHorses(dom) {
+        chrome.runtime.sendMessage({
+            action: 'SAVE_HORSES',
+            data: {
+                horses: getStallions(dom.innerHTML),
+            },
         });
     }
 
-    return Object.values(stallions);
-}
-
-window.addEventListener('message', handleSearch);
-
-window.addEventListener(`${chrome.runtime.id}.installed`, function handleInstalled() {
-    window.removeEventListener(`${chrome.runtime.id}.installed`, handleInstalled);
-    window.removeEventListener('message', handleSearch);
-});
-
-const script = document.createElement('script');
-script.type = 'text/javascript';
-script.textContent = `(() => {
-    const dt = $('#saleTable').DataTable();
-    const search = document.querySelector('#saleTable_filter input[type="search"]');
-    let debounce;
-
-    search.addEventListener('keyup', e => {
-        clearTimeout(debounce);
-
-        if (!e.target.value?.trim())
-            return;
-
-        debounce = setTimeout(() => {
-            const id = parseInt(performance.now()).toString();
-
-            window.addEventListener('message', function _search(e) {
-                if (typeof e?.data !== 'object' || !('pattern' in e.data && 'id' in e.data) || e.data.id !== id)
-                    return;
-
-                window.removeEventListener('message', _search);
-                e.data.pattern && dt.search(e.data.pattern, true, false).draw();
-            });
-
-            window.postMessage({ id, term: e.target.value });
-        }, 200);
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(m => {
+            if ([].find.call(m.addedNodes, n => n.id === 'saleTable_wrapper')) {
+                bindSearch();
+                updateHorses(m.target);
+            }
+        });
     });
-})();`
 
-const observer = new MutationObserver(mutations => {
-    mutations.forEach(m => {
-        if ([].find.call(m.addedNodes, n => n.id === 'saleTable_wrapper')) {
-            script.remove();
-            document.body.appendChild(script);
-
-            chrome.runtime.sendMessage({
-                action: 'SAVE_HORSES',
-                data: {
-                    horses: getStallions(m.target.innerHTML),
-                },
-            });
-        }
+    observer.observe(document, {
+        childList: true,
+        subtree: true
     });
-});
 
-observer.observe(document, {
-    childList: true,
-    subtree: true
-});
+    window.addEventListener(`installed.${chrome.runtime.id}`, () => {
+        observer.disconnect();
+    }, { once: true });
 
-window.addEventListener(`${chrome.runtime.id}.installed`, function handleInstalled() {
-    window.removeEventListener(`${chrome.runtime.id}.installed`, handleInstalled);
-    observer.disconnect();
+    window.addEventListener('DOMContentLoaded', () => {
+        const script = document.createElement('script');
+        script.setAttribute('type', 'text/javascript');
+        script.textContent = `(() => {
+            function bloodlineSearch(e) {
+                $('#saleTable').DataTable().search(e.detail.pattern, true, false).draw();
+            }
 
-    if (script.parentNode) {
-        script.remove();
+            window.removeEventListener('search.${chrome.runtime.id}', bloodlineSearch);
+            window.addEventListener('search.${chrome.runtime.id}', bloodlineSearch);
+        })();`
         document.body.appendChild(script);
+    });
+
+    if (document.querySelector('#saleTable_wrapper')) {
+        bindSearch();
+        updateHorses(document.querySelector('#saleTable_wrapper'));
     }
-});
+})();

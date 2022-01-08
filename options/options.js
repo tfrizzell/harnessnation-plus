@@ -36,7 +36,7 @@
                     input.addEventListener('input', e => saveInput(e.target));
                 }
 
-                for (const custom of form.querySelectorAll('plus-dt-state-duration[name]')) {
+                for (const custom of form.querySelectorAll('hn-plus-dt-state-duration[name]')) {
                     const value = custom.name.split('.').reduce((obj, key) => obj?.[key], data);
                     if (value == null) continue;
 
@@ -91,7 +91,7 @@
             chrome.storage.sync.get(data => {
                 const form = document.forms.settings;
 
-                for (const custom of form.querySelectorAll('plus-dt-state-duration[name]')) {
+                for (const custom of form.querySelectorAll('hn-plus-dt-state-duration[name]')) {
                     const [key, ...keys] = custom.name.split('.').reverse();
                     const obj = keys.reverse().reduce((obj, key) => obj[key] ?? (obj[key] = {}), data);
 
