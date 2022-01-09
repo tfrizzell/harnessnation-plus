@@ -5,7 +5,7 @@ import { getHorses } from './horses.js';
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     switch (request?.action) {
         case 'CALCULATE_STUD_FEE': calculateStudFee(request.data.id, request.data.formula).then(sendResponse); break;
-        case 'SEARCH_STALLIONS': createStallionSearchPattern(request.data.term).then(sendResponse); break;
+        case 'SEARCH_STALLIONS': createStallionSearchPattern(request.data.term, request.data.maxGenerations).then(sendResponse); break;
         default: return;
     }
 
@@ -61,26 +61,22 @@ async function calculateStudFee(id, formula = FORMULA_APEX) {
     return Math.min(Math.max(1000, fee), 10000000);
 }
 
-function createStallionSearchPattern(term) {
-    return new Promise(resolve => {
-        chrome.storage.sync.get('stallions', async ({ stallions: settings }) => {
-            if (!settings.registry.bloodlineSearch || !term?.trim())
-                return resolve(term ?? '');
+async function createStallionSearchPattern(term, maxGenerations = 4) {
+    if (!term?.trim())
+        return term ?? '';
 
-            const horses = await getHorses();
-            const pattern = new RegExp(term.replace(/\s+/g, '\\s*'), 'i');
-            const matches = horses.filter(s => pattern.test(s.name)).map(s => addGeneration(s));
+    const horses = await getHorses();
+    const pattern = new RegExp(term.replace(/\s+/g, '\\s*'), 'i');
+    const matches = horses.filter(s => pattern.test(s.name)).map(s => addGeneration(s));
 
-            if (!matches.length)
-                return resolve(term);
+    if (!matches.length)
+        return term;
 
-            for (const match of matches) {
-                if (match.generation < settings.registry.maxGenerations)
-                    matches.push(...horses.filter(s => s.sireId == match.id && !matches.includes(s)).map(s => addGeneration(s, match.generation + 1)));
-            }
+    for (const match of matches) {
+        if (match.generation < maxGenerations)
+            matches.push(...horses.filter(s => s.sireId == match.id && !matches.includes(s)).map(s => addGeneration(s, match.generation + 1)));
+    }
 
-            const names = matches.map(stud => stud.name);
-            resolve(`\\b(${names.map(name => name.trim()).map(Regex.escape).join('|')})\\b`);
-        });
-    });
+    const names = matches.map(stud => stud.name);
+    return `\\b(${names.map(name => name.trim()).map(Regex.escape).join('|')})\\b`;
 }

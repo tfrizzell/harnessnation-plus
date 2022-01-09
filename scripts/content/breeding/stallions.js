@@ -1,4 +1,52 @@
 (() => {
+    async function bindSearch() {
+        const unbind = document.createElement('script');
+        unbind.setAttribute('type', 'module');
+        unbind.textContent = `$('#saleTable_filter input[type="search"]').unbind()`
+        document.body.append(unbind);
+
+        const filter = document.querySelector('#saleTable_filter');
+        const search = filter.querySelector('input[type="search"]');
+
+        const [wrapper, toggle] = await injectLocalToggle();
+        filter.parentNode.previousSibling.append(wrapper);
+
+        let debounce;
+
+        function handleSearch() {
+            clearTimeout(debounce);
+            debounce = setTimeout(doSearch, 200, search.value, toggle.checked);
+        }
+
+        async function toggleSearch() {
+            const term = search.value;
+            await doSearch(search.value, toggle.checked);
+            search.value = term;
+        }
+
+        search.addEventListener('input', handleSearch);
+        toggle.addEventListener('input', toggleSearch);
+
+        window.addEventListener(`installed.${chrome.runtime.id}`, () => {
+            toggle.removeEventListener('input', toggleSearch);
+            search.removeEventListener('input', handleSearch);
+        }, { once: true });
+    }
+
+    async function doSearch(term, useBloodlineSearch = true) {
+        chrome.storage.sync.get('stallions', async ({ stallions: settings }) => {
+            window.dispatchEvent(new CustomEvent(`search.${chrome.runtime.id}`, {
+                detail: {
+                    pattern: await new Promise(resolve => {
+                        useBloodlineSearch
+                        ? chrome.runtime.sendMessage({ action: 'SEARCH_STALLIONS', data: { term, maxGenerations: settings.registry.maxGenerations } }, resolve)
+                        : resolve(term);
+                    }),
+                },
+            }));
+        });
+    }
+
     function getStallions(html) {
         const pattern = /<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?(?:Unknown\s*x\s*Unknown|<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>\s*x\s*<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>)/gs;
         const stallions = {};
@@ -23,37 +71,39 @@
         return Object.values(stallions);
     }
 
-    const handleSearch = (() => {
-        async function doSearch(e) {
-            window.dispatchEvent(new CustomEvent(`search.${chrome.runtime.id}`, {
-                detail: {
-                    pattern: await new Promise(resolve => {
-                        chrome.runtime.sendMessage({ action: 'SEARCH_STALLIONS', data: { term: e.target.value } }, resolve);
-                    }),
-                },
-            }));
-        }
+    function injectLocalToggle() {
+        return new Promise(resolve => {
+            chrome.storage.sync.get('stallions', async ({ stallions: settings }) => {
+                document.querySelector('#hn-plus-bloodline-search')?.remove();
 
-        let debounce;
+                const wrapper = document.createElement('div');
+                wrapper.setAttribute('id', 'hn-plus-bloodline-search');
 
-        return (...args) => {
-            clearTimeout(debounce);
-            debounce = setTimeout(doSearch, 200, ...args);
-        }
-    })();
+                const label = document.createElement('label');
+                label.textContent = 'Bloodline Search:';
+                wrapper.append(label);
 
-    function bindSearch() {
-        const unbind = document.createElement('script');
-        unbind.setAttribute('type', 'text/javascript');
-        unbind.textContent = `(() => { $('#saleTable_filter input[type="search"]').unbind(); })();`
-        document.body.appendChild(unbind);
+                const toggle = document.createElement('input', { is: 'hn-plus-toggle', type: 'checkbox' });
+                toggle.type = 'checkbox';
+                toggle.setAttribute('type', 'checkbox');
+                toggle.setAttribute('is', 'hn-plus-toggle');
+                settings.registry.bloodlineSearch && toggle.toggleAttribute('checked');
+                label.append(toggle);
 
-        const search = document.querySelector('#saleTable_filter input[type="search"]');
-        search.addEventListener('input', handleSearch);
+                const tooltip = document.createElement('hn-plus-tooltip');
+                wrapper.append(tooltip);
 
-        window.addEventListener(`installed.${chrome.runtime.id}`, () => {
-            search.removeEventListener('input', handleSearch);
-        }, { once: true });
+                const p = document.createElement('p');
+                tooltip.innerHTML = 'Temporarily toggle bloodline search on or off. To toggle this permanently, or to change the depth of the search, go to the HarnessNation+ options page.';
+                tooltip.append(p);
+
+                window.addEventListener(`installed.${chrome.runtime.id}`, () => {
+                    wrapper.remove();
+                }, { once: true });
+
+                resolve([wrapper, toggle]);
+            });
+        });
     }
 
     function updateHorses(dom) {
@@ -84,17 +134,60 @@
     }, { once: true });
 
     window.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.createElement('script');
+        toggle.setAttribute('type', 'module');
+        toggle.setAttribute('src', chrome.runtime.getURL('/public/components/toggle.js'));
+        document.body.append(toggle);
+
+        const tooltip = document.createElement('script');
+        toggle.setAttribute('type', 'module');
+        tooltip.setAttribute('src', chrome.runtime.getURL('/public/components/tooltip.js'));
+        document.body.append(tooltip);
+
+        const style = document.createElement('style');
+        style.textContent = `
+            #hn-plus-bloodline-search {
+                align-items: center;
+                column-gap: 0.5em;
+                display: flex;
+            }
+            
+            #hn-plus-bloodline-search label {
+                display: contents;
+            }
+
+            #hn-plus-bloodline-search .hn-plus-toggle {
+                background-color: var(--theme-tertiary, #8ea8c3);
+                display: inline-flex;
+                opacity: 1;
+                pointer-events: initial;
+                position: relative;
+                width: var(--toggle-width);
+                vertical-align: middle;
+            }
+
+            #hn-plus-bloodline-search .hn-plus-toggle:checked {
+                background-color: var(--theme-secondary, #406e8e);
+            }
+
+            #hn-plus-bloodline-search hn-plus-tooltip {
+                font-size: 0.8em;
+            }
+        `.trim();
+        document.body.append(style);
+
         const script = document.createElement('script');
-        script.setAttribute('type', 'text/javascript');
-        script.textContent = `(() => {
+        script.setAttribute('type', 'module');
+        script.textContent = `
             function bloodlineSearch(e) {
+                console.log(e);
                 $('#saleTable').DataTable().search(e.detail.pattern, true, false).draw();
             }
 
             window.removeEventListener('search.${chrome.runtime.id}', bloodlineSearch);
             window.addEventListener('search.${chrome.runtime.id}', bloodlineSearch);
-        })();`
-        document.body.appendChild(script);
+        `.trim();
+        document.body.append(script);
     });
 
     if (document.querySelector('#saleTable_wrapper')) {

@@ -4,7 +4,7 @@ document.querySelectorAll('#inputStudFee, #inputStudFeeUpdate').forEach(input =>
     button.textContent = 'calculate';
 
     input.classList.add('hn-plus-calculate-input');
-    input.parentNode.appendChild(button);
+    input.parentNode.append(button);
 
     let calculating = false;
 

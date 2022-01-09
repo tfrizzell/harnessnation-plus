@@ -37,20 +37,22 @@ style.textContent = `
         filter: grayscale(1);
         opacity: 0.5;
     }
-`;
+`.trim();
 
 class Toggle extends HTMLInputElement {
-    constructor() {
-        super();
-        if (this.type !== 'checkbox')
-            return;
+    connectedCallback() {
+        if (this.getAttribute('type') !== 'checkbox')
+            throw new TypeError(`HNPlusToggle: Cannot bind to input type ${this.getAttribute('type')}`);
 
         this.classList.add('hn-plus-toggle');
 
         if (!style.isConnected)
-            document.head.appendChild(style);
+            document.body.append(style);
+    }
+
+    disconnectedCallback() {
+        this.classList.add('hn-plus-toggle');
     }
 }
 
 customElements.define('hn-plus-toggle', Toggle, { extends: 'input' });
-console.log('defined');

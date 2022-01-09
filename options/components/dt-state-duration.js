@@ -5,7 +5,7 @@ style.textContent = `
         column-gap: 0.75em;
         display: inline-flex;
     }
-`;
+`.trim();
 
 const modeOptions = [
     { value: 0, name: 'Site Default', default: true },
@@ -42,24 +42,22 @@ class DTStateDuration extends HTMLElement {
     #unitsInput = null;
     #valueInput = null;
 
-    constructor() {
-        super();
-
+    connectedCallback() {
         for (const ps of document.head.querySelectorAll('link'))
-            this.#shadow.appendChild(ps.cloneNode());
+            this.#shadow.append(ps.cloneNode());
 
-        this.#shadow.appendChild(style.cloneNode(true));
+        this.#shadow.append(style.cloneNode(true));
 
         this.#modeInput = document.createElement('select');
         this.#modeInput.setAttribute('role', 'mode');
         this.#modeInput.toggleAttribute('required');
-        this.#shadow.appendChild(this.#modeInput);
+        this.#shadow.append(this.#modeInput);
 
         for (const opt of modeOptions) {
             const option = document.createElement('option');
             option.setAttribute('value', opt.value);
             option.innerHTML = opt.name;
-            this.#modeInput.appendChild(option);
+            this.#modeInput.append(option);
 
             if (opt.default)
                 option.toggleAttribute('selected');
@@ -104,7 +102,7 @@ class DTStateDuration extends HTMLElement {
         this.#valueInput.setAttribute('role', 'value');
         this.#valueInput.setAttribute('type', 'text');
         this.#valueInput.toggleAttribute('required');
-        this.#shadow.appendChild(this.#valueInput);
+        this.#shadow.append(this.#valueInput);
 
         this.#valueInput.addEventListener('input', e => {
             const unit = unitOptions.find(o => o.value === this.#value.displayUnits) ?? unitOptions.find(o => o.default);
@@ -120,7 +118,7 @@ class DTStateDuration extends HTMLElement {
         this.#unitsInput = document.createElement('select');
         this.#unitsInput.setAttribute('role', 'units');
         this.#unitsInput.toggleAttribute('required');
-        this.#shadow.appendChild(this.#unitsInput);
+        this.#shadow.append(this.#unitsInput);
 
         this.#unitsInput.addEventListener('input', e => {
             const oldUnit = unitOptions.find(o => o.value === this.#value.displayUnits) ?? unitOptions.find(o => o.default);
@@ -139,7 +137,7 @@ class DTStateDuration extends HTMLElement {
             const option = document.createElement('option');
             option.setAttribute('value', opt.value);
             option.innerHTML = opt.name;
-            this.#unitsInput.appendChild(option);
+            this.#unitsInput.append(option);
 
             if (opt.default)
                 option.toggleAttribute('selected');
