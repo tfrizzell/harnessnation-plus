@@ -20,8 +20,8 @@
 
         async function toggleSearch() {
             const term = search.value;
+            window.addEventListener(`search.${chrome.runtime.id}`, () => search.value = term, { once: true });
             await doSearch(search.value, toggle.checked);
-            search.value = term;
         }
 
         search.addEventListener('input', handleSearch);
@@ -180,7 +180,6 @@
         script.setAttribute('type', 'module');
         script.textContent = `
             function bloodlineSearch(e) {
-                console.log(e);
                 $('#saleTable').DataTable().search(e.detail.pattern, true, false).draw();
             }
 
