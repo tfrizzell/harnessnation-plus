@@ -1,6 +1,20 @@
 # harnessnation-plus
-HarnessNation+ Extension for Google Chrome
+HarnessNation+ Extension - Enhance your HarnessNation experience with these client-side add-ons and fixes!
 
 ## Features
 
 See the [features page on our wiki](https://github.com/tfrizzell/harnessnation-plus/wiki/Features) for a complete list of features, bug fixes, and other enhancements.
+
+## Installation
+
+### Google Chrome
+
+[Install **HarnessNation+** on Google Chrome](https://chrome.google.com/webstore/detail/harnessnation%20/aonknefdnheomhlfcnjdicnkbfdakcdo)
+
+### Mozilla Firefox
+
+[Install **HarnessNation+** on Mozilla Firefox](https://addons.mozilla.org/en-US/firefox/addon/harnessnation-plus/)
+
+### Other Chromium-based Browsers
+
+Other Chromium-based browsers, such as Microsoft Edge, Brave, Opera, and Vivaldi are compatible with the [Google Chrome version of **HarnessNation+**](#google-chrome)
