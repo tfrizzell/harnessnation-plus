@@ -11,10 +11,14 @@ See the [features page on our wiki](https://github.com/tfrizzell/harnessnation-p
 
 [Install **HarnessNation+** on Google Chrome](https://chrome.google.com/webstore/detail/harnessnation%20/aonknefdnheomhlfcnjdicnkbfdakcdo)
 
+### Microsoft Edge
+
+[Install **HarnessNation+** on Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/harnessnation/joniipgaaolooildpfoinglgbfefjobk)
+
 ### Mozilla Firefox
 
 [Install **HarnessNation+** on Mozilla Firefox](https://addons.mozilla.org/en-US/firefox/addon/harnessnation-plus/)
 
 ### Other Chromium-based Browsers
 
-Other Chromium-based browsers, such as Microsoft Edge, Brave, Opera, and Vivaldi are compatible with the [Google Chrome version of **HarnessNation+**](#google-chrome)
+Other Chromium-based browsers, such as Brave, Opera, and Vivaldi are compatible with the [Google Chrome version of **HarnessNation+**](#google-chrome)
