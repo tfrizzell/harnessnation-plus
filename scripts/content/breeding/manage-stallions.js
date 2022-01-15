@@ -38,7 +38,7 @@ document.querySelectorAll('#inputStudFee, #inputStudFeeUpdate').forEach(input =>
     });
 });
 
-window.addEventListener(`installed.${chrome.runtime.id}`, () => {
+window.addEventListener('installed.harnessnation-plus', () => {
     document.querySelectorAll('.hn-plus-calculate-button').forEach(el => el.remove());
     document.querySelectorAll('.hn-plus-calculate-input').forEach(el => el.classList.remove('hn-plus-calculate-input', 'hn-plus-calculating'));
 }, { once: true });

@@ -1,0 +1,9 @@
+@import '../../../public/style/common.css';
+
+.hn-plus-button-wrapper {
+    align-items: center;
+    column-gap: 0.5em;
+    display: flex;
+    float: left;
+    font-size: 0.8em;
+}

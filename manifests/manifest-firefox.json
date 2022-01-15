@@ -32,6 +32,11 @@
       "js": [
         "scripts/content/breeding/stallions.js"
       ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "scripts/content/breeding/stallions.css"
+      ],
       "run_at": "document_start"
     },
     {
@@ -42,6 +47,7 @@
         "scripts/content/breeding/manage-stallions.js"
       ],
       "css": [
+        "public/style/theme.css",
         "scripts/content/breeding/manage-stallions.css"
       ]
     },

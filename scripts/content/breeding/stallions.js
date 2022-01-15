@@ -1,4 +1,29 @@
-async function bindSearch() {
+async function addExportButton() {
+    document.querySelectorAll('.buyHorsePagination .pagination').forEach(p => {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('hn-plus-button-wrapper');
+        p.parentNode.insertBefore(wrapper, p);
+
+        const button = document.createElement('button');
+        button.classList.add('hn-plus-button');
+        button.textContent = 'Report (CSV)';
+        button.type = 'button';
+
+        button.addEventListener('click', async e => {
+            e.preventDefault();
+
+            document.querySelectorAll('.hn-plus-button').forEach(el => el.disabled = true);
+            await exportReport(document.querySelector('#saleTable_wrapper').innerHTML);
+            document.querySelectorAll('.hn-plus-button').forEach(el => el.disabled = false);
+        });
+
+        const tooltip = document.createElement('hn-plus-tooltip');
+        tooltip.textContent = 'Generate a CSV export of all stallions listed on this page. This report includes data from their progeny report and may take a few minutes to generate.';
+        wrapper.append(button, tooltip);
+    });
+}
+
+async function bindBloodlineSearch() {
     const unbind = document.createElement('script');
     unbind.setAttribute('type', 'module');
     unbind.textContent = `$('#saleTable_filter input[type="search"]').unbind()`
@@ -22,11 +47,39 @@ async function bindSearch() {
 
 async function doSearch(term) {
     chrome.storage.sync.get('stallions', async ({ stallions: settings }) => {
-        window.dispatchEvent(new CustomEvent('search.harnessnation-plus', {
-            detail: {
-                pattern: await new Promise(resolve => chrome.runtime.sendMessage({ action: 'SEARCH_STALLIONS', data: { term, maxGenerations: settings.registry.maxGenerations } }, resolve)),
-            },
-        }));
+        chrome.runtime.sendMessage({ action: 'SEARCH_STALLIONS', data: { term, maxGenerations: settings.registry.maxGenerations } }, pattern => {
+            window.dispatchEvent(new CustomEvent('search.harnessnation-plus', {
+                detail: { pattern },
+            }));
+        });
+    });
+}
+
+function exportReport(html) {
+    return new Promise(resolve => {
+        const pattern = />\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
+        const now = new Date();
+        const ids = [];
+        let id;
+
+        while (id = pattern.exec(html)?.[1])
+            ids.push(+id);
+
+        chrome.runtime.sendMessage({ action: 'EXPORT_STALLIONS', data: { ids } }, csv => {
+            if (csv?.trim()) {
+                const dl = document.createElement('a');
+                dl.setAttribute('href', `data:text/csv;base64,${btoa(csv)}`);
+                dl.setAttribute('download', `hnplus-stallion-report-${now.getFullYear()}${[
+                    now.getMonth() + 1,
+                    now.getDate(),
+                    now.getHours(),
+                    now.getMinutes(),
+                    now.getSeconds()].map(v => v.toString().padStart(2, '0')).join('')}.csv`);
+                dl.click();
+            }
+
+            resolve();
+        });
     });
 }
 
@@ -66,7 +119,8 @@ function updateHorses(dom) {
 const observer = new MutationObserver(mutations => {
     mutations.forEach(m => {
         if ([].find.call(m.addedNodes, n => n.id === 'saleTable_wrapper')) {
-            bindSearch();
+            addExportButton();
+            bindBloodlineSearch();
             updateHorses(m.target);
         }
     });
@@ -79,16 +133,12 @@ observer.observe(document, {
 
 window.addEventListener('installed.harnessnation-plus', () => {
     observer.disconnect();
+    document.querySelectorAll('.hn-plus-button-wrapper').forEach(el => el.remove());
 }, { once: true });
 
 window.addEventListener('DOMContentLoaded', () => {
-    const toggle = document.createElement('script');
-    toggle.setAttribute('type', 'module');
-    toggle.setAttribute('src', chrome.runtime.getURL('/public/components/toggle.js'));
-    document.body.append(toggle);
-
     const tooltip = document.createElement('script');
-    toggle.setAttribute('type', 'module');
+    tooltip.setAttribute('type', 'module');
     tooltip.setAttribute('src', chrome.runtime.getURL('/public/components/tooltip.js'));
     document.body.append(tooltip);
 
@@ -138,6 +188,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 if (document.querySelector('#saleTable_wrapper')) {
-    bindSearch();
+    addExportButton();
+    bindBloodlineSearch();
     updateHorses(document.querySelector('#saleTable_wrapper'));
 }

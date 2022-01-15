@@ -46,8 +46,10 @@ chrome.runtime.onInstalled.addListener(data => {
                     chrome.tabs.query({ url: matches }, tabs => {
                         tabs.forEach(tab => {
                             chrome.tabs.executeScript(tab.id, { file: 'scripts/installed.js' }, () => {
-                                css.forEach(file => chrome.tabs.insertCSS(tab.id, { file, runAt }));
-                                js.forEach(file => chrome.tabs.executeScript(tab.id, { file, runAt }));
+                                setTimeout(() => {
+                                    css.forEach(file => chrome.tabs.insertCSS(tab.id, { file, runAt }));
+                                    js.forEach(file => chrome.tabs.executeScript(tab.id, { file, runAt }));
+                                }, 1);
                             });
                         });
                     });

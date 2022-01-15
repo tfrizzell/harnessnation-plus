@@ -1,4 +1,4 @@
-import { parseCurrency } from '../../lib/func.js';
+import { parseCurrency, toPercentage } from '../../lib/func.js';
 
 describe(`parseCurrency`, () => {
     test(`exists`, () => {
@@ -34,5 +34,34 @@ describe(`parseCurrency`, () => {
 
         for (const value of values)
             expect(parseCurrency(value)).toEqual(value);
+    });
+});
+
+describe(`toPercentage`, () => {
+    test(`exists`, () => {
+        expect(toPercentage).not.toBeUndefined();
+        expect(window.toPercentage).not.toBeUndefined();
+    });
+
+    test(`is a function`, () => {
+        expect(typeof toPercentage).toEqual('function');
+    });
+
+    test(`properly computes a percentage`, () => {
+        const values = [
+            [25, 100, '25.00%'],
+            [50, 25, '200.00%'],
+            [256, 287, '89.20%'],
+            [239, 256, '93.36%'],
+            [48, 256, '18.75%'],
+            [5, 256, '1.95%'],
+        ];
+
+        for (const [nom, den, result] of values)
+            expect(toPercentage(nom, den)).toEqual(result);
+    });
+
+    test(`returns 0.00% when given 0 as a denominator`, () => {
+        expect(toPercentage(25, 0)).toEqual('0.00%');
     });
 });
