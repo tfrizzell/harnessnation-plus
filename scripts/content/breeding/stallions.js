@@ -1,29 +1,45 @@
-async function addExportButton() {
-    document.querySelectorAll('.buyHorsePagination .pagination').forEach(p => {
-        const wrapper = document.createElement('div');
-        wrapper.classList.add('hn-plus-button-wrapper');
-        p.parentNode.insertBefore(wrapper, p);
+function addExportButton() {
+    chrome.storage.local.get('stallion.export', ({ 'stallion.export': exportRunning }) => {
+        document.querySelectorAll('.buyHorsePagination .pagination').forEach(p => {
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('hn-plus-button-wrapper');
+            p.parentNode.insertBefore(wrapper, p);
 
-        const button = document.createElement('button');
-        button.classList.add('hn-plus-button');
-        button.textContent = 'Report (CSV)';
-        button.type = 'button';
+            const button = document.createElement('button');
+            button.classList.add('hn-plus-button');
+            button.disabled = exportRunning;
+            button.textContent = 'Report (CSV)';
+            button.type = 'button';
 
-        button.addEventListener('click', async e => {
-            e.preventDefault();
+            button.addEventListener('click', async e => {
+                e.preventDefault();
+                exportReport(document.querySelector('#saleTable_wrapper').innerHTML);
+                setTimeout(() => alert('Your stallion report is being generated in the background and will be downloaded automatically upon completion. You are free to continue browsing without impacting this process.'), 50);
+            });
 
-            document.querySelectorAll('.hn-plus-button').forEach(el => el.disabled = true);
-            await exportReport(document.querySelector('#saleTable_wrapper').innerHTML);
-            document.querySelectorAll('.hn-plus-button').forEach(el => el.disabled = false);
+            const tooltip = document.createElement('hn-plus-tooltip');
+            tooltip.textContent = 'Generate a CSV export of all stallions listed on this page. This report includes data from their progeny report and may take several minutes to generate.';
+            wrapper.append(button, tooltip);
+
+            function handleStateChange(changes, areaName) {
+                if (areaName !== 'local' || !('stallion.export' in changes)) return;
+
+                if (changes['stallion.export']?.newValue)
+                    document.querySelectorAll('.hn-plus-button').forEach(el => el.disabled = true);
+                else
+                    document.querySelectorAll('.hn-plus-button').forEach(el => el.disabled = false);
+            }
+
+            chrome.storage.onChanged.addListener(handleStateChange);
+
+            window.addEventListener('installed.harnessnation-plus', () => {
+                chrome.storage.onChanged.removeListener(handleStateChange);
+            }, { once: true });
         });
-
-        const tooltip = document.createElement('hn-plus-tooltip');
-        tooltip.textContent = 'Generate a CSV export of all stallions listed on this page. This report includes data from their progeny report and may take a few minutes to generate.';
-        wrapper.append(button, tooltip);
     });
 }
 
-async function bindBloodlineSearch() {
+function bindBloodlineSearch() {
     const unbind = document.createElement('script');
     unbind.setAttribute('type', 'module');
     unbind.textContent = `$('#saleTable_filter input[type="search"]').unbind()`
@@ -45,7 +61,7 @@ async function bindBloodlineSearch() {
     }, { once: true });
 }
 
-async function doSearch(term) {
+function doSearch(term) {
     chrome.storage.sync.get('stallions', async ({ stallions: settings }) => {
         chrome.runtime.sendMessage({ action: 'SEARCH_STALLIONS', data: { term, maxGenerations: settings.registry.maxGenerations } }, pattern => {
             window.dispatchEvent(new CustomEvent('search.harnessnation-plus', {
@@ -58,28 +74,13 @@ async function doSearch(term) {
 function exportReport(html) {
     return new Promise(resolve => {
         const pattern = />\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
-        const now = new Date();
         const ids = [];
         let id;
 
         while (id = pattern.exec(html)?.[1])
             ids.push(+id);
 
-        chrome.runtime.sendMessage({ action: 'EXPORT_STALLIONS', data: { ids } }, csv => {
-            if (csv?.trim()) {
-                const dl = document.createElement('a');
-                dl.setAttribute('href', `data:text/csv;base64,${btoa(csv)}`);
-                dl.setAttribute('download', `hnplus-stallion-report-${now.getFullYear()}${[
-                    now.getMonth() + 1,
-                    now.getDate(),
-                    now.getHours(),
-                    now.getMinutes(),
-                    now.getSeconds()].map(v => v.toString().padStart(2, '0')).join('')}.csv`);
-                dl.click();
-            }
-
-            resolve();
-        });
+        chrome.runtime.sendMessage({ action: 'EXPORT_STALLIONS', data: { ids } }, resolve);
     });
 }
 

@@ -1,10 +1,12 @@
-import { Formula } from '../../lib/enums.js';
+import '../../lib/enums.js';
 const defaultSettings = await fetch(chrome.runtime.getURL('/data/settings.json')).then(res => res.json());
 
 chrome.runtime.onInstalled.addListener(data => {
     if (data.reason !== 'install' && data.reason !== 'update') {
         return
     }
+
+    chrome.storage.local.clear();
 
     chrome.storage.sync.get(data => {
         chrome.storage.sync.clear(async () => {
