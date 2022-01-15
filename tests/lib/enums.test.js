@@ -1,11 +1,4 @@
-import {
-    Formula,
-    FORMULA_APEX,
-    FORMULA_RIDGE,
-    Mode,
-    MODE_CUSTOM,
-    MODE_DEFAULT,
-} from '../../lib/enums.js';
+import '../../lib/enums.js';
 
 describe(`Formula`, () => {
     test(`exists`, () => {

@@ -3,7 +3,6 @@ import { parseCurrency, toPercentage } from '../../lib/func.js';
 describe(`parseCurrency`, () => {
     test(`exists`, () => {
         expect(parseCurrency).not.toBeUndefined();
-        expect(window.parseCurrency).not.toBeUndefined();
     });
 
     test(`is a function`, () => {
@@ -40,7 +39,6 @@ describe(`parseCurrency`, () => {
 describe(`toPercentage`, () => {
     test(`exists`, () => {
         expect(toPercentage).not.toBeUndefined();
-        expect(window.toPercentage).not.toBeUndefined();
     });
 
     test(`is a function`, () => {

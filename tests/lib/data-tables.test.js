@@ -1,5 +1,6 @@
-import { DataTables } from '../../lib/data-tables.js';
-import { Mode } from '../../lib/enums.js';
+import '../../lib/data-tables.js';
+import '../../lib/enums.js';
+import '../../lib/regex.js';
 
 describe(`DataTables`, () => {
     test(`exists`, () => {

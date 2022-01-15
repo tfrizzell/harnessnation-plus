@@ -1,4 +1,4 @@
-import { Mode } from '../../lib/enums.js';
+import '../../lib/enums.js';
 
 const style = document.createElement('style');
 style.textContent = `

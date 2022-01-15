@@ -1,4 +1,4 @@
-import { Regex } from '../../lib/regex.js';
+import '../../lib/regex.js';
 
 describe(`Regex`, () => {
     test(`exists`, () => {

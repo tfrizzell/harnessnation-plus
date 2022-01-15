@@ -56,8 +56,9 @@
         "*://*.harnessnation.com/horse/*"
       ],
       "js": [
-        "lib/regex.js",
         "lib/data-tables.js",
+        "lib/enums.js",
+        "lib/regex.js",
         "scripts/content/horse/progeny-table.js"
       ],
       "run_at": "document_start"
@@ -68,8 +69,9 @@
         "*://*.harnessnation.com/stable/breeding"
       ],
       "js": [
-        "lib/regex.js",
         "lib/data-tables.js",
+        "lib/enums.js",
+        "lib/regex.js",
         "scripts/content/stable/horse-table.js"
       ],
       "run_at": "document_start"
