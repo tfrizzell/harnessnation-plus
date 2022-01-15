@@ -1,8 +1,9 @@
-import '../lib/func.js';
-import '../lib/regex.js';
+import { Formula } from '../../lib/enums.js';
+import { parseCurrency } from '../../lib/func.js';
+import { Regex } from '../../lib/regex.js';
 import { getHorses } from './horses.js';
 
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request?.action) {
         case 'CALCULATE_STUD_FEE': calculateStudFee(request.data.id, request.data.formula).then(sendResponse); break;
         case 'SEARCH_STALLIONS': createStallionSearchPattern(request.data.term, request.data.maxGenerations).then(sendResponse); break;
@@ -17,7 +18,7 @@ function addGeneration(stallion, generation = 1) {
     return stallion;
 }
 
-async function calculateStudFee(id, formula = FORMULA_APEX) {
+async function calculateStudFee(id, formula = Formula.Apex) {
     const report = await fetch('https://www.harnessnation.com/api/progeny/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,12 +32,12 @@ async function calculateStudFee(id, formula = FORMULA_APEX) {
         const avgEarnings = parseCurrency(report?.match(/<b[^>]*>\s*Average\s*Earnings\s*per\s*Starter\s*:\s*<\/b[^>]*>\s*([$\d,\.]+)/i)?.pop() ?? 0);
 
         switch (formula) {
-            case FORMULA_APEX:
+            case Formula.Apex:
             default:
                 fee = (1000 * Math.round(avgEarnings / 4000)) ?? fee;
                 break;
 
-            case FORMULA_RIDGE:
+            case Formula.Ridge:
                 fee = (1000 * Math.round(5 + (avgEarnings / 2000))) ?? fee;
                 break;
         }
@@ -47,12 +48,12 @@ async function calculateStudFee(id, formula = FORMULA_APEX) {
         const earnings = parseCurrency(data[1]);
 
         switch (formula) {
-            case FORMULA_APEX:
+            case Formula.Apex:
             default:
                 fee = (1000 * Math.round(earnings / starts / 1000)) ?? fee;
                 break;
 
-            case FORMULA_RIDGE:
+            case Formula.Ridge:
                 fee = (1000 * Math.round(5 + (earnings / 20000))) ?? fee;
                 break;
         }

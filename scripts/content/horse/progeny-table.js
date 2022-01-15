@@ -15,7 +15,7 @@ DataTables.getSettings('progeny').then(settings => {
         subtree: true
     });
 
-    window.addEventListener(`installed.${chrome.runtime.id}`, () => {
+    window.addEventListener('installed.harnessnation-plus', () => {
         observer.disconnect();
     }, { once: true });
 });

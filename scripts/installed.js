@@ -1,1 +1,1 @@
-window.dispatchEvent(new CustomEvent(`installed.${chrome.runtime.id}`));
+window.dispatchEvent(new CustomEvent('installed.harnessnation-plus'));

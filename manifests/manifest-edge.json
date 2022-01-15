@@ -50,8 +50,8 @@
         "*://*.harnessnation.com/horse/*"
       ],
       "js": [
-        "scripts/lib/regex.js",
-        "scripts/lib/data-tables.js",
+        "lib/regex.js",
+        "lib/data-tables.js",
         "scripts/content/horse/progeny-table.js"
       ],
       "run_at": "document_start"
@@ -62,8 +62,8 @@
         "*://*.harnessnation.com/stable/breeding"
       ],
       "js": [
-        "scripts/lib/regex.js",
-        "scripts/lib/data-tables.js",
+        "lib/regex.js",
+        "lib/data-tables.js",
         "scripts/content/stable/horse-table.js"
       ],
       "run_at": "document_start"

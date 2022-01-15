@@ -1,4 +1,4 @@
-import '../lib/const.js';
+import { Formula } from '../../lib/enums.js';
 const defaultSettings = await fetch(chrome.runtime.getURL('/data/settings.json')).then(res => res.json());
 
 chrome.runtime.onInstalled.addListener(data => {
@@ -30,7 +30,7 @@ chrome.runtime.onInstalled.addListener(data => {
                     ...defaultSettings?.stallions,
                     management: {
                         ...defaultSettings?.stallions?.management,
-                        formula: data?.studFee?.formula ?? defaultSettings?.stallions?.management?.formula ?? FORMULA_APEX,
+                        formula: data?.studFee?.formula ?? defaultSettings?.stallions?.management?.formula ?? Formula.Apex,
                         ...data?.stallions?.management,
                     },
                     registry: {
