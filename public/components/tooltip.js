@@ -20,7 +20,7 @@ style.textContent = `
 
     hn-plus-tooltip .hn-plus-tooltip {
         background: #ffffff;
-        border: 1px solid var(--theme-primary, #23395b);
+        border: 1px solid var(--hn-plus-theme-primary, #23395b);
         border-radius: 5px;
         box-shadow: 0 0 5px 0 #4f4f4f;
         color: var(--theme-primary, #23395b);
@@ -42,7 +42,7 @@ style.textContent = `
         border-color: transparent;
         border-style: solid;
         border-width: 1rem;
-        border-bottom-color: var(--theme-primary, #23395b);
+        border-bottom-color: var(--hn-plus-theme-primary, #23395b);
         bottom: 100%;
         content: "";
         position: absolute;

@@ -1,3 +1,5 @@
+import '../../lib/enums.js';
+
 const style = document.createElement('style');
 style.textContent = `
     :host {
@@ -8,8 +10,8 @@ style.textContent = `
 `.trim();
 
 const modeOptions = [
-    { value: 0, name: 'Site Default', default: true },
-    { value: 1, name: 'Custom' },
+    { value: Mode.Default, name: 'Site Default', default: true },
+    { value: Mode.Custom, name: 'Custom' },
 ];
 
 const unitOptions = [

@@ -4,7 +4,7 @@ style.textContent = `
         --toggle-width: 3.6em;
         appearance: none;
         align-items: center;
-        background-color: var(--theme-tertiary, #8ea8c3);
+        background-color: var(--hn-plus-theme-tertiary, #8ea8c3);
         border-radius: 1em;
         cursor: pointer;
         display: inline-flex;
@@ -14,7 +14,7 @@ style.textContent = `
     }
 
     .hn-plus-toggle:before {
-        background-color: var(--logo-color, #ffffff);
+        background-color: var(--hn-plus-logo-color, #ffffff);
         border: none;
         border-radius: 50%;
         content: "";
@@ -25,7 +25,7 @@ style.textContent = `
     }
 
     .hn-plus-toggle:checked {
-        background-color: var(--theme-secondary, #406e8e);
+        background-color: var(--hn-plus-theme-secondary, #406e8e);
     }
 
     .hn-plus-toggle:checked:before {

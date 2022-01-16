@@ -1,10 +1,12 @@
-import '../lib/const.js';
+import '../../lib/enums.js';
 const defaultSettings = await fetch(chrome.runtime.getURL('/data/settings.json')).then(res => res.json());
 
 chrome.runtime.onInstalled.addListener(data => {
     if (data.reason !== 'install' && data.reason !== 'update') {
         return
     }
+
+    chrome.storage.local.clear();
 
     chrome.storage.sync.get(data => {
         chrome.storage.sync.clear(async () => {
@@ -30,7 +32,7 @@ chrome.runtime.onInstalled.addListener(data => {
                     ...defaultSettings?.stallions,
                     management: {
                         ...defaultSettings?.stallions?.management,
-                        formula: data?.studFee?.formula ?? defaultSettings?.stallions?.management?.formula ?? FORMULA_APEX,
+                        formula: data?.studFee?.formula ?? defaultSettings?.stallions?.management?.formula ?? Formula.Apex,
                         ...data?.stallions?.management,
                     },
                     registry: {
@@ -46,8 +48,10 @@ chrome.runtime.onInstalled.addListener(data => {
                     chrome.tabs.query({ url: matches }, tabs => {
                         tabs.forEach(tab => {
                             chrome.tabs.executeScript(tab.id, { file: 'scripts/installed.js' }, () => {
-                                css.forEach(file => chrome.tabs.insertCSS(tab.id, { file, runAt }));
-                                js.forEach(file => chrome.tabs.executeScript(tab.id, { file, runAt }));
+                                setTimeout(() => {
+                                    css.forEach(file => chrome.tabs.insertCSS(tab.id, { file, runAt }));
+                                    js.forEach(file => chrome.tabs.executeScript(tab.id, { file, runAt }));
+                                }, 1);
                             });
                         });
                     });

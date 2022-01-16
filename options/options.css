@@ -1,13 +1,4 @@
-:root {
-    --theme-primary: #23395b;
-    --theme-secondary: #406e8e;
-    --theme-tertiary: #8ea8c3;
-    --theme-quarternary: #cbf7ed;
-    --theme-quinary: #f4f5ff;
-    --theme-text: #161935;
-
-    --logo-color: #ffffff;
-}
+@import '../public/style/theme.css';
 
 * {
     box-sizing: border-box;
@@ -16,7 +7,7 @@
 }
 
 body {
-    color: var(--theme-text);
+    color: var(--hn-plus-theme-text);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -24,10 +15,10 @@ body {
 
 button, input[type="button" i], input[type="reset" i], input[type="submit" i] {
     align-items: center;
-    background-color: var(--theme-secondary);
+    background-color: var(--hn-plus-theme-secondary);
     border: none;
     border-radius: 1em;
-    color: var(--theme-quarternary);
+    color: var(--hn-plus-theme-quarternary);
     column-gap: 0.33em;
     cursor: pointer;
     display: flex;
@@ -44,11 +35,11 @@ button.icon-button {
 
 button:hover, input[type="button" i]:hover, input[type="reset" i]:hover, input[type="submit" i]:hover,
 button:focus, input[type="button" i]:focus, input[type="reset" i]:focus, input[type="submit" i]:focus {
-    background-color: var(--theme-primary);
+    background-color: var(--hn-plus-theme-primary);
 }
 
 button:active, input[type="button" i]:active, input[type="reset" i]:active, input[type="submit" i]:active {
-    background-color: var(--theme-tertiary);
+    background-color: var(--hn-plus-theme-tertiary);
 }
 
 button.icon-button:hover,
@@ -100,7 +91,7 @@ input[type="time"]:hover,
 input[type="url"]:hover,
 input[type="week"]:hover,
 select:hover {
-    border-bottom-color: var(--theme-tertiary);
+    border-bottom-color: var(--hn-plus-theme-tertiary);
 }
 
 input[type="date"]:focus,
@@ -117,7 +108,7 @@ input[type="time"]:focus,
 input[type="url"]:focus,
 input[type="week"]:focus,
 select:focus {
-    border-bottom-color: var(--theme-secondary);
+    border-bottom-color: var(--hn-plus-theme-secondary);
     outline: none;
 }
 
@@ -135,14 +126,14 @@ input[type="time"]:active,
 input[type="url"]:active,
 input[type="week"]:active,
 select:active {
-    border-bottom-color: var(--theme-primary);
+    border-bottom-color: var(--hn-plus-theme-primary);
     outline: none;
 }
 
 #header {
     align-items: center;
-    background: var(--theme-primary);
-    color: var(--logo-color);
+    background: var(--hn-plus-theme-primary);
+    color: var(--hn-plus-logo-color);
     display: flex;
     height: 4em;
     left: 0;
@@ -174,8 +165,8 @@ select:active {
 }
 
 #settings-form .form-section {
-    background: var(--theme-quinary);
-    border-color: var(--theme-primary);
+    background: var(--hn-plus-theme-quinary);
+    border-color: var(--hn-plus-theme-primary);
     border-radius: 0.33rem;
     border-style: solid;
     border-width: 1px;
@@ -185,8 +176,8 @@ select:active {
 
 #settings-form .form-section summary {
     align-items: center;
-    background: var(--theme-primary);
-    color: var(--logo-color);
+    background: var(--hn-plus-theme-primary);
+    color: var(--hn-plus-logo-color);
     cursor: pointer;
     display: flex;
     font-size: 1.2em;
@@ -255,7 +246,7 @@ select:active {
 
 /* 
 input, select, textarea {
-    border-color: var(--gradient-top);
+    border-color: var(--hn-plus-gradient-top);
     border-style: solid;
     border-width: 0 0 1px;
     height: 1.33rem;
@@ -263,12 +254,12 @@ input, select, textarea {
 }
 
 input:focus, select:focus, textarea:focus {
-    border-color: var(--gradient-bottom);
+    border-color: var(--hn-plus-gradient-bottom);
     outline-color: rgba(167, 183, 191, 0.8);
 }
 
 input:hover, select:hover, textarea:hover {
-    border-color: var(--gradient-bottom);
+    border-color: var(--hn-plus-gradient-bottom);
 }
 
 input[disabled], select[disabled], textarea[disabled] {

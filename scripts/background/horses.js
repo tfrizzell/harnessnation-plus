@@ -1,4 +1,4 @@
-import * as firestore from '../modules/firestore.js';
+import * as firestore from '../../lib/firestore.js';
 let db = firestore.firestore;
 
 import {

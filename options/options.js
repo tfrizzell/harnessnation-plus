@@ -8,7 +8,7 @@
         });
     }
 
-    async function clearStallionCache() {
+    function clearStallionCache() {
         return new Promise((resolve, reject) => {
             if (confirm('You are about to clear your local cache of horse data. The data will be repopulated the next time you access the stallion registry page. Would you like to continue?'))
                 chrome.runtime.sendMessage({ action: 'CLEAR_HORSE_CACHE' }, () => resolve());

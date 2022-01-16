@@ -1,0 +1,24 @@
+{
+  "name": "harnessnation-plus",
+  "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
+  "version": "3.3.0",
+  "repository": "https://github.com/tfrizzell/harnessnation-plus.git",
+  "author": "Trevor Frizzell <trevor@frizzell.ca>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "package": "gulp package",
+    "package:all": "gulp package:all",
+    "package:chrome": "gulp package:chrome",
+    "package:edge": "gulp package:edge",
+    "package:firefox": "gulp package:firefox",
+    "test": "jest --passWithNoTests --coverage"
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.16.8",
+    "gulp": "^4.0.2",
+    "gulp-rename": "^2.0.0",
+    "gulp-zip": "^5.1.0",
+    "jest": "^27.4.7"
+  }
+}
