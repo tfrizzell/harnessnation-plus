@@ -63,11 +63,15 @@ function bindBloodlineSearch() {
 
 function doSearch(term) {
     chrome.storage.sync.get('stallions', async ({ stallions: settings }) => {
-        chrome.runtime.sendMessage({ action: 'SEARCH_STALLIONS', data: { term, maxGenerations: settings.registry.maxGenerations } }, pattern => {
-            window.dispatchEvent(new CustomEvent('search.harnessnation-plus', {
-                detail: { pattern },
-            }));
-        });
+        window.dispatchEvent(new CustomEvent('search.harnessnation-plus', {
+            detail: {
+                pattern: await new Promise(resolve => {
+                    settings.registry.bloodlineSearch
+                    ? chrome.runtime.sendMessage({ action: 'SEARCH_STALLIONS', data: { term, maxGenerations: settings.registry.maxGenerations } }, resolve)
+                    : resolve(term);
+                }),
+            },
+        }));
     });
 }
 
