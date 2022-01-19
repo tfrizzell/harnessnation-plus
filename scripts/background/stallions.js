@@ -79,8 +79,7 @@ async function createStallionSearchPattern(term, maxGenerations = 4) {
             matches.push(...horses.filter(s => s.sireId == match.id && !matches.includes(s)).map(s => addGeneration(s, match.generation + 1)));
     }
 
-    const names = matches.map(stud => stud.name);
-    return `\\b(${names.map(name => name.trim()).map(Regex.escape).join('|')})\\b`;
+    return `(${[term, ...matches.map(stud => stud.name)].map(name => Regex.escape(name.trim()).replace(/\s+/g, '\\s*')).join('|')})`;
 }
 
 function exportStallionRegistryReport(ids) {
