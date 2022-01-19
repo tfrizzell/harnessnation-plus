@@ -22,7 +22,11 @@
     "page": "background.html",
     "persistent": false
   },
-  "options_page": "options/index.html",
+  "options_ui": {
+    "page": "options/index.html",
+    "open_in_tab": true,
+    "browser_style": true
+  },
   "content_security_policy": "script-src 'self' https://www.gstatic.com/ https://*.firebaseio.com https://www.googleapis.com https://cdn.jsdelivr.net/; object-src 'self'",
   "content_scripts": [
     {
