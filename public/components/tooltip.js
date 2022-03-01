@@ -35,6 +35,7 @@ style.textContent = `
         top: 100%;
         transition: 400ms ease;
         transform: translate(-50%, 0.25rem);
+        white-space: initial !important;
         z-index: 2;
     }
 
