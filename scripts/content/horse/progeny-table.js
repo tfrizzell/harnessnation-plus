@@ -1,21 +1,23 @@
-DataTables.getSettings('progeny').then(settings => {
-    const observer = new MutationObserver(mutations => {
-        mutations.filter(m => m.target.tagName === 'SCRIPT' && m.target.innerHTML.match(/\bfunction updateProgenyTableData\b/)).forEach(script => {
-            script.addedNodes?.forEach(node => {
-                if (!node.data.match(/\bfunction updateProgenyTableData\b/))
-                    return;
+(() => {
+    DataTables.getSettings('progeny').then(settings => {
+        const observer = new MutationObserver(mutations => {
+            mutations.filter(m => m.target.tagName === 'SCRIPT' && m.target.innerHTML.match(/\bfunction updateProgenyTableData\b/)).forEach(script => {
+                script.addedNodes?.forEach(node => {
+                    if (!node.data.match(/\bfunction updateProgenyTableData\b/))
+                        return;
 
-                node.data = DataTables.extend('#progenyListTable', node.data.replace(/\bsaleTable\b/g, 'progenyListTable'), { ...settings, saveSearch: false });
+                    node.data = DataTables.extend('#progenyListTable', node.data.replace(/\bsaleTable\b/g, 'progenyListTable'), { ...settings, saveSearch: false });
+                });
             });
         });
-    });
 
-    observer.observe(document, {
-        childList: true,
-        subtree: true
-    });
+        observer.observe(document, {
+            childList: true,
+            subtree: true
+        });
 
-    window.addEventListener('installed.harnessnation-plus', () => {
-        observer.disconnect();
-    }, { once: true });
-});
+        window.addEventListener('installed.harnessnation-plus', () => {
+            observer.disconnect();
+        }, { once: true });
+    });
+})();

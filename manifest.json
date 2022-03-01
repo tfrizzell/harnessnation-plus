@@ -3,7 +3,7 @@
   "name": "HarnessNation+",
   "short_name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.3.1",
+  "version": "3.4.0",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
   "icons": {
@@ -69,14 +69,31 @@
     },
     {
       "matches": [
-        "*://*.harnessnation.com/stable/main",
-        "*://*.harnessnation.com/stable/breeding"
+        "*://*.harnessnation.com/stable/main"
       ],
       "js": [
         "lib/data-tables.js",
         "lib/enums.js",
         "lib/regex.js",
         "scripts/content/stable/horse-table.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/stable/breeding"
+      ],
+      "js": [
+        "lib/data-tables.js",
+        "lib/enums.js",
+        "lib/regex.js",
+        "scripts/content/stable/horse-table.js",
+        "scripts/content/stable/breeding.js"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "scripts/content/stable/breeding.css"
       ],
       "run_at": "document_start"
     }

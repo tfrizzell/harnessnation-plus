@@ -1,0 +1,16 @@
+@import '../../../public/style/common.css';
+
+.hn-plus-button-wrapper {
+    align-items: center;
+    column-gap: 0.5em;
+    display: flex;
+    font-size: 0.8em;
+    justify-content: flex-end;
+    margin-left: auto;
+    padding-right: 0.5em;
+}
+
+.hn-plus-button-wrapper:first-child {
+    float: right;
+    margin-top: 1rem;
+}
