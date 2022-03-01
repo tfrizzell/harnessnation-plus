@@ -1,3 +1,4 @@
+import { timestamp } from '../../lib/func.js';
 import { generateBreedingReport } from '../../lib/reporting.js';
 
 import * as firestore from '../../lib/firestore.js';
@@ -21,7 +22,7 @@ import {
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     switch (request?.action) {
-        case 'BREEDING_REPORT': downloadBreedingReport(request.data.ids).then(sendResponse); break;
+        case 'BREEDING_REPORT': downloadBreedingReport(request.data.ids, request.data).then(sendResponse); break;
         case 'CLEAR_HORSE_CACHE': clearCache().then(sendResponse); break;
         case 'GET_HORSES': getHorses().then(sendResponse); break;
         case 'SAVE_HORSES': saveHorses(request.data.horses).then(sendResponse); break;
@@ -36,25 +37,21 @@ async function clearCache() {
     db = await firestore.connect();
 }
 
-function downloadBreedingReport(ids) {
+function downloadBreedingReport(ids, { filename, headers } = {}) {
     return new Promise((resolve, reject) => {
         chrome.storage.local.get('breeding.export', ({ 'breeding.export': exportRunning }) => {
             if (exportRunning)
                 return reject('A breeding report is already running. Please wait for it to finish before starting a new one.');
 
             chrome.storage.local.set({ 'breeding.export': true }, async () => {
-                const now = new Date();
-                const dl = document.createElement('a');
-                dl.setAttribute('href', await generateBreedingReport(ids));
-                dl.setAttribute('download', `hn-plus-breeding-report-${now.getFullYear()}${[
-                    now.getMonth() + 1,
-                    now.getDate(),
-                    now.getHours(),
-                    now.getMinutes(),
-                    now.getSeconds()].map(v => v.toString().padStart(2, '0')).join('')}.csv`);
-                dl.click();
-
-                chrome.storage.local.remove('breeding.export', () => resolve());
+                try {
+                    const dl = document.createElement('a');
+                    dl.setAttribute('href', await generateBreedingReport(ids, headers));
+                    dl.setAttribute('download', `${(filename ?? 'hn-plus-breeding-report-${timestamp}.csv').replace(/\.[^\.]+$/, '').replace('${timestamp}', timestamp().replace(/\D/g, ''))}.csv`);
+                    dl.click();
+                } finally {
+                    chrome.storage.local.remove('breeding.export', () => resolve());
+                }
             })
         });
     });

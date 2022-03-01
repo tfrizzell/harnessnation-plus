@@ -1,14 +1,12 @@
 import '../../lib/enums.js';
 import '../../lib/regex.js';
 import { parseCurrency } from '../../lib/func.js';
-import { generateBreedingReport } from '../../lib/reporting.js';
 import { getHorses } from './horses.js';
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     switch (request?.action) {
         case 'CALCULATE_STUD_FEE': calculateStudFee(request.data.id, request.data.formula).then(sendResponse); break;
         case 'SEARCH_STALLIONS': createSearchPattern(request.data.term, request.data.maxGenerations).then(sendResponse); break;
-        case 'STALLION_REPORT': downloadBreedingReport(request.data.ids).then(sendResponse); break;
         default: return;
     }
 
@@ -81,28 +79,4 @@ async function createSearchPattern(term, maxGenerations = 4) {
     }
 
     return `(${[term, ...matches.map(stud => stud.name)].map(name => Regex.escape(name.trim()).replace(/\s+/g, '\\s*')).join('|')})`;
-}
-
-function downloadBreedingReport(ids) {
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.get('stallion.export', ({ 'stallion.export': exportRunning }) => {
-            if (exportRunning)
-                return reject('A stallion report is already running. Please wait for it to finish before starting a new one.');
-
-            chrome.storage.local.set({ 'stallion.export': true }, async () => {
-                const now = new Date();
-                const dl = document.createElement('a');
-                dl.setAttribute('href', await generateBreedingReport(ids, { headers: { 1: 'Stallion' } }));
-                dl.setAttribute('download', `hn-plus-stallion-report-${now.getFullYear()}${[
-                    now.getMonth() + 1,
-                    now.getDate(),
-                    now.getHours(),
-                    now.getMinutes(),
-                    now.getSeconds()].map(v => v.toString().padStart(2, '0')).join('')}.csv`);
-                dl.click();
-
-                chrome.storage.local.remove('stallion.export', () => resolve());
-            })
-        });
-    });
 }

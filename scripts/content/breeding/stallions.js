@@ -1,6 +1,6 @@
 (() => {
     function addExportButton() {
-        chrome.storage.local.get('stallion.export', ({ 'stallion.export': exportRunning }) => {
+        chrome.storage.local.get('breeding.export', ({ 'breeding.export': exportRunning }) => {
             document.querySelectorAll('.buyHorsePagination .pagination').forEach(p => {
                 const wrapper = document.createElement('div');
                 wrapper.classList.add('hn-plus-button-wrapper');
@@ -23,9 +23,9 @@
                 wrapper.append(button, tooltip);
 
                 function handleStateChange(changes, areaName) {
-                    if (areaName !== 'local' || !('stallion.export' in changes)) return;
+                    if (areaName !== 'local' || !('breeding.export' in changes)) return;
 
-                    if (changes['stallion.export']?.newValue)
+                    if (changes['breeding.export']?.newValue)
                         document.querySelectorAll('.hn-plus-button').forEach(el => el.disabled = true);
                     else
                         document.querySelectorAll('.hn-plus-button').forEach(el => el.disabled = false);
@@ -85,7 +85,13 @@
             while (id = pattern.exec(html)?.[1])
                 ids.push(+id);
 
-            chrome.runtime.sendMessage({ action: 'STALLION_REPORT', data: { ids } }, resolve);
+            chrome.runtime.sendMessage({
+                action: 'BREEDING_REPORT', data: {
+                    ids,
+                    headers: { 1: 'Stallion' },
+                    filename: 'hn-plus-stallion-report-${timestamp}',
+                }
+            }, resolve);
         });
     }
 

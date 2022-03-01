@@ -9,8 +9,3 @@
     margin-left: auto;
     padding-right: 0.5em;
 }
-
-.hn-plus-button-wrapper:first-child {
-    float: right;
-    margin-top: 1rem;
-}

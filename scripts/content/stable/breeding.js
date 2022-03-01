@@ -5,9 +5,9 @@
                 [p.parentNode, p.parentNode.parentNode].forEach(n => {
                     const wrapper = document.createElement('div');
                     wrapper.classList.add('hn-plus-button-wrapper');
-                    
+
                     if (n === p.parentNode)
-                        n.insertBefore(wrapper, n.firstChild);
+                        n.insertBefore(wrapper, p);
                     else
                         n.append(wrapper);
 
@@ -56,7 +56,12 @@
             while (id = pattern.exec(html)?.[1])
                 ids.push(+id);
 
-            chrome.runtime.sendMessage({ action: 'BREEDING_REPORT', data: { ids } }, resolve);
+            chrome.runtime.sendMessage({
+                action: 'BREEDING_REPORT', data: {
+                    ids,
+                    filename: 'hn-plus-broodmare-report-${timestamp}',
+                }
+            }, resolve);
         });
     }
 
