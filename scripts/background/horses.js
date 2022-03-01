@@ -46,7 +46,7 @@ function downloadBreedingReport(ids, { filename, headers } = {}) {
             chrome.storage.local.set({ 'breeding.export': true }, async () => {
                 try {
                     const dl = document.createElement('a');
-                    dl.setAttribute('href', await generateBreedingReport(ids, headers));
+                    dl.setAttribute('href', await generateBreedingReport(ids, { headers }));
                     dl.setAttribute('download', `${(filename ?? 'hn-plus-breeding-report-${timestamp}.csv').replace(/\.[^\.]+$/, '').replace('${timestamp}', timestamp().replace(/\D/g, ''))}.csv`);
                     dl.click();
                 } finally {
