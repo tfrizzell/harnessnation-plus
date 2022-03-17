@@ -78,5 +78,5 @@ async function createSearchPattern(term, maxGenerations = 4) {
             matches.push(...horses.filter(s => s.sireId == match.id && !matches.includes(s)).map(s => addGeneration(s, match.generation + 1)));
     }
 
-    return `(${[term, ...matches.map(stud => stud.name)].map(name => Regex.escape(name.trim()).replace(/\s+/g, '\\s*')).join('|')})`;
+    return `(${[...new Set([term, ...matches.map(stud => stud.name)].map(name => Regex.escape(name.trim()).replace(/\s+/g, '\\s*')))].join('|')})`;
 }
