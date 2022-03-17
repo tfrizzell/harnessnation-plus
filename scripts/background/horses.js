@@ -18,7 +18,7 @@ import {
     setDoc,
     where,
     writeBatch
-} from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+} from '../../lib/firebasejs/firebase-firestore.js';
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     switch (request?.action) {
