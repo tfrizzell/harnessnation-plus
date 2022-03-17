@@ -2,14 +2,14 @@ import '../../lib/enums.js';
 const defaultSettings = await fetch(chrome.runtime.getURL('/data/settings.json')).then(res => res.json());
 
 chrome.runtime.onInstalled.addListener(data => {
-    if (data.reason !== 'install' && data.reason !== 'update') {
-        return
-    }
-
     chrome.storage.local.clear();
 
+    if (data.reason !== 'install' && data.reason !== 'update') {
+        return;
+    }
+
     chrome.storage.sync.get(data => {
-        chrome.storage.sync.clear(async () => {
+        chrome.storage.sync.clear(() => {
             chrome.storage.sync.set({
                 ...defaultSettings,
                 dt: {
