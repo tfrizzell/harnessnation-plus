@@ -14,12 +14,12 @@
     height: calc(2.25rem + 2px);
     object-fit: contain;
     object-position: center center;
+    padding: 0;
     transition: border-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
     width: calc(2.25rem + 2px);
 }
 
-.hn-plus-calculate-button::before {
-    content: url('chrome-extension://aonknefdnheomhlfcnjdicnkbfdakcdo/public/icons/calculate.svg');
+.hn-plus-calculate-button img {
     height: 100%;
     max-width: 100%;
 }

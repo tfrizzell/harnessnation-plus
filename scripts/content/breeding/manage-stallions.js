@@ -1,8 +1,14 @@
 (() => {
     document.querySelectorAll('#inputStudFee, #inputStudFeeUpdate').forEach(input => {
-        const button = document.createElement('i');
+        const button = document.createElement('button');
         button.classList.add('hn-plus-calculate-button');
+        button.setAttribute('data-extension', chrome.runtime.id);
+        button.setAttribute('type', 'button');
         button.textContent = 'calculate';
+
+        const image = document.createElement('img');
+        image.src = `chrome-extension://${chrome.runtime.id}/public/icons/calculate.svg`;
+        button.append(image);
 
         input.classList.add('hn-plus-calculate-input');
         input.parentNode.append(button);
