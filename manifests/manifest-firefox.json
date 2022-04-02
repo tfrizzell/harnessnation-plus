@@ -3,7 +3,7 @@
   "name": "HarnessNation+",
   "short_name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
   "icons": {
