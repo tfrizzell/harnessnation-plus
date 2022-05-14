@@ -14,8 +14,14 @@
 
                 button.addEventListener('click', async e => {
                     e.preventDefault();
-                    exportReport(document.querySelector('#saleTable_wrapper').innerHTML);
-                    setTimeout(() => alert('Your stallion report is being generated in the background and will be downloaded automatically upon completion. You are free to continue browsing without impacting this process.'), 50);
+                    const message = setTimeout(() => alert('Your stallion report is being generated in the background and will be downloaded automatically upon completion. You are free to continue browsing without impacting this process.'), 50);
+
+                    try {
+                        await exportReport(document.querySelector('#saleTable_wrapper').innerHTML);
+                    } catch (error) {
+                        clearTimeout(message);
+                        alert(error);
+                    }
                 });
 
                 const tooltip = document.createElement('hn-plus-tooltip');
@@ -77,7 +83,7 @@
     }
 
     function exportReport(html) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             const pattern = />\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
             const ids = [];
             let id;
@@ -91,7 +97,12 @@
                     headers: { 1: 'Stallion' },
                     filename: 'hn-plus-stallion-report-${timestamp}',
                 }
-            }, resolve);
+            }, response => {
+                if (response['@type'] === '\u2063error')
+                    reject(response.message);
+                else
+                    resolve(response);
+            });
         });
     }
 

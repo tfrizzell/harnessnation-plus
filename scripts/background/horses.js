@@ -1,4 +1,4 @@
-import { timestamp } from '../../lib/func.js';
+import { createPlainError, timestamp } from '../../lib/func.js';
 import { generateBreedingReport } from '../../lib/reporting.js';
 
 import * as firestore from '../../lib/firestore.js';
@@ -22,11 +22,32 @@ import {
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     switch (request?.action) {
-        case 'BREEDING_REPORT': downloadBreedingReport(request.data.ids, request.data).then(sendResponse); break;
-        case 'CLEAR_HORSE_CACHE': clearCache().then(sendResponse); break;
-        case 'GET_HORSES': getHorses().then(sendResponse); break;
-        case 'SAVE_HORSES': saveHorses(request.data.horses).then(sendResponse); break;
-        default: return;
+        case 'BREEDING_REPORT':
+            downloadBreedingReport(request.data.ids, request.data)
+                .then(sendResponse)
+                .catch(error => sendResponse(createPlainError(error?.message ?? error)));
+            break;
+
+        case 'CLEAR_HORSE_CACHE':
+            clearCache()
+                .then(sendResponse)
+                .catch(error => sendResponse(createPlainError(error?.message ?? error)));
+            break;
+
+        case 'GET_HORSES':
+            getHorses()
+                .then(sendResponse)
+                .catch(error => sendResponse(createPlainError(error?.message ?? error)));
+            break;
+
+        case 'SAVE_HORSES':
+            saveHorses(request.data.horses)
+                .then(sendResponse)
+                .catch(error => sendResponse(createPlainError(error?.message ?? error)));
+            break;
+
+        default:
+            return;
     }
 
     return true;
@@ -40,8 +61,9 @@ async function clearCache() {
 function downloadBreedingReport(ids, { filename, headers } = {}) {
     return new Promise((resolve, reject) => {
         chrome.storage.local.get('breeding.export', ({ 'breeding.export': exportRunning }) => {
-            if (exportRunning)
-                return reject('A breeding report is already running. Please wait for it to finish before starting a new one.');
+            if (exportRunning) {
+                return reject('A breeding report is already running. Please wait for it to finish before starting a new one. If you are certain there is not one running, or you want to cancel it, try restarting your browser.');
+            }
 
             chrome.storage.local.set({ 'breeding.export': true }, async () => {
                 try {

@@ -6,9 +6,9 @@
         button.setAttribute('type', 'button');
         button.textContent = 'calculate';
 
-        const image = document.createElement('img');
-        image.src = `chrome-extension://${chrome.runtime.id}/public/icons/calculate.svg`;
-        button.append(image);
+        const icon = document.createElement('img');
+        icon.src = `chrome-extension://${chrome.runtime.id}/public/icons/calculate.svg`;
+        button.append(icon);
 
         input.classList.add('hn-plus-calculate-input');
         input.parentNode.append(button);

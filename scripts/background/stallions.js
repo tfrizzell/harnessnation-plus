@@ -1,13 +1,24 @@
 import '../../lib/enums.js';
 import '../../lib/regex.js';
-import { parseCurrency } from '../../lib/func.js';
+import { createPlainError, parseCurrency } from '../../lib/func.js';
 import { getHorses } from './horses.js';
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     switch (request?.action) {
-        case 'CALCULATE_STUD_FEE': calculateStudFee(request.data.id, request.data.formula).then(sendResponse); break;
-        case 'SEARCH_STALLIONS': createSearchPattern(request.data.term, request.data.maxGenerations).then(sendResponse); break;
-        default: return;
+        case 'CALCULATE_STUD_FEE':
+            calculateStudFee(request.data.id, request.data.formula)
+                .then(sendResponse)
+                .catch(error => sendResponse(createPlainError(error?.message ?? error)));
+            break;
+
+        case 'SEARCH_STALLIONS':
+            createSearchPattern(request.data.term, request.data.maxGenerations)
+                .then(sendResponse)
+                .catch(error => sendResponse(createPlainError(error?.message ?? error)));
+            break;
+
+        default:
+            return;
     }
 
     return true;
