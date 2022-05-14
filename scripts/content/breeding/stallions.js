@@ -200,8 +200,19 @@
         const script = document.createElement('script');
         script.setAttribute('type', 'module');
         script.textContent = `
-            function bloodlineSearch(e) {
-                $('#saleTable').DataTable().search(e.detail.pattern, true, false).draw();
+            function bloodlineSearch(e, retries = 10) {
+                try {
+                    console.debug('Executing bloodline search...');
+                    $('#saleTable').DataTable().search(e.detail.pattern, true, false).draw();
+                } catch (e) {
+                    console.error('Error while executing bloodline search:', e.message);
+                    console.error(e);
+
+                    if (retries > 1) {
+                        setTimeout(() => bloodlineSearch.call(this, e, retries - 1), 100);
+                        console.debug('Retrying in 100ms...');
+                    }
+                }
             }
 
             window.removeEventListener('search.harnessnation-plus', bloodlineSearch);
