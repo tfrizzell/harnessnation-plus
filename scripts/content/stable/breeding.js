@@ -19,8 +19,14 @@
 
                     button.addEventListener('click', async e => {
                         e.preventDefault();
-                        exportReport(document.querySelector('#breedingHorseTable_3_wrapper').innerHTML);
-                        setTimeout(() => alert('Your broodmare report is being generated in the background and will be downloaded automatically upon completion. You are free to continue browsing without impacting this process.'), 50);
+                        const message = setTimeout(() => alert('Your broodmare report is being generated in the background and will be downloaded automatically upon completion. You are free to continue browsing without impacting this process.'), 50);
+
+                        try {
+                            await exportReport(document.querySelector('#breedingHorseTable_3_wrapper').innerHTML);
+                        } catch (error) {
+                            clearTimeout(message);
+                            alert(error);
+                        }
                     });
 
                     const tooltip = document.createElement('hn-plus-tooltip');
@@ -48,7 +54,7 @@
     }
 
     function exportReport(html) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             const pattern = /<tr[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
             const ids = [];
             let id;
@@ -61,7 +67,12 @@
                     ids,
                     filename: 'hn-plus-broodmare-report-${timestamp}',
                 }
-            }, resolve);
+            }, response => {
+                if (response['@type'] === '\u2063error')
+                    reject(response.message);
+                else
+                    resolve(response);
+            });
         });
     }
 
