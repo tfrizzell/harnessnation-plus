@@ -1,28 +1,44 @@
 {
   "name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.4.2",
+  "version": "3.5.0",
   "repository": "https://github.com/tfrizzell/harnessnation-plus.git",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "license": "MIT",
   "private": true,
   "scripts": {
+    "build": "gulp build",
+    "build:chrome": "gulp build:chrome",
+    "build:debug": "gulp build:debug",
+    "build:edge": "gulp build:edge",
+    "build:firefox": "gulp build:firefox",
+    "clean": "gulp clean",
+    "debug": "yarn build:debug && yarn watch",
     "package": "gulp package",
     "package:all": "gulp package:all",
     "package:chrome": "gulp package:chrome",
     "package:edge": "gulp package:edge",
     "package:firefox": "gulp package:firefox",
-    "test": "jest --passWithNoTests --coverage"
+    "test": "jest --passWithNoTests --coverage",
+    "watch": "tsc --sourceMap --watch"
   },
   "devDependencies": {
-    "@babel/plugin-transform-modules-commonjs": "^7.16.8",
+    "@types/chrome": "^0.0.188",
+    "@types/jest": "^27.5.1",
+    "del": "^6.1.1",
+    "fs": "^0.0.1-security",
     "gulp": "^4.0.2",
     "gulp-rename": "^2.0.0",
+    "gulp-typescript": "^6.0.0-alpha.1",
     "gulp-zip": "^5.1.0",
-    "jest": "^27.4.7"
+    "jest": "^28.1.0",
+    "jest-chrome": "^0.7.2",
+    "jest-environment-jsdom": "^28.1.0",
+    "path": "^0.12.7",
+    "ts-jest": "^28.0.3",
+    "typescript": "^4.7.2"
   },
   "resolutions": {
-    "glob-parent": "^6.0.1",
-    "minimist": "^1.2.6"
+    "glob-parent": ">=5.1.2"
   }
 }

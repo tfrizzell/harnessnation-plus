@@ -1,0 +1,224 @@
+                <!-- Begin Horse Name and Awards/Status Row -->
+                <div class="row mt-0 mb-0">
+                    <div class="col-sm-6 m-0 p-0">
+                        <h1 class="h1-responsive font-weight-bold text-left my-2 mb-1">Astronomical</h1>
+                    </div>
+                    <div class="col-sm-6 text-right">
+                                                        <img src="/assets/img/icons/trophyhorse.png" data-horse-id="14" class="goldHorseTrophy trophy-horse-page">
+                                                                                                                                                    <img src="/assets/img/icons/newtrophygold.png" data-horse-id="14" class="trophyGold trophy-horse-page">
+                                                                                                                                <img src="/assets/img/icons/newtrophybronze.png" data-horse-id="14" class="trophyBronze trophy-horse-page">
+                                                                                                                                                        <span class="badge grade-a grade-horse-page">A</span>
+                                                                                                                                                                                                                                                                                    </div>
+                </div>
+                <!-- End horse name and awards/status row -->
+
+                <!-- Begin Horse Note Section -->
+                                    <!-- End Horse Note Section -->
+
+                <!-- Begin Main Body of Horse Details -->
+                    <div class="row">
+                        <!-- Left Column of Horse Details -->
+                        <div class="col-sm-4 m-0 p-0">
+                            <div id="watchListButton" style="display:none;"></div>
+                            <small><b>ID:</b> 14</small><br>
+                            <b>Age:</b> 21<br>
+                            <b>Gender:</b> Stallion
+                                                            <i class="far fa-mars blue-text"></i>
+                                                        <br>
+                            <b>Coat Color:</b> Bay<br>
+                            <br>
+                                                            <b>Sire:</b> Unknown<br>
+                                                                                        <b>Dam:</b> Unknown<br>
+                                                        <br>
+                            <b>Breeder:</b>
+                                                            <a href="https://www.harnessnation.com/stable/4" class="stableLink">Apex Racing Stable</a>
+                                                        <br>
+                            <small class="text-muted">Foaled: July 1st, 2017</small>
+                            <Br>
+                            <br/>
+                                                            Retired
+                                                        <br>
+                                                            <b>Last Trained:</b> Tuesday May 22nd, 2018<br>
+                                                    </div>
+                        <!-- End Left Column -->
+
+                        <!-- Begin Center Column -->
+                        <div class="col-sm-4 m-0 p-0">
+                            <b>Annual Race Record</b><br/>
+                                                            0 - 0 - 0 - 0 ($0<br/>
+                                                                                        <b>Last Six Starts</b><br/>
+                                Wins: 3<Br/>
+                                Earnings: $81,812<br/>
+                                <br/>
+                                                                                        <button class="m-0 mt-1 mb-3 p-1 pl-2 pr-1 btn btn-sm btn-flat btn-secondary text-white" id="pastRaceRecordsBtn" data-horse-id="14" data-toggle="modal" data-target="#pastRaceRecordsModal"><i class="fa fa-history"></i> Past Season Race Records</button><br/>
+                                <div class="modal fade" id="pastRaceRecordsModal" tabindex="-1" role="dialog" aria-labelledby="pastRaceRecordsModal">
+    <div class="modal-dialog modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Past Season Race Records</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="pastRaceRecordsModalLoadingContainer">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="pastRaceRecordsModalContent" style="display:none;">
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#pastRaceRecordsBtn").on('click', function (e) {
+            var horseId = $(this).attr("data-horse-id");
+            $.ajax({
+                type: 'GET',
+                url: '/horse/api/past-season-records/'+horseId,
+                cache: 'false',
+                timeout: 30000,
+                async: true,
+                beforeSend: function(request) {
+                    request.setRequestHeader('X-CSRF-TOKEN','');
+                    $("#pastRaceRecordsModalContent").hide();
+                    $("#pastRaceRecordsModalLoadingContainer").show();
+                },
+                error: function() {
+                    $("#pastRaceRecordsModalContent").html('<div class="alert alert-danger"><b>Error:</b> There was an error while attempting to fetch season record data.</div>');
+                    $("#pastRaceRecordsModalContent").show();
+                    $("#pastRaceRecordsModalLoadingContainer").hide();
+                },
+                success: function(data) {
+                    if (!data.error) {
+                        // Success action
+                        $("#pastRaceRecordsModalContent").html(data);
+                    } else {
+                        $("#pastRaceRecordsModalContent").html('<div class="alert alert-danger"><b>Error:</b> '+data.error+'</div>');
+                    }
+                    $("#pastRaceRecordsModalContent").show();
+                    $("#pastRaceRecordsModalLoadingContainer").hide();
+                }
+            });
+        });
+    });
+</script>                                                        <b>Lifetime Race Record</b><br/>
+                                                            35 - 17 - 5 - 4 ($769,474)<br/>
+                                                                    <br/>
+                                    <b>Stake Record</b><br/>7 - 1 - 0 - 1 ($191,500)<br/>
+                                                                                    <!-- Begin HRR/LRR -->
+                                                            <br/>
+                                                                    <b>Lifetime Mark:</b> 1:55.56<br/>
+                                    <small class="text-muted"><b>Race Date:</b></small> Tuesday October 3rd, 2017<br/>
+                                    <br/>
+                                                                <b>Last Race Time:</b> 2:01.14<br>
+                                <small class="text-muted"><b>Race Date:</b> Saturday May 26th, 2018</small><br>
+                                                    <!-- End HRR/LRR -->
+                        </div>
+                        <!-- End Center Column -->
+
+                        <!-- Begin Right Column -->
+                        <div class="col-sm-4 m-0 p-0">
+                                                            <i class="fas fa-heart green-text"></i> <b>Health:</b> 20 / 20<br>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width:100%;">
+                                        100%
+                                    </div>
+                                </div>
+                                <i class="fas fa-bolt blue-text"></i> <b>Energy:</b> 20 / 20<br>
+                                <div class="progress">
+                                    <div class="progress-bar btn-blue" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width:100%;">
+                                        100%
+                                    </div>
+                                </div>
+                                <!-- Only display if owner or if has preference viewing license and horse is in MB/BB -->
+                                                                                                                        <br/>
+                                <br/>
+                                <img src="/assets/img/icons/hall_of_fame.png"><br/><br/>
+                            
+                        <!-- If owner with pref license, show horse preferences -->
+                                                            <blockquote class="blockquote bq-primary mt-5">
+                                    <p class="bq-title p-0">Preferences</p>
+                                    <p class="p-0">
+                                        <small>
+                                                                                            Pacing
+                                                                                        on
+                                                                                            fast
+                                                                                                                                        half-mile
+                                                                                        tracks
+                                            <br/>
+                                                                                            Set The Pace
+                                                                                        Running Style
+
+                                                                                    </small>
+                                        <br/>
+                                        <button class="m-0 mt-1 p-1 pl-2 pr-1 btn btn-sm btn-flat btn-secondary text-white" id="idealGradedStakesBtn" data-horse-id="14" data-toggle="modal" data-target="#idealGradedStakesModal"><i class="fa fa-search"></i> Ideal Stake Races</button><br/>
+                                    </p>
+                                </blockquote>
+                                <div class="modal fade" id="idealGradedStakesModal" tabindex="-1" role="dialog" aria-labelledby="idealGradedStakesModal">
+    <div class="modal-lg modal-dialog modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Ideal Stakes</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="idealGradedStakesModalLoadingContainer">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="idealGradedStakesModalContent" style="display:none;">
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#idealGradedStakesBtn").on('click', function (e) {
+            let horseId = $(this).attr("data-horse-id");
+            $.ajax({
+                type: 'POST',
+                url: '/api/stakes/ideal',
+                data: {horseId: horseId},
+                cache: 'false',
+                timeout: 30000,
+                async: true,
+                beforeSend: function(request) {
+                    request.setRequestHeader('X-CSRF-TOKEN','');
+                    $("#idealGradedStakesModalContent").hide();
+                    $("#idealGradedStakesModalLoadingContainer").show();
+                },
+                error: function() {
+                    $("#idealGradedStakesModalContent").html('<p><div class="alert alert-danger"><b>Error:</b> There was an error while attempting to fetch ideal stake race data.</div></p>');
+                    $("#idealGradedStakesModalContent").show();
+                    $("#idealGradedStakesModalLoadingContainer").hide();
+                },
+                success: function(data) {
+                    if (!data.error) {
+                        // Success action
+                        $("#idealGradedStakesModalContent").html(data);
+                    } else {
+                        $("#idealGradedStakesModalContent").html('<div class="alert alert-danger"><b>Error:</b> '+data.error+'</div>');
+                    }
+                    $("#idealGradedStakesModalContent").show();
+                    $("#idealGradedStakesModalLoadingContainer").hide();
+                }
+            });
+        });
+    });
+</script>                                                <!-- End horse preferences -->
+                        </div>
+                        <!-- End Right Column -->
+                    </div>
+                    <!-- End Main Horse Details Section -->
