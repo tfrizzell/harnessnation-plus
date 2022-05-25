@@ -89,24 +89,22 @@ gulp.task('build:firefox', gulp.series('build', dev('firefox')));
 
 const package = browser => () => {
     const zipFile = `hn-plus-${browser}.zip`;
+    del(zipFile);
 
-    return gulp.series(
-        del(zipFile),
-        gulp.src([...FILES, `manifests/manifest-${browser}.json`], { base: './' })
-            .pipe(rename(path => {
-                if (path.basename === `manifest-${browser}`) {
-                    path.dirname = './';
-                    path.basename = path.basename.replace(/^manifest-.*/, 'manifest');
-                }
-            }))
-            .pipe(zip(`hn-plus-${browser}.zip`))
-            .pipe(gulp.dest('./')),
-    );
+    return gulp.src([...FILES, `manifests/manifest-${browser}.json`], { base: './' })
+        .pipe(rename(path => {
+            if (path.basename === `manifest-${browser}`) {
+                path.dirname = './';
+                path.basename = path.basename.replace(/^manifest-.*/, 'manifest');
+            }
+        }))
+        .pipe(zip(zipFile))
+        .pipe(gulp.dest('./'));
 }
 
-gulp.task('package:chrome', package('chrome'));
-gulp.task('package:edge', package('edge'));
-gulp.task('package:firefox', package('firefox'));
+gulp.task('package:chrome', gulp.series('build', package('chrome')));
+gulp.task('package:edge', gulp.series('build', package('edge')));
+gulp.task('package:firefox', gulp.series('build', package('firefox')));
 
-gulp.task('package:all', gulp.parallel('package:chrome', 'package:edge', 'package:firefox'));
+gulp.task('package:all', gulp.series('build', gulp.parallel(package('chrome'), package('edge'), package('firefox'))));
 gulp.task('package', gulp.parallel('package:all'));
