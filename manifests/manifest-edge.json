@@ -1,9 +1,9 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "HarnessNation+",
   "short_name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.4.2",
+  "version": "3.5.0",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
   "icons": {
@@ -13,14 +13,17 @@
     "80": "icons/hn-plus80.png",
     "128": "icons/hn-plus128.png"
   },
+  "host_permissions": [
+    "*://*.harnessnation.com/"
+  ],
   "permissions": [
-    "*://*.harnessnation.com/",
+    "scripting",
     "storage",
     "tabs"
   ],
   "background": {
-    "page": "background.html",
-    "persistent": false
+    "service_worker": "background.js",
+    "type": "module"
   },
   "options_ui": {
     "page": "options/index.html",
@@ -32,13 +35,13 @@
       "matches": [
         "*://*.harnessnation.com/breeding/stallions"
       ],
-      "js": [
-        "scripts/content/breeding/stallions.js"
-      ],
       "css": [
         "public/style/theme.css",
         "public/style/common.css",
         "scripts/content/breeding/stallions.css"
+      ],
+      "js": [
+        "scripts/content/breeding/stallions.js"
       ],
       "run_at": "document_start"
     },
@@ -46,12 +49,12 @@
       "matches": [
         "*://*.harnessnation.com/breeding/manage/stallions"
       ],
-      "js": [
-        "scripts/content/breeding/manage-stallions.js"
-      ],
       "css": [
         "public/style/theme.css",
         "scripts/content/breeding/manage-stallions.css"
+      ],
+      "js": [
+        "scripts/content/breeding/manage-stallions.js"
       ]
     },
     {
@@ -59,9 +62,6 @@
         "*://*.harnessnation.com/horse/*"
       ],
       "js": [
-        "lib/data-tables.js",
-        "lib/enums.js",
-        "lib/regex.js",
         "scripts/content/horse/progeny-table.js"
       ],
       "run_at": "document_start"
@@ -71,9 +71,6 @@
         "*://*.harnessnation.com/stable/main"
       ],
       "js": [
-        "lib/data-tables.js",
-        "lib/enums.js",
-        "lib/regex.js",
         "scripts/content/stable/horse-table.js"
       ],
       "run_at": "document_start"
@@ -82,23 +79,31 @@
       "matches": [
         "*://*.harnessnation.com/stable/breeding"
       ],
-      "js": [
-        "lib/data-tables.js",
-        "lib/enums.js",
-        "lib/regex.js",
-        "scripts/content/stable/horse-table.js",
-        "scripts/content/stable/breeding.js"
-      ],
       "css": [
         "public/style/theme.css",
         "public/style/common.css",
         "scripts/content/stable/breeding.css"
       ],
+      "js": [
+        "scripts/content/stable/horse-table.js",
+        "scripts/content/stable/breeding.js"
+      ],
       "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
-    "public/**"
+    {
+      "matches": [
+        "*://*.harnessnation.com/*"
+      ],
+      "resources": [
+        "lib/**",
+        "public/**",
+        "scripts/content/**/*.*.js",
+        "scripts/installed.js"
+      ],
+      "use_dynamic_url": true
+    }
   ],
   "update_url": "https://edge.microsoft.com/extensionwebstorebase/v1/crx"
 }

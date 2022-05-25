@@ -1,1 +1,0 @@
-window.dispatchEvent(new CustomEvent('installed.harnessnation-plus'));
