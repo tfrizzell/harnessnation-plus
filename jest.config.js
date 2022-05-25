@@ -1,6 +1,7 @@
 module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'jsdom',
+    globalSetup: './global.setup.js',
     setupFilesAfterEnv: ['./jest.setup.js'],
     extensionsToTreatAsEsm: ['.ts'],
     globals: {
