@@ -93,8 +93,10 @@ const package = browser => () => {
 
     return gulp.src([...FILES, `manifests/manifest-${browser}.json`], { base: './' })
         .pipe(rename(path => {
+            path.dirname = path.dirname.replace(/^dist[/\\]+/, '').replace(/^dist$/, '.');
+
             if (path.basename === `manifest-${browser}`) {
-                path.dirname = './';
+                path.dirname = '.';
                 path.basename = path.basename.replace(/^manifest-.*/, 'manifest');
             }
         }))
