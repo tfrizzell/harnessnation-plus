@@ -134,7 +134,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
 
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
         mutations.forEach((mutation: MutationRecord): void => {
-            if ([].find.call(mutation.addedNodes, (node: HTMLElement) => node.id === 'saleTable_wrapper')) {
+            if ([].find.call(mutation.addedNodes, (node: HTMLElement): boolean => node.id === 'saleTable_wrapper')) {
                 addExportButton();
                 bindBloodlineSearch();
                 updateHorses((mutation.target as HTMLElement).innerHTML);

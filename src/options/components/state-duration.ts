@@ -118,7 +118,7 @@ export class HNPlusStateDurationElement extends HTMLElement {
         if (_value.mode !== this.#value.mode)
             this.#value.mode ? this.#renderCustom() : this.#unrenderCustom();
 
-        const unit: StateDurationUnit = units.find(unit => unit.value === this.#value.displayUnits) ?? units.find(unit => unit.default)!;
+        const unit: StateDurationUnit = units.find((unit: StateDurationUnit): boolean => unit.value === this.#value.displayUnits) ?? units.find(unit => unit.default)!;
         this.#modeInput.value = this.#value.mode.toString();
         this.#valueInput && (this.#valueInput.value = ((this.#value.duration / unit.value) ?? 1).toString())
         this.#unitsInput && (this.#unitsInput.value = unit.value.toString());
@@ -132,7 +132,7 @@ export class HNPlusStateDurationElement extends HTMLElement {
         this.#valueInput.toggleAttribute('required');
 
         this.#valueInput.addEventListener('input', (): void => {
-            const unit: StateDurationUnit = units.find(unit => unit.value === this.#value.displayUnits) ?? units.find(unit => unit.default)!;
+            const unit: StateDurationUnit = units.find((unit: StateDurationUnit): boolean => unit.value === this.#value.displayUnits) ?? units.find(unit => unit.default)!;
 
             this.#setValue({
                 ...this.#value,
@@ -157,8 +157,8 @@ export class HNPlusStateDurationElement extends HTMLElement {
         }
 
         this.#unitsInput.addEventListener('input', (): void => {
-            const oldUnit: StateDurationUnit = units.find(unit => unit.value === this.#value.displayUnits) ?? units.find(unit => unit.default)!;
-            const newUnit: StateDurationUnit = units.find(unit => unit.value.toString() === this.#unitsInput!.value)!;
+            const oldUnit: StateDurationUnit = units.find((unit: StateDurationUnit): boolean => unit.value === this.#value.displayUnits) ?? units.find((unit: StateDurationUnit): boolean => unit.default == true)!;
+            const newUnit: StateDurationUnit = units.find((unit: StateDurationUnit): boolean => unit.value.toString() === this.#unitsInput!.value)!;
 
             this.#setValue({
                 ...this.#value,

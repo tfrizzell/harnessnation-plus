@@ -77,7 +77,7 @@ import { toTimestamp } from '../../../lib/utils.js';
 
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
         mutations.forEach((mutation: MutationRecord): void => {
-            if ([].find.call(mutation.addedNodes, (node: HTMLElement) => node.id === 'breedingHorseTable_3_wrapper'))
+            if ([].find.call(mutation.addedNodes, (node: HTMLElement): boolean => node.id === 'breedingHorseTable_3_wrapper'))
                 addExportButton();
         });
     });

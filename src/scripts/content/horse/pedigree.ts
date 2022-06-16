@@ -1,0 +1,1 @@
+import(chrome.runtime.getURL('scripts/content/common/pedigree.module.js'));

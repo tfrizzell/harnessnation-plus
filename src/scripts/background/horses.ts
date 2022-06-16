@@ -170,7 +170,7 @@ async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<void> {
         (horse.sireId != null) && (data.sireId = horse.sireId);
         (horse.retired != null) && (data.retired = horse.retired);
 
-        if (!Object.entries(data).find(([key, value]) => !(key in docData) || value !== (docData as any)[key]))
+        if (!Object.entries(data).find(([key, value]): boolean => !(key in docData) || value !== (docData as any)[key]))
             return;
 
         console.debug(`%chorses.ts%c     Updating horse ${horse.id}${batch ? ' (batch)' : ''}`, 'color:#406e8e;font-weight:bold;', '');

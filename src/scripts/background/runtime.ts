@@ -33,8 +33,8 @@ chrome.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledD
             setTimeout(async () => {
                 await chrome.scripting.executeScript({
                     target: { tabId: tab.id! },
-                    func: async () => {
-                        await import(chrome.runtime.getURL('scripts/installed.js'));
+                    func: () => {
+                        import(chrome.runtime.getURL('scripts/installed.js'));
                     },
                 });
 

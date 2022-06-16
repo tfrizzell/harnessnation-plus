@@ -3,7 +3,7 @@
   "name": "HarnessNation+",
   "short_name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
   "icons": {
@@ -59,9 +59,19 @@
     },
     {
       "matches": [
+        "*://*.harnessnation.com/breeding/pedigree/generate"
+      ],
+      "js": [
+        "scripts/content/breeding/pedigree.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
         "*://*.harnessnation.com/horse/*"
       ],
       "js": [
+        "scripts/content/horse/pedigree.js",
         "scripts/content/horse/progeny-table.js"
       ],
       "run_at": "document_start"
