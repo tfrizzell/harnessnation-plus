@@ -1,3 +1,5 @@
+[![build and test](https://github.com/tfrizzell/harnessnation-plus/actions/workflows/ci.yml/badge.svg)](https://github.com/tfrizzell/harnessnation-plus/actions/workflows/ci.yml)
+
 # harnessnation-plus
 HarnessNation+ Extension - Enhance your HarnessNation experience with these client-side add-ons and fixes!
 
