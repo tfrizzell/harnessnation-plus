@@ -115,7 +115,7 @@ describe(`sleep`, (): void => {
         await sleep(100);
         const time = Math.round(performance.now() - start);
         expect(time).toBeGreaterThanOrEqual(90);
-        expect(time).toBeLessThanOrEqual(125);
+        expect(time).toBeLessThanOrEqual(199);
     });
 
     test(`can be aborted`, async (): Promise<void> => {
