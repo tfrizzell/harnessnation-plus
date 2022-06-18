@@ -8,13 +8,13 @@ on:
 
 jobs:
   build:
-    name: build-and-test-${{matrix.os}}
+    name: build-and-test-nodejs-${{matrix.node-version}}-on-${{matrix.os}}
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        node-version: [16.x, 18.x, 19.x]
+        node-version: [16.x, 18.x]
 
     steps:
       - uses: actions/checkout@v2
