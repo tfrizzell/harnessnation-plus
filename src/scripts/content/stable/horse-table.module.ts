@@ -7,7 +7,20 @@ import { onInstalled } from '../../../lib/events.js';
     if (page == undefined)
         return;
 
-    const settings: DataTablesOptions | undefined = await DataTables.getSettings(page);
+    async function updateScript(script: Node | undefined, observer: boolean = false): Promise<void> {
+        if (!script?.textContent?.match(/\bfunction loadHorses\b/))
+            return;
+
+        const settings: DataTablesOptions | undefined = await DataTables.getSettings(page!);
+
+        script.textContent = await DataTables.extend(
+            `'#${page === 'breeding' ? 'breedingHorse' : 'horse'}Table_' + i`,
+            script.textContent,
+            settings
+        );
+    }
+
+    await updateScript(Array.from(document.querySelectorAll('script')).find((el: HTMLScriptElement) => !!el.textContent?.match(/\bfunction loadHorses\b/)));
 
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
         mutations.filter((mutation: MutationRecord): boolean =>
@@ -15,16 +28,7 @@ import { onInstalled } from '../../../lib/events.js';
             && (<HTMLElement>mutation.target).tagName === 'SCRIPT'
             && !!(<HTMLElement>mutation.target).textContent?.match(/\bfunction loadHorses\b/)
         ).forEach((mutation: MutationRecord): void => {
-            mutation.addedNodes?.forEach(async (node: Node): Promise<void> => {
-                if (!node.textContent?.match(/\bfunction loadHorses\b/))
-                    return;
-
-                node.textContent = await DataTables.extend(
-                    `'#${page === 'breeding' ? 'breedingHorse' : 'horse'}Table_' + i`,
-                    node.textContent,
-                    settings
-                );
-            });
+            mutation.addedNodes?.forEach((el: Node) => updateScript(el, true));
         });
     });
 
