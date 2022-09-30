@@ -32,6 +32,7 @@ import { StudFeeFormula } from '../../../lib/settings.js';
                 const formula: StudFeeFormula = (await chrome.storage.sync.get('stallions.management.formula'))?.['stallions.management.formula'];
                 input.value = (await sendAction(ActionType.CalculateStudFee, { id, formula }))?.data?.toString() ?? input.value;
             } catch (e: any) {
+                console.error(`%cmanage-stallions.module.ts%c     Error while calculating stud fee: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(e);
                 alert((e as Error).message || e);
             } finally {
