@@ -33,6 +33,7 @@ import { toTimestamp } from '../../../lib/utils.js';
                         await exportReport(el.innerHTML);
                     } catch (e: any) {
                         clearTimeout(message);
+                        console.error(`%cbreeding.module.ts%c     Error while generating breeding report: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
                         console.error(e);
                         alert('An unexpected error has occurred while generating your broodmare report. Please try again, and if the issue persists file a bug with the developer.');
                     }

@@ -10,3 +10,8 @@ export function onInstalled(callback: EventListenerOrEventListenerObject, option
 export function onLoad(callback: EventListenerOrEventListenerObject, options?: AddEventListenerOptions | boolean): void {
     window.addEventListener('DOMContentLoaded', callback, options);
 }
+
+export default {
+    onInstalled,
+    onLoad,
+}

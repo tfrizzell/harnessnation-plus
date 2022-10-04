@@ -31,14 +31,6 @@ gulp.task('copy:icons', () =>
     gulp.src('./icons/**/*.png')
         .pipe(gulp.dest(`${DIR_DIST}/icons`)));
 
-gulp.task('copy:manifest', () =>
-    gulp.src('./manifests/manifest-chrome.json')
-        .pipe(rename(path => {
-            path.dirname = './';
-            path.basename = path.basename.replace(/^manifest-.*/, 'manifest');
-        }))
-        .pipe(gulp.dest(DIR_DIST)));
-
 gulp.task('copy:public', () =>
     gulp.src('./public/**/*')
         .pipe(gulp.dest(`${DIR_DIST}/public`)));
@@ -66,8 +58,8 @@ gulp.task('build', gulp.series('clean', 'copy:icons', 'copy:public', 'compile'))
  **                   **
  ***********************/
 
-const dev = browser => () =>
-    gulp.src([...PKG_FILES, `manifests/manifest-${browser}.json`], { base: './' })
+const copyManifest = browser => () =>
+    gulp.src([`manifests/manifest-${browser}.json`], { base: './' })
         .pipe(rename(path => {
             if (path.basename === `manifest-${browser}`) {
                 path.dirname = './';
@@ -76,10 +68,10 @@ const dev = browser => () =>
         }))
         .pipe(gulp.dest(DIR_DIST));
 
-gulp.task('build:chrome', gulp.series('build', dev('chrome')));
-gulp.task('build:debug', gulp.series('build', 'copy:manifest'));
-gulp.task('build:edge', gulp.series('build', dev('edge')));
-gulp.task('build:firefox', gulp.series('build', dev('firefox')));
+gulp.task('build:chrome', gulp.series('build', copyManifest('chrome')));
+gulp.task('build:edge', gulp.series('build', copyManifest('edge')));
+gulp.task('build:firefox', gulp.series('build', copyManifest('firefox')));
+gulp.task('build:debug', gulp.parallel('build:edge'));
 
 /***********************
  **                   **

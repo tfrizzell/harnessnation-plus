@@ -114,7 +114,7 @@ onLoad(async () => {
             await alertAsync('The stallion bloodline cache has been cleared!');
         } catch (e: any) {
             if (e) {
-                console.error(`%coptions.js     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%coptions.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
                 await alertAsync(`An unexpected error has occurred: ${e.message}`);
             }
         }
@@ -128,7 +128,7 @@ onLoad(async () => {
             await alertAsync('Your settings have been reset to the defaults!');
         } catch (e: any) {
             if (e) {
-                console.error(`%coptions.js%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%coptions.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
                 await alertAsync(`An unexpected error has occurred: ${e.message}`);
             }
         }
@@ -142,7 +142,7 @@ onLoad(async () => {
             await alertAsync('Your settings have been saved!');
         } catch (e: any) {
             if (e) {
-                console.error(`%coptions.js%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%coptions.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
                 await alertAsync(`An unexpected error has occurred: ${e.message}`);
             }
         }
