@@ -9,7 +9,7 @@ import { sleep } from '../../../lib/utils.js';
         controller?.abort();
 
         try {
-            console.error(`%cstallions.search.ts%c     Executing bloodline search`, 'color:#406e8e;font-weight:bold;', '');
+            console.debug(`%cstallions.search.ts%c     Executing bloodline search`, 'color:#406e8e;font-weight:bold;', '');
             $('#saleTable').DataTable().search((e as CustomEvent).detail.pattern, true, false).draw();
             controller = null;
         } catch (e: any) {

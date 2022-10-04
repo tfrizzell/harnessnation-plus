@@ -1,21 +1,8 @@
-import * as DataTables from '../../../lib/data-tables.js';
+import DataTables, { DataTablesOptions } from '../../../lib/data-tables.js';
 import { onInstalled } from '../../../lib/events.js';
 
 (async (): Promise<void> => {
-    async function updateScript(script: Node | undefined): Promise<void> {
-        if (!script?.textContent?.match(/\bfunction updateProgenyTableData\b/))
-            return;
-
-        const settings: DataTables.DataTablesOptions | undefined = await DataTables.getSettings('progeny');
-
-        script.textContent = await DataTables.extend(
-            '#progenyListTable',
-            script.textContent.replace(/\bsaleTable\b/g, 'progenyListTable'),
-            { ...settings, saveSearch: false }
-        );
-    }
-
-    await updateScript(Array.from(document.querySelectorAll('script')).find((el: HTMLScriptElement) => !!el.textContent?.match(/\bfunction updateProgenyTableData\b/)));
+    const settings: DataTablesOptions | undefined = await DataTables.getSettings('progeny');
 
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
         mutations.filter((mutation: MutationRecord): boolean =>
@@ -23,7 +10,16 @@ import { onInstalled } from '../../../lib/events.js';
             && (<HTMLElement>mutation.target).tagName === 'SCRIPT'
             && !!(<HTMLElement>mutation.target).textContent?.match(/\bfunction updateProgenyTableData\b/)
         ).forEach((mutation: MutationRecord): void => {
-            mutation.addedNodes?.forEach(updateScript);
+            mutation.addedNodes?.forEach(async (node: Node): Promise<void> => {
+                if (!node?.textContent?.match(/\bfunction updateProgenyTableData\b/))
+                    return;
+
+                node.textContent = await DataTables.extend(
+                    '#progenyListTable',
+                    node.textContent.replace(/\bsaleTable\b/g, 'progenyListTable'),
+                    { ...settings, saveSearch: false }
+                );
+            });
         });
     });
 

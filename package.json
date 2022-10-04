@@ -1,7 +1,7 @@
 {
   "name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "repository": "https://github.com/tfrizzell/harnessnation-plus.git",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "license": "MIT",
