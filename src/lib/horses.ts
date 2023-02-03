@@ -4,14 +4,75 @@ import { parseCurrency, sleep, toPercentage } from './utils.js';
 
 type BreedingReportRow = (string | number | undefined)[];
 
+export type BreedingScore = {
+    score: number;
+    confidence: number;
+}
+
 export type Horse = {
     id?: number;
     name?: string;
     sireId?: number | null;
     damId?: number | null;
     retired?: boolean;
+    breedingScore?: {
+        value?: number;
+        confidence?: number;
+        racing?: number;
+        breeding?: number;
+        sire?: number;
+    };
 }
 
+/**
+ * Calculates the breeding score of a particular horse.
+ * @param {number} id - the id of the horse.
+ * @returns {Promise<BreedingScore>} A `Promise` resolving with the breeding score and its confidence level.
+ */
+export async function calculateBreedingScore(id: number): Promise<BreedingScore> {
+    const report: string = await getProgenyReport(id);
+    const totalStarters: number = parseInt(report.match(/<b[^>]*>\s*Total\s+Starters\s*:\s*<\/b[^>]*>\s*(\d+)/is)?.[1]?.trim() ?? '0');
+    const totalEarnings: number = parseInt(report.match(/<b[^>]*>\s*Total\s+Earnings\s*:\s*<\/b[^>]*>\s*(\$[\d,]+)/is)?.[1]?.trim() ?? '$0');
+    const stakeStarters: number = parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*(\d+)/is)?.[1]?.trim() ?? '0');
+    const stakeWinners: number = parseInt(report.match(/<b[^>]*>\s*Stake\s+Winners\s*:\s*<\/b[^>]*>\s*(\d+)/is)?.[1]?.trim() ?? '0');
+    const [stakeStarts, stakePlaces]: [number, number] = (report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*(\d+)\s*-\s*(\d+)\s*-\s*(\d+)\s*-\s*(\d+)/is)?.slice(1).map(v => parseInt(v))
+        ?? [0, 0, 0, 0]).reduce(([starts, places], value, index) => [starts + +(index === 0) * value, places + +(index !== 0) * value], [0, 0]);
+
+    return {
+        score: (totalStarters < 1 ? 0 : 1250 * stakeWinners / totalStarters)
+            + (stakeStarts < 1 ? 0 : 100 * stakePlaces / stakeStarts)
+            + (totalStarters < 1 ? 0 : 50 * stakeStarters / totalStarters)
+            + (totalStarters < 1 ? 0 : totalEarnings / totalStarters / 20000),
+        confidence: Math.min(0, Math.max(1, totalStarters / 100))
+    };
+}
+
+/**
+ * Calculates the racing score of a particular horse.
+ * @param {number} id - the id of the horse.
+ * @returns {Promise<number>} A `Promise` resolving with the racing score.
+ */
+export async function calculateRacingScore(id: number): Promise<number> {
+    const profile: string = await getInfo(id);
+    // TODO: Implement racing score formula
+    return 0;
+}
+
+/**
+ * Calculates the sire score of a particular horse.
+ * @param {number} id - the id of the horse.
+ * @returns {Promise<number>} A `Promise` resolving with the sire score.
+ */
+export function calculateSireScore(id: number, horses: Horse[]): Promise<number> {
+    const filteredHorses = horses.filter(horse => (horse.breedingScore?.breeding != null) && (horse.id === id || horse.sireId === id));
+    return Promise.resolve(filteredHorses.length < 1 ? 0 : filteredHorses.reduce((score, horse) => score + horse.breedingScore!.breeding!, 0) / filteredHorses.length);
+}
+
+/**
+ * Calculates the suggested stud fee of a particulra horse.
+ * @param {object} data - an object containing the id of the horse and the formula to use.
+ * @returns {Promise<number>} A `Promise` resolving with the suggested stud fee.
+ */
 export async function calculateStudFee({ id, formula }: CalculateStudFeeData): Promise<number> {
     const report: string = await getProgenyReport(id);
     const starters: number = parseInt(report?.match(/<b[^>]*>\s*Total\s*Starters\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.pop() ?? '0');
@@ -49,6 +110,11 @@ export async function calculateStudFee({ id, formula }: CalculateStudFeeData): P
     return Math.min(10000000, Math.max(1000, fee));
 }
 
+/**
+ * Generates a breeding report for the provided list of horses.
+ * @param {BreedingReportData} data - an object containing the ids of the horses and any header override.
+ * @returns {Promise<string>} A `Promise` that resolves with the report as a base64-encoded data URI.
+ */
 export async function generateBreedingReport({ ids, headers }: BreedingReportData): Promise<string> {
     const csv: Array<BreedingReportRow> = [
         [
@@ -90,6 +156,9 @@ export async function generateBreedingReport({ ids, headers }: BreedingReportDat
 
         if (csv.length < ids.length + 1)
             await sleep(30000);
+
+        if (csv.length % 50 === 0)
+            await sleep(15000);
     }
 
     return `data:text/csv;base64,${btoa(
@@ -100,6 +169,11 @@ export async function generateBreedingReport({ ids, headers }: BreedingReportDat
             .join('\n').replace(/&#039;/g, '\''))}`;
 }
 
+/**
+ * Generates a breeding report row for the given horse.
+ * @param {number} id - the id of the horse.
+ * @returns {Promise<BreedingReportRow>} A `Promise` that resolves with an array of row data values.
+ */
 async function getBreedingReportRow(id: number): Promise<BreedingReportRow> {
     const [profile, report]: [string, string] = await Promise.all([
         getInfo(id),
@@ -139,6 +213,11 @@ async function getBreedingReportRow(id: number): Promise<BreedingReportRow> {
     ];
 }
 
+/**
+ * Creates a `Horse` object for the given horse.
+ * @param {number} id - the id of the horse.
+ * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
+ */
 export async function getHorse(id: number): Promise<Horse> {
     const info: string = await getInfo(id);
 
@@ -151,10 +230,20 @@ export async function getHorse(id: number): Promise<Horse> {
     };
 }
 
+/**
+ * Fetches a horse's info page.
+ * @param {number} id - the id of the horse.
+ * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the info page.
+ */
 export async function getInfo(id: number): Promise<string> {
     return await fetch(`https://www.harnessnation.com/horse/${id}`).then(res => res.text());
 }
 
+/**
+ * Fetches a horse's progeny report.
+ * @param {number} id - the id of the horse.
+ * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the progeny report.
+ */
 export async function getProgenyReport(id: number): Promise<string> {
     return await fetch('https://www.harnessnation.com/api/progeny/report', {
         method: 'POST',
