@@ -1,5 +1,9 @@
 export function parseCurrency(value: string | number): number {
-    return value == null ? value : parseFloat(value.toString().replace(/[^\d.]/g, '') ?? '');
+    return value == null ? value : globalThis.parseFloat(value.toString().replace(/[^\d.]/g, ''));
+}
+
+export function parseInt(value: string | number): number {
+    return value == null ? value : ~~(globalThis.parseFloat(value.toString().replace(/[^\d.]/g, '')));
 }
 
 export function reduceChanges(changes: { [key: string]: any }, [key, value]: [string, chrome.storage.StorageChange]): { [key: string]: any } {
