@@ -186,7 +186,8 @@ export class ActionResponse<T> {
 
 export async function sendAction(type: ActionType.CalculateStudFee, data: CalculateStudFeeData): Promise<ActionResponse<number>>;
 export async function sendAction(type: ActionType.GenerateBreedingReport, data: BreedingReportData): Promise<ActionResponse<string>>;
-export async function sendAction(type: ActionType.GetHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;
+export async function sendAction(type: ActionType.GetHorses, data?:any): Promise<ActionResponse<Horse[]>>;
+export async function sendAction(type: ActionType.SearchHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
     const response: ActionResponse<T> | ActionError = await chrome.runtime.sendMessage(new Action(type, data));
