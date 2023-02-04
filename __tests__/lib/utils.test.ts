@@ -1,6 +1,6 @@
-import { parseCurrency, reduceChanges, regexEscape, sleep, toPercentage, toTimestamp } from '../../src/lib/utils';
+import { parseCurrency, parseInt, reduceChanges, regexEscape, sleep, toPercentage, toTimestamp } from '../../src/lib/utils';
 
-type CurrencyTestData = [string | number, number];
+type NumberTestData = [string | number, number];
 type PercentageTestData = [number, number, string];
 type TimestampTestData = [Date | string | number, string];
 
@@ -14,7 +14,7 @@ describe(`parseCurrency`, (): void => {
     });
 
     test(`properly converts strings to numbers`, (): void => {
-        const values: CurrencyTestData[] = [
+        const values: NumberTestData[] = [
             ['1000000', 1000000],
             ['1000000.00', 1000000.00],
             ['$1000000', 1000000],
@@ -31,6 +31,36 @@ describe(`parseCurrency`, (): void => {
 
         for (const [value, expected] of values)
             expect(parseCurrency(value)).toEqual(expected);
+    });
+});
+
+describe(`parseInt`, (): void => {
+    test(`exists`, (): void => {
+        expect(parseInt).not.toBeUndefined();
+    });
+
+    test(`is a function`, (): void => {
+        expect(typeof parseInt).toEqual('function');
+    });
+
+    test(`properly converts strings to numbers`, (): void => {
+        const values: NumberTestData[] = [
+            ['1000000', 1000000],
+            ['1000000.00', 1000000],
+            ['$1000000', 1000000],
+            ['$1000000.00', 1000000],
+            ['1,000,000', 1000000],
+            ['1,000,000.00', 1000000],
+            ['$1,000,000', 1000000],
+            ['$1,000,000.00', 1000000],
+            [1000000, 1000000],
+            [1000000.00, 1000000],
+            [1_000_000, 1000000],
+            [1_000_000.00, 1000000],
+        ];
+
+        for (const [value, expected] of values)
+            expect(parseInt(value)).toEqual(expected);
     });
 });
 
@@ -168,7 +198,7 @@ describe(`toTimestamp`, (): void => {
     });
 
     test(`properly converts values to timestamps`, () => {
-        const values = [
+        const values: TimestampTestData[] = [
             [new Date('2022-01-01 00:00:00 +00:00'), '2022-01-01T00:00:00'],
             ['2022-01-01 00:00:00 +00:00', '2022-01-01T00:00:00'],
             [1_640_995_200_000, '2022-01-01T00:00:00'],
