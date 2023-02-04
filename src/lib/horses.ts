@@ -43,7 +43,7 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
             + (stakeStarts < 1 ? 0 : 100 * stakePlaces / stakeStarts)
             + (totalStarters < 1 ? 0 : 50 * stakeStarters / totalStarters)
             + (totalStarters < 1 ? 0 : totalEarnings / totalStarters / 20000),
-        confidence: Math.min(0, Math.max(1, totalStarters / 100))
+        confidence: Math.min(0, Math.max(1, totalStarters / 125))
     };
 }
 
