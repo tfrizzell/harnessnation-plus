@@ -15,13 +15,15 @@ export type Horse = {
     sireId?: number | null;
     damId?: number | null;
     retired?: boolean;
-    stallionScore?: {
-        value?: number;
-        confidence?: number;
-        racing?: number | null;
-        breeding?: number | null;
-        bloodline?: number | null;
-    };
+    stallionScore?: StallionScore | null;
+}
+
+export type StallionScore = {
+    value?: number;
+    confidence?: number;
+    racing?: number;
+    breeding?: number;
+    bloodline?: number | null;
 }
 
 /**
@@ -29,8 +31,13 @@ export type Horse = {
  * @param {number} id - the id of the horse.
  * @returns {Promise<number>} A `Promise` resolving with the bloodline score.
  */
-export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<number> {
-    const filteredHorses = horses.filter(horse => (horse.stallionScore?.value != null) && (horse.id === id || horse.sireId === id));
+export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<number | null> {
+    const horse: Horse | undefined = horses.find(horse => horse.id === id);
+
+    if (horse?.sireId == null)
+        return Promise.resolve(null);
+
+    const filteredHorses = horses.filter(h => h !== horse && (h.stallionScore?.value != null) && (h.id === horse.sireId || h.sireId === horse.sireId));
     return Promise.resolve(filteredHorses.length < 1 ? 0 : filteredHorses.reduce((score, horse) => score + horse.stallionScore!.value!, 0) / filteredHorses.length);
 }
 

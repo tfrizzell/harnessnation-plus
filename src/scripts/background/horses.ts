@@ -2,7 +2,7 @@ import { CollectionReference, DocumentData, DocumentReference, DocumentSnapshot,
 import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocsFromServer, limit, orderBy, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from '../../lib/firebasejs/firebase-firestore.js';
 
 import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, HorseSearchData, SendResponse } from '../../lib/actions.js';
-import { calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, Horse } from '../../lib/horses.js';
+import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, BreedingScore, Horse, StallionScore } from '../../lib/horses.js';
 import { regexEscape } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
@@ -58,6 +58,9 @@ type HorseWithGeneration = Horse & {
 }
 
 type HorseWithLastModified = Horse & {
+    stallionScore?: (StallionScore & {
+        lastModified?: Timestamp;
+    } | null);
     lastModified?: Timestamp;
 }
 
@@ -128,10 +131,25 @@ export async function getHorses(): Promise<Horse[]> {
 
     querySnapshot.forEach(doc => {
         const { lastModified, ...horse }: HorseWithLastModified = doc.data();
+        delete horse.stallionScore?.lastModified;
         horses.push(horse);
     });
 
     return horses;
+}
+
+async function getStallionScore(id: number): Promise<StallionScore> {
+    const { score: breedingScore, confidence }: BreedingScore = await calculateBreedingScore(id);
+    const racingScore: number = await calculateRacingScore(id);
+    const bloodlineScore: number | null = await calculateBloodlineScore(id, await getHorses());
+
+    return {
+        value: (1 - confidence) * ((racingScore + (bloodlineScore ?? 0) / (1 + +(bloodlineScore != null)))) + confidence * breedingScore,
+        confidence,
+        racing: racingScore,
+        breeding: breedingScore,
+        bloodline: bloodlineScore,
+    };
 }
 
 async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<void> {
@@ -158,27 +176,45 @@ async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<void> {
         horse.damId = damId;
         horse.retired = retired;
 
+        if (horse.stallionScore == null)
+            horse.stallionScore = await getStallionScore(horse.id);
+
         console.debug(`%chorses.ts%c     Creating horse ${horse.id}${batch ? ' (batch)' : ''}`, 'color:#406e8e;font-weight:bold;', '');
 
-        if (batch != null)
-            batch.set(docRef, { ...horse, lastModified: serverTimestamp() });
-        else
-            await setDoc(docRef, { ...horse, lastModified: serverTimestamp() });
+        // if (batch != null) {
+        //     batch.set(docRef, {
+        //         ...horse,
+        //         stallionScore: horse.stallionScore == null ? null : { ...horse.stallionScore, lastModified: serverTimestamp() },
+        //         lastModified: serverTimestamp(),
+        //     });
+        // } else {
+        //     await setDoc(docRef, {
+        //         ...horse,
+        //         stallionScore: horse.stallionScore == null ? null : { ...horse.stallionScore, lastModified: serverTimestamp() },
+        //         lastModified: serverTimestamp(),
+        //     });
+        // }
     } else {
         const docData: DocumentData = _doc.data();
         const data: Horse = { id: horse.id, name: horse.name };
         (horse.sireId != null) && (data.sireId = horse.sireId);
+        (horse.damId != null) && (data.damId = horse.damId);
         (horse.retired != null) && (data.retired = horse.retired);
+        (horse.stallionScore != null) && (data.stallionScore = horse.stallionScore);
 
-        if (!Object.entries(data).find(([key, value]): boolean => !(key in docData) || value !== (docData as any)[key]))
+        const changed = Object.entries(data).filter(([key, value]): boolean => !(key in docData) || JSON.stringify(value) !== JSON.stringify((docData as any)[key])).map(([key]) => key);
+        console.log(changed);
+
+        if (!Object.entries(data).find(([key, value]): boolean => !(key in docData) || JSON.stringify(value) !== JSON.stringify((docData as any)[key])))
             return;
 
         console.debug(`%chorses.ts%c     Updating horse ${horse.id}${batch ? ' (batch)' : ''}`, 'color:#406e8e;font-weight:bold;', '');
 
-        if (batch != null)
-            batch.update(docRef, { ...data, lastModified: serverTimestamp() });
-        else
-            await updateDoc(docRef, { ...data, lastModified: serverTimestamp() });
+        // if (batch != null) {
+        //     batch.update(docRef, { ...data, lastModified: serverTimestamp() });
+        // } else {
+        //     await updateDoc(docRef, { ...data, lastModified: serverTimestamp() });
+        // }
     }
 }
 
@@ -190,6 +226,33 @@ async function saveHorses(horses: Horse[]): Promise<void> {
     let chunk: Horse[];
 
     while ((chunk = _horses.splice(0, 25)) && chunk.length > 0) {
+        const batch: WriteBatch = writeBatch(db);
+        await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)));
+        await batch.commit();
+    }
+}
+
+export async function updateStallionScores(): Promise<void> {
+    const horses: Horse[] = await getHorses();
+    let chunk: Horse[];
+
+    for (const horse of horses) {
+        horse.stallionScore ??= {};
+
+        if (horse.stallionScore!.breeding == null) {
+            const { score: breedingScore, confidence }: BreedingScore = await calculateBreedingScore(horse.id!);
+            horse.stallionScore!.breeding = breedingScore;
+            horse.stallionScore!.confidence = confidence;
+        }
+
+        if (horse.stallionScore!.racing == null)
+            horse.stallionScore!.racing = await calculateRacingScore(horse.id!);
+    }
+
+    for (const horse of horses)
+        horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
+
+    while ((chunk = horses.splice(0, 25)) && chunk.length > 0) {
         const batch: WriteBatch = writeBatch(db);
         await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)));
         await batch.commit();
