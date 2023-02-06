@@ -1,3 +1,5 @@
+self.window = self;
+
 import { FirebaseApp, initializeApp } from './firebasejs/firebase-app.js';
 import { clearIndexedDbPersistence, enableIndexedDbPersistence, Firestore, getFirestore as initFirestore, terminate } from './firebasejs/firebase-firestore.js';
 
