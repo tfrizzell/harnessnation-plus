@@ -15,13 +15,23 @@ export type Horse = {
     sireId?: number | null;
     damId?: number | null;
     retired?: boolean;
-    breedingScore?: {
+    stallionScore?: {
         value?: number;
         confidence?: number;
         racing?: number | null;
         breeding?: number | null;
-        sire?: number | null;
+        bloodline?: number | null;
     };
+}
+
+/**
+ * Calculates the bloodline score of a particular horse.
+ * @param {number} id - the id of the horse.
+ * @returns {Promise<number>} A `Promise` resolving with the bloodline score.
+ */
+export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<number> {
+    const filteredHorses = horses.filter(horse => (horse.stallionScore?.value != null) && (horse.id === id || horse.sireId === id));
+    return Promise.resolve(filteredHorses.length < 1 ? 0 : filteredHorses.reduce((score, horse) => score + horse.stallionScore!.value!, 0) / filteredHorses.length);
 }
 
 /**
@@ -35,7 +45,7 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
     const totalEarnings: number = parseCurrency(report.match(/<b[^>]*>\s*Total\s+Earnings\s*:\s*<\/b[^>]*>\s*([$\d,]+(?:\.\d+)?)/is)?.[1] ?? '$0');
     const stakeStarters: number = parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
     const stakeWinners: number = parseInt(report.match(/<b[^>]*>\s*Stake\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const [stakeStarts, stakePlaces]: [number, number] = (report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([$\d,]+(?:\.\d+)?)/is)?.slice(1).map(parseInt)
+    const [stakeStarts, stakePlaces]: [number, number] = (report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\([$\d,]+(?:\.\d+)?\)/is)?.slice(1).map(parseCurrency)
         ?? [0, 0, 0, 0]).reduce(([starts, places], value, index) => [starts + +(index === 0) * value, places + +(index !== 0) * value], [0, 0]);
 
     return {
@@ -43,7 +53,7 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
             + (stakeStarts < 1 ? 0 : 100 * stakePlaces / stakeStarts)
             + (totalStarters < 1 ? 0 : 50 * stakeStarters / totalStarters)
             + (totalStarters < 1 ? 0 : totalEarnings / totalStarters / 20000),
-        confidence: Math.min(0, Math.max(1, totalStarters / 125))
+        confidence: Math.max(0, Math.min(1, totalStarters / 140))
     };
 }
 
@@ -54,18 +64,19 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
  */
 export async function calculateRacingScore(id: number): Promise<number> {
     const profile: string = await getInfo(id);
-    // TODO: Implement racing score formula
-    return 0;
-}
+    const [starts, wins, places, shows, earnings]: number[] = profile.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
+    const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings]: number[] = profile.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
 
-/**
- * Calculates the sire score of a particular horse.
- * @param {number} id - the id of the horse.
- * @returns {Promise<number>} A `Promise` resolving with the sire score.
- */
-export function calculateSireScore(id: number, horses: Horse[]): Promise<number> {
-    const filteredHorses = horses.filter(horse => (horse.breedingScore?.breeding != null) && (horse.id === id || horse.sireId === id));
-    return Promise.resolve(filteredHorses.length < 1 ? 0 : filteredHorses.reduce((score, horse) => score + horse.breedingScore!.breeding!, 0) / filteredHorses.length);
+    return 0.3 * (
+        (starts < 1 ? 0 : 100 * (wins - stakeWins) / (starts - stakeStarts))
+        + Math.max(0, Math.log(earnings - stakeEarnings))
+        + Math.max(0, Math.log((earnings - stakeEarnings) / (starts - stakeStarts)))
+    ) + 0.85 * (
+        Math.max(0, Math.sqrt(stakeStarts))
+        + (stakeStarts < 1 ? 0 : 100 * (stakeWins + stakePlaces + stakeShows) / stakeStarts)
+        + Math.max(0, Math.log(stakeEarnings))
+        + Math.max(0, Math.log(stakeEarnings / stakeStarts))
+    );
 }
 
 /**
