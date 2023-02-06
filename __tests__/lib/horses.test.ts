@@ -5,7 +5,7 @@ import { calculateBreedingScore, calculateRacingScore, calculateStudFee, getHors
 import { StudFeeFormula } from '../../src/lib/settings';
 
 type HorseTestData = [number, Horse];
-type ScoreTestData = [number, number | { value: number, confidence: number }];
+type ScoreTestData = [number, number | { value: number | null, confidence: number }];
 type StudFeeTestData = [StudFeeFormula, number, number];
 
 global.fetch = jest.fn((input: RequestInfo, init?: RequestInit): Promise<any> => {
@@ -44,12 +44,14 @@ describe(`calculateBreedingScore`, (): void => {
             [14, { value: 126.46416, confidence: 1 }],
             [10474, { value: 102.26093, confidence: 1 }],
             [15729, { value: 90.71718, confidence: 0.41429 }],
-            [26326, { value: 0, confidence: 0 }],
+            [26326, { value: null, confidence: 0 }],
         ];
 
         for (const [id, expected] of values) {
             const { score, confidence } = await calculateBreedingScore(id);
-            expect(parseFloat(score.toFixed(5))).toEqual((expected as any).value);
+            expect(score).not.toBeUndefined();
+            expect(confidence).not.toBeUndefined();
+            expect(score == null ? score : parseFloat(score.toFixed(5))).toEqual((expected as any).value);
             expect(parseFloat(confidence.toFixed(5))).toEqual((expected as any).confidence);
         }
     });
@@ -73,8 +75,9 @@ describe(`calculateRacingScore`, (): void => {
         ];
 
         for (const [id, expected] of values) {
-            console.log(id);
-            expect(parseFloat((await calculateRacingScore(id)).toFixed(5))).toEqual(expected);
+            const score = await calculateRacingScore(id);
+            expect(score).not.toBeUndefined();
+            expect(parseFloat(score!.toFixed(5))).toEqual(expected);
         }
     });
 });

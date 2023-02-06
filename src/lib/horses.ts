@@ -5,7 +5,7 @@ import { parseCurrency, parseInt, sleep, toPercentage } from './utils.js';
 type BreedingReportRow = (string | number | undefined)[];
 
 export type BreedingScore = {
-    score: number;
+    score: number | null;
     confidence: number;
 }
 
@@ -19,10 +19,10 @@ export type Horse = {
 }
 
 export type StallionScore = {
-    value?: number;
+    value?: number | null;
     confidence?: number;
-    racing?: number;
-    breeding?: number;
+    racing?: number | null;
+    breeding?: number | null;
     bloodline?: number | null;
 }
 
@@ -37,8 +37,8 @@ export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<nu
     if (horse?.sireId == null)
         return Promise.resolve(null);
 
-    const filteredHorses = horses.filter(h => h !== horse && (h.stallionScore?.value != null) && (h.id === horse.sireId || h.sireId === horse.sireId));
-    return Promise.resolve(filteredHorses.length < 1 ? 0 : filteredHorses.reduce((score, horse) => score + horse.stallionScore!.value!, 0) / filteredHorses.length);
+    const filteredHorses = horses.filter(h => (h.stallionScore?.breeding != null) && (h.id === horse.sireId || h.sireId === horse.sireId));
+    return Promise.resolve(filteredHorses.length < 1 ? 0 : filteredHorses.reduce((score, horse) => score + horse.stallionScore!.breeding!, 0) / filteredHorses.length);
 }
 
 /**
@@ -56,10 +56,11 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
         ?? [0, 0, 0, 0]).reduce(([starts, places], value, index) => [starts + +(index === 0) * value, places + +(index !== 0) * value], [0, 0]);
 
     return {
-        score: (totalStarters < 1 ? 0 : 1250 * stakeWinners / totalStarters)
+        score: totalStarters < 1 ? null :
+            1250 * stakeWinners / totalStarters
             + (stakeStarts < 1 ? 0 : 100 * stakePlaces / stakeStarts)
-            + (totalStarters < 1 ? 0 : 50 * stakeStarters / totalStarters)
-            + (totalStarters < 1 ? 0 : totalEarnings / totalStarters / 20000),
+            + 50 * stakeStarters / totalStarters
+            + totalEarnings / totalStarters / 20000,
         confidence: Math.max(0, Math.min(1, totalStarters / 140))
     };
 }
@@ -69,21 +70,22 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
  * @param {number} id - the id of the horse.
  * @returns {Promise<number>} A `Promise` resolving with the racing score.
  */
-export async function calculateRacingScore(id: number): Promise<number> {
+export async function calculateRacingScore(id: number): Promise<number | null> {
     const profile: string = await getInfo(id);
     const [starts, wins, places, shows, earnings]: number[] = profile.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
-    const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings]: number[] = profile.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
+    const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings]: number[] = profile.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0, 0];
 
-    return 0.3 * (
-        (starts < 1 ? 0 : 100 * (wins - stakeWins) / (starts - stakeStarts))
-        + Math.max(0, Math.log(earnings - stakeEarnings))
-        + Math.max(0, Math.log((earnings - stakeEarnings) / (starts - stakeStarts)))
-    ) + 0.85 * (
-        Math.max(0, Math.sqrt(stakeStarts))
-        + (stakeStarts < 1 ? 0 : 100 * (stakeWins + stakePlaces + stakeShows) / stakeStarts)
-        + Math.max(0, Math.log(stakeEarnings))
-        + Math.max(0, Math.log(stakeEarnings / stakeStarts))
-    );
+    return starts < 1 ? null :
+        0.3 * (
+            (starts < 1 ? 0 : 100 * (wins - stakeWins) / (starts - stakeStarts))
+            + Math.max(0, Math.log(earnings - stakeEarnings) || 0)
+            + Math.max(0, Math.log((earnings - stakeEarnings) / (starts - stakeStarts)) || 0)
+        ) + 0.85 * (
+            Math.max(0, Math.sqrt(stakeStarts) || 0)
+            + (stakeStarts < 1 ? 0 : 100 * (stakeWins + stakePlaces + stakeShows) / stakeStarts)
+            + Math.max(0, Math.log(stakeEarnings) || 0)
+            + Math.max(0, Math.log(stakeEarnings / stakeStarts) || 0)
+        );
 }
 
 /**
@@ -172,11 +174,12 @@ export async function generateBreedingReport({ ids, headers }: BreedingReportDat
     while ((batch = _ids.splice(0, 10)) && batch.length > 0) {
         csv.push(...(await Promise.all(batch.map(getBreedingReportRow))));
 
-        if (csv.length < ids.length + 1)
+        if (_ids.length > 0) {
             await sleep(30000);
 
-        if (csv.length % 50 === 0)
-            await sleep(15000);
+            if (csv.length % 50 === 0)
+                await sleep(15000);
+        }
     }
 
     return `data:text/csv;base64,${btoa(
@@ -241,7 +244,7 @@ export async function getHorse(id: number): Promise<Horse> {
 
     return {
         id,
-        name: info?.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1],
+        name: info?.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1]?.trim(),
         sireId: info?.match(/<b[^>]*>\s*Sire:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
         damId: info?.match(/<b[^>]*>\s*Dam:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
         retired: !!info?.match(/<br[^>]*>\s*<br[^>]*>\s*Retired\s*<br[^>]*>/is)?.[0],

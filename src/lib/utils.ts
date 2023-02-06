@@ -1,3 +1,5 @@
+import { Timestamp } from "@firebase/firestore";
+
 export function parseCurrency(value: string | number): number {
     return value == null ? value : globalThis.parseFloat(value.toString().replace(/[^\d.]/g, ''));
 }
@@ -23,6 +25,11 @@ export function sleep(value: number, abortSignal: AbortSignal | null = null): Pr
             reject('Aborted by the user');
         });
     });
+}
+
+export function toDate(timestamp: Timestamp | undefined): Date {
+    const milliseconds = parseFloat(`${timestamp?.seconds ?? 0}.${timestamp?.nanoseconds ?? 0}`) * 1000;
+    return new Date(milliseconds);
 }
 
 export function toPercentage(numerator: number, denominator: number): string {

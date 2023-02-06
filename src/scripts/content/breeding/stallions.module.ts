@@ -115,12 +115,13 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
         let data;
 
         while (data = pattern.exec(html)) {
-            const [id, name, sireId, sireName] = data.slice(1);
+            const [id, name, sireId, sireName, damId] = data.slice(1);
 
             horses[id] = {
                 id: +id,
                 name,
                 sireId: +sireId || null,
+                damId: +damId || null,
                 retired: false,
             };
 

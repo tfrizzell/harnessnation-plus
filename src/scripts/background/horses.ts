@@ -2,8 +2,9 @@ import { CollectionReference, DocumentData, DocumentReference, DocumentSnapshot,
 import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocsFromServer, limit, orderBy, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from '../../lib/firebasejs/firebase-firestore.js';
 
 import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, HorseSearchData, SendResponse } from '../../lib/actions.js';
-import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, BreedingScore, Horse, StallionScore } from '../../lib/horses.js';
-import { regexEscape } from '../../lib/utils.js';
+import { JobType } from '../../lib/alarms.js';
+import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, BreedingScore, Horse, StallionScore, getInfo } from '../../lib/horses.js';
+import { regexEscape, sleep, toDate } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
 let db: Firestore = firestore.singleton();
@@ -28,6 +29,12 @@ chrome.runtime.onMessage.addListener((action: Action<any>, _sender: chrome.runti
                 .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
+        case ActionType.GetHorse:
+            getHorseById(action.data.id)
+                .then((data: Horse | undefined) => sendResponse(new ActionResponse(action, data)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
+
         case ActionType.GetHorses:
             getHorses()
                 .then((data: Horse[]) => sendResponse(new ActionResponse(action, data)))
@@ -43,6 +50,12 @@ chrome.runtime.onMessage.addListener((action: Action<any>, _sender: chrome.runti
         case ActionType.SearchHorses:
             createSearchPattern(action.data)
                 .then((data: RegExp | string) => sendResponse(new ActionResponse(action, data)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
+
+        case ActionType.UpdateStallionScores:
+            updateStallionScores()
+                .then(() => sendResponse(new ActionResponse(action)))
                 .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
@@ -67,6 +80,16 @@ type HorseWithLastModified = Horse & {
 function addGeneration(horse: Horse | HorseWithGeneration, generation: number = 1): HorseWithGeneration {
     (horse as HorseWithGeneration).generation = generation;
     return horse as HorseWithGeneration;
+}
+
+function calculateStallionScore(breedingScore: number | null, confidence: number, racingScore: number | null, bloodlineScore?: number | null): Promise<number | null> {
+    if (breedingScore == null && racingScore == null && bloodlineScore == null)
+        return Promise.resolve(null);
+
+    return Promise.resolve(
+        ((1 - confidence) * (+racingScore! + bloodlineScore!) / (+(racingScore != null) + +(bloodlineScore != null)))
+        + (confidence! * +breedingScore!)
+    );
 }
 
 async function clearHorseCache(): Promise<void> {
@@ -116,43 +139,78 @@ async function generateBreedingReport(data: BreedingReportData): Promise<string>
     }
 }
 
+export async function getHorseById(id: number): Promise<Horse | undefined> {
+    const colRef: CollectionReference<DocumentData> = collection(db, 'horses');
+    const qLastModified: Query<DocumentData | {}> = query(colRef, where('id', '==', id), orderBy('lastModified', 'desc'), limit(1));
+    const qsLastModified: QuerySnapshot<HorseWithLastModified> = await getDocsFromCache(qLastModified);
+    const lastModified: Date = qsLastModified?.docs?.[0]?.data()?.lastModified?.toDate?.() ?? new Date(0);
+
+    const qRemote: Query<DocumentData | {}> = query(colRef, where('id', '==', id), where('lastModified', '>', lastModified));
+    const qsRemote: QuerySnapshot<HorseWithLastModified> = await getDocsFromServer(qRemote);
+    qsRemote.size && console.debug(`%chorses.ts%c     Fetched ${qsRemote.size} new horse record${qsRemote.size === 1 ? 's' : ''} from firestore`, 'color:#406e8e;font-weight:bold;', '');
+
+    const qSnapshot: Query<DocumentData | {}> = query(colRef, where('id', '==', id), limit(1));
+    const qsSnapshot: QuerySnapshot<Horse> = await getDocsFromCache(qSnapshot);
+    const horses: HorseWithLastModified[] = [];
+
+    qsSnapshot.forEach(doc => {
+        const horse: HorseWithLastModified = { ...doc.data() };
+
+        horses.push({
+            ...horse,
+            stallionScore: horse.stallionScore == null ? horse.stallionScore : { ...horse.stallionScore },
+        });
+    });
+
+    return horses.shift();
+}
+
 export async function getHorses(): Promise<Horse[]> {
+    return (await getHorsesWithLastModified()).map(horse => {
+        delete horse.lastModified;
+        delete horse.stallionScore?.lastModified;
+        return horse;
+    });
+}
+
+async function getHorsesWithLastModified(): Promise<HorseWithLastModified[]> {
     const colRef: CollectionReference<DocumentData> = collection(db, 'horses');
     const qLastModified: Query<DocumentData | {}> = query(colRef, orderBy('lastModified', 'desc'), limit(1));
     const qsLastModified: QuerySnapshot<HorseWithLastModified> = await getDocsFromCache(qLastModified);
-    const lastModified: Date = qsLastModified?.docs?.[0]?.data()?.lastModified?.toDate() ?? new Date(0);
+    const lastModified: Date = qsLastModified?.docs?.[0]?.data()?.lastModified?.toDate?.() ?? new Date(0);
 
     const qRemote: Query<DocumentData | {}> = query(colRef, where('lastModified', '>', lastModified));
     const qsRemote: QuerySnapshot<HorseWithLastModified> = await getDocsFromServer(qRemote);
     qsRemote.size && console.debug(`%chorses.ts%c     Fetched ${qsRemote.size} new horse record${qsRemote.size === 1 ? 's' : ''} from firestore`, 'color:#406e8e;font-weight:bold;', '');
 
     const querySnapshot: QuerySnapshot<Horse> = await getDocsFromCache(colRef);
-    const horses: Horse[] = [];
+    const horses: HorseWithLastModified[] = [];
 
     querySnapshot.forEach(doc => {
-        const { lastModified, ...horse }: HorseWithLastModified = doc.data();
-        delete horse.stallionScore?.lastModified;
-        horses.push(horse);
+        const horse: HorseWithLastModified = { ...doc.data() };
+
+        horses.push({
+            ...horse,
+            stallionScore: horse.stallionScore == null ? horse.stallionScore : { ...horse.stallionScore },
+        });
     });
 
     return horses;
 }
 
-async function getStallionScore(id: number): Promise<StallionScore> {
-    const { score: breedingScore, confidence }: BreedingScore = await calculateBreedingScore(id);
-    const racingScore: number = await calculateRacingScore(id);
-    const bloodlineScore: number | null = await calculateBloodlineScore(id, await getHorses());
+async function getStallionScore(horse: Horse): Promise<StallionScore> {
+    const { score: breedingScore, confidence }: BreedingScore = await calculateBreedingScore(horse.id!);
+    const racingScore: number | null = await calculateRacingScore(horse.id!);
 
     return {
-        value: (1 - confidence) * ((racingScore + (bloodlineScore ?? 0) / (1 + +(bloodlineScore != null)))) + confidence * breedingScore,
+        value: await calculateStallionScore(breedingScore, confidence, racingScore),
         confidence,
         racing: racingScore,
         breeding: breedingScore,
-        bloodline: bloodlineScore,
     };
 }
 
-async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<void> {
+async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<number | undefined> {
     if (!horse?.id)
         return;
 
@@ -164,6 +222,7 @@ async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<void> {
     } catch (e: any) {
         if (!e.message.includes('Failed to get document from cache.')) {
             console.error(`%chorses.ts%c     Failed to save horse ${horse.id}: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+            console.error(e);
             return;
         }
 
@@ -171,50 +230,48 @@ async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<void> {
     }
 
     if (!_doc.exists()) {
-        const { sireId, damId, retired }: Horse = await getHorse(horse.id);
+        const { sireId, damId, retired }: HorseWithLastModified = await getHorse(horse.id);
         horse.sireId = sireId;
         horse.damId = damId;
         horse.retired = retired;
 
         if (horse.stallionScore == null)
-            horse.stallionScore = await getStallionScore(horse.id);
+            horse.stallionScore = { ...await getStallionScore(horse), lastModified: serverTimestamp() } as any;
 
         console.debug(`%chorses.ts%c     Creating horse ${horse.id}${batch ? ' (batch)' : ''}`, 'color:#406e8e;font-weight:bold;', '');
 
-        // if (batch != null) {
-        //     batch.set(docRef, {
-        //         ...horse,
-        //         stallionScore: horse.stallionScore == null ? null : { ...horse.stallionScore, lastModified: serverTimestamp() },
-        //         lastModified: serverTimestamp(),
-        //     });
-        // } else {
-        //     await setDoc(docRef, {
-        //         ...horse,
-        //         stallionScore: horse.stallionScore == null ? null : { ...horse.stallionScore, lastModified: serverTimestamp() },
-        //         lastModified: serverTimestamp(),
-        //     });
-        // }
+        if (batch != null)
+            batch.set(docRef, { ...horse, lastModified: serverTimestamp() });
+        else
+            await setDoc(docRef, { ...horse, lastModified: serverTimestamp() });
+
+        if (horse.stallionScore != null)
+            return horse.id;
     } else {
         const docData: DocumentData = _doc.data();
-        const data: Horse = { id: horse.id, name: horse.name };
+        const data: HorseWithLastModified = { id: horse.id, name: horse.name?.trim(), damId: null, };
         (horse.sireId != null) && (data.sireId = horse.sireId);
         (horse.damId != null) && (data.damId = horse.damId);
         (horse.retired != null) && (data.retired = horse.retired);
         (horse.stallionScore != null) && (data.stallionScore = horse.stallionScore);
 
         const changed = Object.entries(data).filter(([key, value]): boolean => !(key in docData) || JSON.stringify(value) !== JSON.stringify((docData as any)[key])).map(([key]) => key);
-        console.log(changed);
 
-        if (!Object.entries(data).find(([key, value]): boolean => !(key in docData) || JSON.stringify(value) !== JSON.stringify((docData as any)[key])))
+        if (changed.length < 1)
             return;
 
         console.debug(`%chorses.ts%c     Updating horse ${horse.id}${batch ? ' (batch)' : ''}`, 'color:#406e8e;font-weight:bold;', '');
 
-        // if (batch != null) {
-        //     batch.update(docRef, { ...data, lastModified: serverTimestamp() });
-        // } else {
-        //     await updateDoc(docRef, { ...data, lastModified: serverTimestamp() });
-        // }
+        if (data.stallionScore != null && changed.includes('stallionScore'))
+            data.stallionScore!.lastModified = serverTimestamp() as any;
+
+        if (batch != null)
+            batch.update(docRef, { ...data, lastModified: serverTimestamp() });
+        else
+            await updateDoc(docRef, { ...data, lastModified: serverTimestamp() });
+
+        if (changed.includes('stallionScore'))
+            return horse.id;
     }
 }
 
@@ -223,38 +280,93 @@ async function saveHorses(horses: Horse[]): Promise<void> {
         return;
 
     const _horses: Horse[] = [...horses];
+    const toUpdate: number[] = [];
     let chunk: Horse[];
 
     while ((chunk = _horses.splice(0, 25)) && chunk.length > 0) {
         const batch: WriteBatch = writeBatch(db);
-        await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)));
+        toUpdate.push(...(await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)))).filter(id => id != null) as number[]);
         await batch.commit();
+    }
+
+    if (toUpdate.length > 0) {
+        horses = await getHorses();
+
+        const _horses: Horse[] = Array.from(new Set(toUpdate.reduce((map, id) => {
+            if (!map.has(id)) {
+                const horse = horses.find(horse => horse.id === id)!;
+                map.set(horse.id!, horse);
+
+                for (const related of horses.filter(h => h.id === horse.sireId || h.sireId === horse.sireId))
+                    map.has(related.id!) || map.set(related.id!, related);
+            }
+
+            return map;
+        }, new Map<number, Horse>).values())).sort((a, b) => a.id! - b.id!);
+
+        for (const horse of _horses) {
+            horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
+            horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!.breeding!, horse.stallionScore!.confidence!, horse.stallionScore!.racing!, horse.stallionScore!.bloodline);
+        }
+
+        while ((chunk = _horses.splice(0, 25)) && chunk.length > 0) {
+            const batch: WriteBatch = writeBatch(db);
+            await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)));
+            await batch.commit();
+        }
     }
 }
 
 export async function updateStallionScores(): Promise<void> {
-    const horses: Horse[] = await getHorses();
+    console.debug(`%chorses.ts%c     Updating stallion scores`, 'color:#406e8e;font-weight:bold;', '');
+
+    const horses: HorseWithLastModified[] = await getHorsesWithLastModified();
+    const updated: Horse[] = [];
     let chunk: Horse[];
 
     for (const horse of horses) {
-        horse.stallionScore ??= {};
+        const lastModified: Date = horse?.stallionScore?.lastModified?.toDate?.() ?? new Date(0);
 
-        if (horse.stallionScore!.breeding == null) {
-            const { score: breedingScore, confidence }: BreedingScore = await calculateBreedingScore(horse.id!);
-            horse.stallionScore!.breeding = breedingScore;
-            horse.stallionScore!.confidence = confidence;
+        if (Date.now() - lastModified.valueOf() < 86400000)
+            break;
+
+
+        if (!horse.retired) {
+            const info: Horse = await getHorse(horse.id!);
+            horse.name = info.name;
+            horse.sireId = info.sireId;
+            horse.damId = info.damId;
+            horse.retired = info.retired;
         }
+
+        const { score: breedingScore, confidence }: BreedingScore = await calculateBreedingScore(horse.id!);
+        horse.stallionScore ??= {};
+        horse.stallionScore!.breeding = breedingScore;
+        horse.stallionScore!.confidence = confidence;
 
         if (horse.stallionScore!.racing == null)
             horse.stallionScore!.racing = await calculateRacingScore(horse.id!);
+
+        if (updated.push(horse) % 10 === 0)
+            await sleep(30000);
     }
 
-    for (const horse of horses)
+    for (const horse of updated) {
         horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
+        horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!.breeding!, horse.stallionScore!.confidence!, horse.stallionScore!.racing!, horse.stallionScore!.bloodline);
+    }
 
-    while ((chunk = horses.splice(0, 25)) && chunk.length > 0) {
+    while ((chunk = updated.splice(0, 25)) && chunk.length > 0) {
         const batch: WriteBatch = writeBatch(db);
         await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)));
         await batch.commit();
     }
 }
+
+chrome.alarms.onAlarm.addListener(async (alarm: chrome.alarms.Alarm) => {
+    switch (alarm.name) {
+        case JobType.UpdateStallionScores:
+            await updateStallionScores();
+            break;
+    }
+});

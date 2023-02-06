@@ -17,6 +17,7 @@
     "*://*.harnessnation.com/"
   ],
   "permissions": [
+    "alarms",
     "scripting",
     "storage",
     "tabs"
