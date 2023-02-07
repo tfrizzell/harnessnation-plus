@@ -291,36 +291,29 @@ async function saveHorses(horses: Horse[]): Promise<void> {
         return;
 
     const _horses: Horse[] = [...horses];
-    const toUpdate: number[] = [];
+    const updatedIds: number[] = [];
     let chunk: Horse[];
 
     while ((chunk = _horses.splice(0, 25)) && chunk.length > 0) {
         const batch: WriteBatch = writeBatch(db);
-        toUpdate.push(...(await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)))).filter(id => id != null) as number[]);
+        updatedIds.push(...(await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)))).filter(id => id != null) as number[]);
         await batch.commit();
     }
 
-    if (toUpdate.length > 0) {
+    if (updatedIds.length > 0) {
         horses = await getHorses();
+        const updated: Horse[] = [];
 
-        const _horses: Horse[] = Array.from(new Set(toUpdate.reduce((map, id) => {
-            if (!map.has(id)) {
-                const horse = horses.find(horse => horse.id === id)!;
-                map.set(horse.id!, horse);
+        for (const horse of horses) {
+            if (!updatedIds.includes(horse.id!))
+                continue;
 
-                for (const related of horses.filter(h => h.id === horse.sireId || h.sireId === horse.sireId))
-                    map.has(related.id!) || map.set(related.id!, related);
-            }
-
-            return map;
-        }, new Map<number, Horse>).values())).sort((a, b) => a.id! - b.id!);
-
-        for (const horse of _horses) {
             horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
             horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!.breeding!, horse.stallionScore!.confidence!, horse.stallionScore!.racing!, horse.stallionScore!.bloodline);
+            updated.push(horse);
         }
 
-        while ((chunk = _horses.splice(0, 25)) && chunk.length > 0) {
+        while ((chunk = updated.splice(0, 25)) && chunk.length > 0) {
             const batch: WriteBatch = writeBatch(db);
             await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)));
             await batch.commit();
@@ -338,9 +331,8 @@ export async function updateStallionScores(): Promise<void> {
     for (const horse of horses) {
         const lastModified: Date = horse?.stallionScore?.lastModified?.toDate?.() ?? new Date(0);
 
-        if (Date.now() - lastModified.valueOf() < 86400000)
+        if (Date.now() - lastModified.valueOf() < 604800000)
             break;
-
 
         if (!horse.retired) {
             const info: Horse = await getHorse(horse.id!);
