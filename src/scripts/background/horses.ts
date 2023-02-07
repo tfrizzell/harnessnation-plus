@@ -266,14 +266,14 @@ async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<number | und
         (horse.retired != null) && (data.retired = horse.retired);
         (horse.stallionScore != null) && (data.stallionScore = horse.stallionScore);
 
-        const changed = Object.entries(data).filter(([key, value]): boolean => !(key in docData) || JSON.stringify(value) !== JSON.stringify((docData as any)[key])).map(([key]) => key);
+        const changes = Object.entries(data).filter(([key, value]): boolean => !(key in docData) || JSON.stringify(value) !== JSON.stringify((docData as any)[key])).map(([key]) => key);
 
-        if (changed.length < 1)
+        if (changes.length < 1)
             return;
 
         console.debug(`%chorses.ts%c     Updating horse ${horse.id}${batch ? ' (batch)' : ''}`, 'color:#406e8e;font-weight:bold;', '');
 
-        if (data.stallionScore != null && changed.includes('stallionScore'))
+        if (data.stallionScore != null && changes.includes('stallionScore'))
             data.stallionScore!.lastModified = serverTimestamp() as any;
 
         if (batch != null)
@@ -281,7 +281,7 @@ async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<number | und
         else
             await updateDoc(docRef, { ...data, lastModified: serverTimestamp() });
 
-        if (changed.includes('stallionScore'))
+        if (changes.includes('stallionScore'))
             return horse.id;
     }
 }
