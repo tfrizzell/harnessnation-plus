@@ -1,0 +1,1 @@
+import(chrome.runtime.getURL('scripts/content/horse/stallion-score.module.js'));

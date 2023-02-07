@@ -72,11 +72,16 @@
       "matches": [
         "*://*.harnessnation.com/horse/*"
       ],
+      "css": [
+        "public/style/theme.css",
+        "scripts/content/horse/stallion-score.css"
+      ],
       "js": [
         "lib/data-tables.web.js",
         "lib/events.web.js",
         "scripts/content/horse/pedigree.js",
-        "scripts/content/horse/progeny-table.js"
+        "scripts/content/horse/progeny-table.js",
+        "scripts/content/horse/stallion-score.js"
       ],
       "run_at": "document_start"
     },

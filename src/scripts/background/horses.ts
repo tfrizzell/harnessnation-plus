@@ -133,36 +133,47 @@ async function generateBreedingReport(data: BreedingReportData): Promise<string>
     await chrome.storage.local.set({ 'breeding.export': true });
 
     try {
-        return await generateBreedingReportAsync(data);
+        let breedingScoreMap: { [id: number]: number } | undefined = undefined;
+
+        if (data.includeBreedingScores === true) {
+            const horses = await getHorses();
+            breedingScoreMap = horses.reduce((map, horse) => ({ ...map, [horse.id!]: horse.stallionScore?.value }), {});
+        }
+
+        return await generateBreedingReportAsync(data, breedingScoreMap);
     } finally {
         await chrome.storage.local.remove('breeding.export');
     }
 }
 
 export async function getHorseById(id: number): Promise<Horse | undefined> {
-    const colRef: CollectionReference<DocumentData> = collection(db, 'horses');
-    const qLastModified: Query<DocumentData | {}> = query(colRef, where('id', '==', id), orderBy('lastModified', 'desc'), limit(1));
-    const qsLastModified: QuerySnapshot<HorseWithLastModified> = await getDocsFromCache(qLastModified);
-    const lastModified: Date = qsLastModified?.docs?.[0]?.data()?.lastModified?.toDate?.() ?? new Date(0);
+    const docRef: DocumentReference<DocumentData> = doc(db, 'horses', `${id}`);
+    let _doc: DocumentSnapshot<HorseWithLastModified> | null;
 
-    const qRemote: Query<DocumentData | {}> = query(colRef, where('id', '==', id), where('lastModified', '>', lastModified));
-    const qsRemote: QuerySnapshot<HorseWithLastModified> = await getDocsFromServer(qRemote);
-    qsRemote.size && console.debug(`%chorses.ts%c     Fetched ${qsRemote.size} new horse record${qsRemote.size === 1 ? 's' : ''} from firestore`, 'color:#406e8e;font-weight:bold;', '');
+    try {
+        _doc = await getDocFromCache(docRef);
+    } catch (e: any) {
+        if (!e.message.includes('Failed to get document from cache.')) {
+            console.error(`%chorses.ts%c     Failed to load horse ${id}: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+            console.error(e);
+            return;
+        }
 
-    const qSnapshot: Query<DocumentData | {}> = query(colRef, where('id', '==', id), limit(1));
-    const qsSnapshot: QuerySnapshot<Horse> = await getDocsFromCache(qSnapshot);
-    const horses: HorseWithLastModified[] = [];
+        _doc = null;
+    }
 
-    qsSnapshot.forEach(doc => {
-        const horse: HorseWithLastModified = { ...doc.data() };
+    const data: HorseWithLastModified | undefined = _doc?.data();
 
-        horses.push({
-            ...horse,
-            stallionScore: horse.stallionScore == null ? horse.stallionScore : { ...horse.stallionScore },
-        });
-    });
+    if (data != null) {
+        const horse: HorseWithLastModified = {
+            ...data,
+            stallionScore: data.stallionScore == null ? data.stallionScore : { ...data.stallionScore },
+        };
 
-    return horses.shift();
+        delete horse.lastModified;
+        delete horse.stallionScore?.lastModified;
+        return horse;
+    }
 }
 
 export async function getHorses(): Promise<Horse[]> {

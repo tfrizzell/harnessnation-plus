@@ -15,6 +15,7 @@ export enum ActionType {
 export type BreedingReportData = {
     ids: number[];
     headers?: { [key: number]: string };
+    includeBreedingScores?: boolean;
 }
 
 export type CalculateStudFeeData = {
@@ -195,7 +196,7 @@ export class ActionResponse<T> {
 
 export async function sendAction(type: ActionType.CalculateStudFee, data: CalculateStudFeeData): Promise<ActionResponse<number>>;
 export async function sendAction(type: ActionType.GenerateBreedingReport, data: BreedingReportData): Promise<ActionResponse<string>>;
-export async function sendAction(type: ActionType.GetHorses, data: HorseIdData): Promise<ActionResponse<Horse>>;
+export async function sendAction(type: ActionType.GetHorse, data: HorseIdData): Promise<ActionResponse<Horse>>;
 export async function sendAction(type: ActionType.GetHorses): Promise<ActionResponse<Horse[]>>;
 export async function sendAction(type: ActionType.SaveHorses): Promise<ActionResponse<void>>;
 export async function sendAction(type: ActionType.SearchHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;

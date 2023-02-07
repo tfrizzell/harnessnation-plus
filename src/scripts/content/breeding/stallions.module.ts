@@ -104,7 +104,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
             ids.push(+id);
 
         const download: HTMLAnchorElement = document.createElement('a');
-        download.setAttribute('href', (await sendAction(ActionType.GenerateBreedingReport, { ids, headers: { 1: 'Stallion' } })).data!);
+        download.setAttribute('href', (await sendAction(ActionType.GenerateBreedingReport, { ids, headers: { 1: 'Stallion' }, includeBreedingScores: true, })).data!);
         download.setAttribute('download', `hn-plus-stallion-report-${toTimestamp().replace(/\D/g, '')}.csv`);
         download.click();
     }
