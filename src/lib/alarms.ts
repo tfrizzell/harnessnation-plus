@@ -1,3 +1,3 @@
-export enum JobType {
-    UpdateStallionScores = 'JOB#UPDATE_STALLION_SCORES',
+export enum AlarmType {
+    UpdateStallionScores = 'ALARM__UPDATE_STALLION_SCORES',
 }

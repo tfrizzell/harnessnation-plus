@@ -2,8 +2,8 @@ import { CollectionReference, DocumentData, DocumentReference, DocumentSnapshot,
 import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocsFromServer, limit, orderBy, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from '../../lib/firebasejs/firebase-firestore.js';
 
 import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, HorseSearchData, SendResponse } from '../../lib/actions.js';
-import { JobType } from '../../lib/alarms.js';
-import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, BreedingScore, Horse, StallionScore, getInfo } from '../../lib/horses.js';
+import { AlarmType } from '../../lib/alarms.js';
+import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, BreedingScore, Horse, StallionScore, getInfo, calculateStallionScore } from '../../lib/horses.js';
 import { regexEscape, sleep, toDate } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
@@ -38,6 +38,12 @@ chrome.runtime.onMessage.addListener((action: Action<any>, _sender: chrome.runti
         case ActionType.GetHorses:
             getHorses()
                 .then((data: Horse[]) => sendResponse(new ActionResponse(action, data)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
+
+        case ActionType.PreviewStallionScore:
+            previewStallionScore(action.data.id)
+                .then((data: StallionScore) => sendResponse(new ActionResponse(action, data)))
                 .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
@@ -80,16 +86,6 @@ type HorseWithLastModified = Horse & {
 function addGeneration(horse: Horse | HorseWithGeneration, generation: number = 1): HorseWithGeneration {
     (horse as HorseWithGeneration).generation = generation;
     return horse as HorseWithGeneration;
-}
-
-function calculateStallionScore(breedingScore: number | null, confidence: number, racingScore: number | null, bloodlineScore?: number | null): Promise<number | null> {
-    if (breedingScore == null && racingScore == null && bloodlineScore == null)
-        return Promise.resolve(null);
-
-    return Promise.resolve(
-        ((1 - confidence) * (+racingScore! + bloodlineScore!) / (+(racingScore != null) + +(bloodlineScore != null)))
-        + (confidence! * +breedingScore!)
-    );
 }
 
 async function clearHorseCache(): Promise<void> {
@@ -212,13 +208,18 @@ async function getHorsesWithLastModified(): Promise<HorseWithLastModified[]> {
 async function getStallionScore(horse: Horse): Promise<StallionScore> {
     const { score: breedingScore, confidence }: BreedingScore = await calculateBreedingScore(horse.id!);
     const racingScore: number | null = await calculateRacingScore(horse.id!);
+    const bloodlineScore: number | null = await calculateBloodlineScore(horse.id!, [horse, ...await getHorses()]);
 
     return {
-        value: await calculateStallionScore(breedingScore, confidence, racingScore),
+        value: await calculateStallionScore({ confidence, racing: racingScore, breeding: breedingScore, bloodline: bloodlineScore }),
         confidence,
         racing: racingScore,
         breeding: breedingScore,
     };
+}
+
+async function previewStallionScore(id: number): Promise<StallionScore> {
+    return getStallionScore(await getHorse(id));
 }
 
 async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<number | undefined> {
@@ -260,7 +261,8 @@ async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<number | und
             return horse.id;
     } else {
         const docData: DocumentData = _doc.data();
-        const data: HorseWithLastModified = { id: horse.id, name: horse.name?.trim(), damId: null, };
+        const data: HorseWithLastModified = { id: horse.id, damId: null, };
+        (horse.name != null) && (data.name = horse.name.trim());
         (horse.sireId != null) && (data.sireId = horse.sireId);
         (horse.damId != null) && (data.damId = horse.damId);
         (horse.retired != null) && (data.retired = horse.retired);
@@ -309,7 +311,7 @@ async function saveHorses(horses: Horse[]): Promise<void> {
                 continue;
 
             horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
-            horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!.breeding!, horse.stallionScore!.confidence!, horse.stallionScore!.racing!, horse.stallionScore!.bloodline);
+            horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!);
             updated.push(horse);
         }
 
@@ -356,7 +358,7 @@ export async function updateStallionScores(): Promise<void> {
 
     for (const horse of updated) {
         horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
-        horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!.breeding!, horse.stallionScore!.confidence!, horse.stallionScore!.racing!, horse.stallionScore!.bloodline);
+        horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!);
     }
 
     while ((chunk = updated.splice(0, 25)) && chunk.length > 0) {
@@ -368,7 +370,7 @@ export async function updateStallionScores(): Promise<void> {
 
 chrome.alarms.onAlarm.addListener(async (alarm: chrome.alarms.Alarm) => {
     switch (alarm.name) {
-        case JobType.UpdateStallionScores:
+        case AlarmType.UpdateStallionScores:
             await updateStallionScores();
             break;
     }

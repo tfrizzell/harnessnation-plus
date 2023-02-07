@@ -89,6 +89,21 @@ export async function calculateRacingScore(id: number): Promise<number | null> {
 }
 
 /**
+ * Calculates the composite stallion score of a particular horse.
+ * @param {number} id - the id of the horse.
+ * @returns {Promise<number>} A `Promise` resolving with the composite stallion score.
+ */
+export function calculateStallionScore({ confidence, racing: racingScore, breeding: breedingScore, bloodline: bloodlineScore }: StallionScore): Promise<number | null> {
+    if (confidence == null || (breedingScore == null && racingScore == null && bloodlineScore == null))
+        return Promise.resolve(null);
+
+    return Promise.resolve(
+        ((1 - confidence) * (+racingScore! + bloodlineScore!) / (+(racingScore != null) + +(bloodlineScore != null)))
+        + (confidence! * +breedingScore!)
+    );
+}
+
+/**
  * Calculates the suggested stud fee of a particulra horse.
  * @param {object} data - an object containing the id of the horse and the formula to use.
  * @returns {Promise<number>} A `Promise` resolving with the suggested stud fee.
