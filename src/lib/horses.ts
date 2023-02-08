@@ -202,10 +202,9 @@ export function createStallionScoreBadge(data: StallionScore | null | undefined)
 /**
  * Generates a breeding report for the provided list of horses.
  * @param {BreedingReportData} data - an object containing the ids of the horses and any header override.
- * @param {{ [id: number]: number }} breedingScoreMap - a object containing breeding score values to be included in the report.
  * @returns {Promise<string>} A `Promise` that resolves with the report as a base64-encoded data URI.
  */
-export async function generateBreedingReport({ ids, headers, includeBreedingScores }: BreedingReportData, breedingScoreMap?: { [id: number]: number }): Promise<string> {
+export async function generateBreedingReport({ ids, headers }: BreedingReportData): Promise<string> {
     const csv: Array<BreedingReportRow> = [
         [
             'ID',
@@ -235,7 +234,6 @@ export async function generateBreedingReport({ ids, headers, includeBreedingScor
             'Stake Place',
             'Stake Show',
             'Stake Earnings',
-            includeBreedingScores ? 'Breeding Score' : '',
         ].filter(v => !!v).map((v, i) => headers?.[i] ?? v),
     ];
 
@@ -243,7 +241,7 @@ export async function generateBreedingReport({ ids, headers, includeBreedingScor
     let batch: number[] | null;
 
     while ((batch = _ids.splice(0, 10)) && batch.length > 0) {
-        const rows = await Promise.all(batch.map(id => getBreedingReportRow(id, breedingScoreMap?.[id])));
+        const rows = await Promise.all(batch.map(id => getBreedingReportRow(id)));
         csv.push(...rows.map(row => row.slice(0, csv[0].length)));
 
         if (_ids.length > 0) {
@@ -267,7 +265,7 @@ export async function generateBreedingReport({ ids, headers, includeBreedingScor
  * @param {number} id - the id of the horse.
  * @returns {Promise<BreedingReportRow>} A `Promise` that resolves with an array of row data values.
  */
-async function getBreedingReportRow(id: number, breedingScore?: number): Promise<BreedingReportRow> {
+async function getBreedingReportRow(id: number): Promise<BreedingReportRow> {
     const [profile, report]: [string, string] = await Promise.all([
         getInfo(id),
         getProgenyReport(id),
@@ -303,7 +301,6 @@ async function getBreedingReportRow(id: number, breedingScore?: number): Promise
         stakeWinners,
         toPercentage(stakeWinners, totalStarters),
         ...(report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1) ?? ['0', '0', '0', '0', '$0']),
-        breedingScore == null ? '' : Math.floor(breedingScore),
     ];
 }
 

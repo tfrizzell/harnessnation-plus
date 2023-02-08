@@ -129,14 +129,7 @@ async function generateBreedingReport(data: BreedingReportData): Promise<string>
     await chrome.storage.local.set({ 'breeding.export': true });
 
     try {
-        let breedingScoreMap: { [id: number]: number } | undefined = undefined;
-
-        if (data.includeBreedingScores === true) {
-            const horses = await getHorses();
-            breedingScoreMap = horses.reduce((map, horse) => ({ ...map, [horse.id!]: horse.stallionScore?.value }), {});
-        }
-
-        return await generateBreedingReportAsync(data, breedingScoreMap);
+        return await generateBreedingReportAsync(data);
     } finally {
         console.debug(`%chorses.ts%c     Clearing breeding export flag`, 'color:#406e8e;font-weight:bold;', '');
         await chrome.storage.local.remove('breeding.export');

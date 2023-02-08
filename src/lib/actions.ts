@@ -16,7 +16,6 @@ export enum ActionType {
 export type BreedingReportData = {
     ids: number[];
     headers?: { [key: number]: string };
-    includeBreedingScores?: boolean;
 }
 
 export type CalculateStudFeeData = {
