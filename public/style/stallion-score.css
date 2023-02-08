@@ -25,19 +25,19 @@
     width: 3.45em;
 }
 
-.hn-plus-stallion-score:has(.hn-plus-breeding-score-level:empty) {
+.hn-plus-stallion-score:has(.hn-plus-stallion-score-level:empty) {
     cursor: pointer;
 }
 
-.hn-plus-breeding-score-value {
+.hn-plus-stallion-score-value {
     font-size: 1.2em;
 }
 
-.hn-plus-breeding-score-level {
+.hn-plus-stallion-score-level {
     font-size: 0.8em;
 }
 
-.hn-plus-breeding-score-tooltip {
+.hn-plus-stallion-score-tooltip {
     background: #ffffff;
     border: 1px solid var(--hn-plus-theme-primary, #23395b);
     border-radius: 5px;
@@ -56,7 +56,7 @@
     z-index: 2;
 }
 
-.hn-plus-breeding-score-tooltip:after {
+.hn-plus-stallion-score-tooltip:after {
     border: 0.7em solid transparent;
     border-left: 1em solid var(--hn-plus-theme-primary, #23395b);
     content: "";
@@ -66,11 +66,11 @@
     transform: translateY(-50%);
 }
 
-.hn-plus-breeding-score-tooltip p + p {
+.hn-plus-stallion-score-tooltip p + p {
     margin-top: 0.25em;
 }
 
-.hn-plus-breeding-score-tooltip .hn-plus-stallion-score-confidence {
+.hn-plus-stallion-score-tooltip .hn-plus-stallion-score-confidence {
     margin-top: 0.5em;
     text-align: right;
 }
@@ -79,6 +79,6 @@
     box-shadow: 0 0 5px 0 #4f4f4f;
 }
 
-.hn-plus-stallion-score:hover .hn-plus-breeding-score-tooltip {
+.hn-plus-stallion-score:hover .hn-plus-stallion-score-tooltip {
     display: block;
 }

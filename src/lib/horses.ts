@@ -160,13 +160,13 @@ export function createStallionScoreBadge(data: StallionScore | null | undefined)
     badge.classList.add('hn-plus-stallion-score');
 
     const score: HTMLElement = document.createElement('h3');
-    score.classList.add('hn-plus-breeding-score-value');
+    score.classList.add('hn-plus-stallion-score-value');
 
     const level: HTMLElement = document.createElement('h4');
-    level.classList.add('hn-plus-breeding-score-level');
+    level.classList.add('hn-plus-stallion-score-level');
 
     const tooltip: HTMLElement = document.createElement('aside');
-    tooltip.classList.add('hn-plus-breeding-score-tooltip');
+    tooltip.classList.add('hn-plus-stallion-score-tooltip');
 
     if (data?.value != null) {
         const stallionScore: number = Math.floor(data.value!);

@@ -2,7 +2,7 @@ import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onInstalled, onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/horses.js';
 
-(async (): Promise<void> => {
+((): void => {
     async function addStallionScore() {
         const id: number = document.body.innerHTML.match(/<b[^>]*>\s*ID\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.slice(1)?.map(parseInt)?.[0] ?? 0;
         const gender: string | undefined = document.body.innerHTML.match(/<b[^>]*>\s*Gender\s*:\s*<\/b[^>]*>\s*(\S+)/i)?.[1]?.toLowerCase();
@@ -14,7 +14,7 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
         const horse: Horse | undefined = (await sendAction(ActionType.GetHorse, { id })).data;
         let badge = createStallionScoreBadge(horse?.stallionScore);
 
-        let tooltip: HTMLElement = badge.querySelector('.hn-plus-breeding-score-tooltip')!;
+        let tooltip: HTMLElement = badge.querySelector('.hn-plus-stallion-score-tooltip')!;
         tooltip.addEventListener('click', e => e.stopPropagation());
 
         if (horse?.stallionScore?.confidence == null) {
@@ -32,7 +32,7 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
                     badge.replaceWith(newBadge);
 
                     badge = newBadge;
-                    tooltip = newBadge.querySelector('.hn-plus-breeding-score-tooltip')!;
+                    tooltip = newBadge.querySelector('.hn-plus-stallion-score-tooltip')!;
 
                     if (!breeding) {
                         tooltip.innerHTML += '<p>This value is a project of what the stallion score would be if the horse were retired to stud right now.</p>';
@@ -46,18 +46,17 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
 
         const name: HTMLElement | null = document.querySelector('h1.font-weight-bold.text-left');
         name?.parentElement?.nextElementSibling?.insertBefore(badge, name?.parentElement?.nextElementSibling.firstChild);
-
     }
 
     onInstalled(() => {
-        document.querySelectorAll('.hn-plus-breeding-score').forEach(el => el.remove());
+        document.querySelectorAll('.hn-plus-stallion-score').forEach(el => el.remove());
     });
 
     onLoad(() => {
-        document.querySelectorAll('.hn-plus-breeding-score').forEach(el => el.remove());
+        document.querySelectorAll('.hn-plus-stallion-score').forEach(el => el.remove());
         addStallionScore();
     });
 
-    if (document.querySelector('h1.font-weight-bold.text-left') != null)
+    if (document.readyState !== 'loading' && document.querySelector('h1.font-weight-bold.text-left') != null)
         addStallionScore();
 })();

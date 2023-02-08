@@ -14,13 +14,13 @@
     margin-left: 0.5em;
 }
 
-.hn-plus-breeding-score-tooltip {
+.hn-plus-stallion-score-tooltip {
     left: 100%;
     right: unset;
     transform: translate(0.75em, -50%);
 }
 
-.hn-plus-breeding-score-tooltip:after {
+.hn-plus-stallion-score-tooltip:after {
     border: 0.7em solid transparent;
     border-right: 1em solid var(--hn-plus-theme-primary, #23395b);
     left: unset;
