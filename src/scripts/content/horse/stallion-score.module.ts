@@ -17,7 +17,7 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
         let tooltip: HTMLElement = badge.querySelector('.hn-plus-breeding-score-tooltip')!;
         tooltip.addEventListener('click', e => e.stopPropagation());
 
-        if (horse?.stallionScore?.value == null) {
+        if (horse?.stallionScore?.confidence == null) {
             tooltip.innerHTML = tooltip.innerHTML.replace(/<\/p[^>]*>$/i, ` Click the box to ${breeding ? 'evaluate' : 'preview'} the stallion score.</p>`)
             tooltip.addEventListener('click', e => e.stopPropagation());
 

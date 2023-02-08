@@ -344,7 +344,7 @@ export async function updateStallionScores(): Promise<void> {
         horse.stallionScore!.breeding = breedingScore;
         horse.stallionScore!.confidence = confidence;
 
-        if (horse.stallionScore!.racing == null)
+        if (horse.stallionScore!.racing === undefined)
             horse.stallionScore!.racing = await calculateRacingScore(horse.id!);
 
         if (updated.push(horse) % 10 === 0)
