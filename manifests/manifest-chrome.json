@@ -105,6 +105,7 @@
       "css": [
         "public/style/theme.css",
         "public/style/common.css",
+        "public/style/stallion-score.css",
         "scripts/content/stable/breeding.css"
       ],
       "js": [

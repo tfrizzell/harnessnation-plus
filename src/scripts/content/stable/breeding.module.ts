@@ -1,5 +1,6 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onInstalled, onLoad } from '../../../lib/events.js';
+import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
 import { toTimestamp } from '../../../lib/utils.js';
 
 ((): void => {
@@ -62,6 +63,25 @@ import { toTimestamp } from '../../../lib/utils.js';
         });
     }
 
+    async function addStallionScores(): Promise<void> {
+        const cells: HTMLAnchorElement[] = Array.from(document.querySelectorAll('#breedingHorseTable_4 > tbody > tr > td:nth-child(2)'));
+        const horses: Horse[] | undefined = (await sendAction(ActionType.GetHorses)).data;
+
+        if (horses == null)
+            return;
+
+        for (const cell of cells) {
+            const id: number | undefined = cell.innerHTML.match(/\/horse\/(\d+)/)?.slice(1)?.map(parseInt)?.[0];
+            const horse: Horse | undefined = horses.find(horse => horse.id === id);
+
+            if (horse?.stallionScore?.value == null)
+                continue;
+
+            const badge = createStallionScoreBadge(horse.stallionScore);
+            cell.insertBefore(badge, cell.firstElementChild);
+        }
+    }
+
     async function exportReport(html: string): Promise<void> {
         const pattern: RegExp = /<tr[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
         const ids: number[] = [];
@@ -80,6 +100,9 @@ import { toTimestamp } from '../../../lib/utils.js';
         mutations.forEach((mutation: MutationRecord): void => {
             if ([].find.call(mutation.addedNodes, (node: HTMLElement): boolean => node.id === 'breedingHorseTable_3_wrapper'))
                 addExportButton();
+
+            if ([].find.call(mutation.addedNodes, (node: HTMLElement): boolean => node.id === 'breedingHorseTable_4_wrapper'))
+                addStallionScores();
         });
     });
 
@@ -87,7 +110,7 @@ import { toTimestamp } from '../../../lib/utils.js';
 
     onInstalled((): void => {
         observer.disconnect();
-        document.querySelectorAll('.hn-plus-button-wrapper').forEach(el => el.remove());
+        document.querySelectorAll('.hn-plus-button-wrapper, .hn-plus-stallion-score').forEach(el => el.remove());
     });
 
     onLoad((): void => {
@@ -99,4 +122,7 @@ import { toTimestamp } from '../../../lib/utils.js';
 
     if (document.querySelector('.horseContentContainer_3'))
         addExportButton();
+
+    if (document.querySelector('.horseContentContainer_4'))
+        addStallionScores()
 })();

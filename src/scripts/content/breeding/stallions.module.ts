@@ -57,7 +57,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
     }
 
     async function addStallionScores(): Promise<void> {
-        const cells: HTMLAnchorElement[] = Array.from(document.querySelectorAll('#saleTable > tbody > tr > td:first-child'));
+        const cells: HTMLAnchorElement[] = Array.from(document.querySelectorAll('#saleTable > tbody > tr > td:nth-child(1)'));
         const horses: Horse[] | undefined = (await sendAction(ActionType.GetHorses)).data;
 
         if (horses == null)
