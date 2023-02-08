@@ -1,7 +1,9 @@
 import { pastels as palette } from '../../../lib/colors.js';
-import { onInstalled } from '../../../lib/events.js';
 
-(async (): Promise<void> => {
+((): void => {
+    if (document.readyState === 'complete')
+        return;
+
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
         mutations.forEach((mutation: MutationRecord): void => {
             let container: Element | undefined = [...mutation.addedNodes].find((node: Node): boolean => (node instanceof HTMLElement) && (node.classList.contains('pedigreeContainer') || node.querySelector('.pedigreeContainer') != null)) as Element;
@@ -49,5 +51,4 @@ import { onInstalled } from '../../../lib/events.js';
     });
 
     observer.observe(window.document, { childList: true, subtree: true });
-    onInstalled((): void => observer.disconnect());
 })();
