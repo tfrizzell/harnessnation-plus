@@ -46,6 +46,8 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
 
         const name: HTMLElement | null = document.querySelector('h1.font-weight-bold.text-left');
         name?.parentElement?.nextElementSibling?.insertBefore(badge, name?.parentElement?.nextElementSibling.firstChild);
+
+        window.addEventListener('DOMContentLoaded', (): void => badge.remove(), { once: true });
         onInstalled((): void => badge.remove());
     }
 
