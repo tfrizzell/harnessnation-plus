@@ -1,5 +1,5 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
-import { onInstalled } from '../../../lib/events.js';
+import { onInstalled, onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/horses.js';
 
 (async (): Promise<void> => {
@@ -47,12 +47,17 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
         const name: HTMLElement | null = document.querySelector('h1.font-weight-bold.text-left');
         name?.parentElement?.nextElementSibling?.insertBefore(badge, name?.parentElement?.nextElementSibling.firstChild);
 
-        window.addEventListener('DOMContentLoaded', (): void => badge.remove(), { once: true });
-        onInstalled((): void => badge.remove());
     }
 
-    window.addEventListener('DOMContentLoaded', addStallionScore, { once: true });
+    onInstalled(() => {
+        document.querySelectorAll('.hn-plus-breeding-score').forEach(el => el.remove());
+    });
+
+    onLoad(() => {
+        document.querySelectorAll('.hn-plus-breeding-score').forEach(el => el.remove());
+        addStallionScore();
+    });
 
     if (document.querySelector('h1.font-weight-bold.text-left') != null)
-        await addStallionScore();
+        addStallionScore();
 })();
