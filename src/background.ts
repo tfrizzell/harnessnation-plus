@@ -18,6 +18,7 @@ chrome.alarms.onAlarm.addListener(async (alarm: chrome.alarms.Alarm) => {
 
 function getNext__updateStallionScores(from: Date) {
     const next = new Date(from.valueOf());
+    next.setMonth(next.getMonth() + 1);
     next.setDate(1);
     next.setUTCHours(7);
     next.setUTCMinutes(0);
