@@ -4,12 +4,16 @@ import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, g
 import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, HorseSearchData, SendResponse } from '../../lib/actions.js';
 import { AlarmType } from '../../lib/alarms.js';
 import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, BreedingScore, Horse, StallionScore, getInfo, calculateStallionScore } from '../../lib/horses.js';
-import { regexEscape, sleep, toDate } from '../../lib/utils.js';
+import { regexEscape, sleep } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
 let db: Firestore = firestore.singleton();
 
-chrome.runtime.onMessage.addListener((action: Action<any>, _sender: chrome.runtime.MessageSender, sendResponse: SendResponse) => {
+chrome.runtime.onMessage.addListener((action: Action<any>, _sender: chrome.runtime.MessageSender, _sendResponse: SendResponse) => {
+    // Firefox compatibility: `structuredClone` fails, so use `.toJSON()` to send a plain object
+    const sendResponse = (response: ActionResponse<any> | ActionError): void =>
+        _sendResponse(response.toJSON());
+
     switch (action?.type) {
         case ActionType.CalculateStudFee:
             calculateStudFee(action.data)
@@ -137,6 +141,12 @@ async function generateBreedingReport(data: BreedingReportData): Promise<string>
 }
 
 export async function getHorseById(id: number): Promise<Horse | undefined> {
+    const colRef: CollectionReference<DocumentData> = collection(db, 'horses');
+    const querySnapshot: QuerySnapshot<HorseWithLastModified> = await getDocsFromCache(colRef);
+
+    if (querySnapshot.docs.length < 1)
+        await getDocsFromServer(colRef);
+
     const docRef: DocumentReference<DocumentData> = doc(db, 'horses', `${id}`);
     let _doc: DocumentSnapshot<HorseWithLastModified> | null;
 
