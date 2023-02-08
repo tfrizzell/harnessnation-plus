@@ -19,8 +19,12 @@ function confirmAsync(message?: any): Promise<boolean> {
 }
 
 async function clearStallionCache() {
-    if (await confirmAsync('You are about to clear your local cache of horse data. The data will be repopulated the next time you access the stallion registry page. Would you like to continue?'))
+    if (await confirmAsync('You are about to clear your local cache of horse data. The data will be repopulated the next time you access the stallion registry page. Would you like to continue?')) {
         await sendAction(ActionType.ClearHorseCache);
+        return true;
+    }
+
+    return false;
 }
 
 async function loadSettings(): Promise<void> {
@@ -110,8 +114,8 @@ onLoad(async () => {
         e.preventDefault();
 
         try {
-            await clearStallionCache();
-            await alertAsync('The stallion bloodline cache has been cleared!');
+            if (await clearStallionCache())
+                await alertAsync('The stallion bloodline cache has been cleared!');
         } catch (e: any) {
             if (e) {
                 console.error(`%coptions.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');

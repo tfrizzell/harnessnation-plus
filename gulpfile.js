@@ -71,7 +71,7 @@ const copyManifest = browser => () =>
 gulp.task('build:chrome', gulp.series('build', copyManifest('chrome')));
 gulp.task('build:edge', gulp.series('build', copyManifest('edge')));
 gulp.task('build:firefox', gulp.series('build', copyManifest('firefox')));
-gulp.task('build:debug', gulp.parallel('build:edge'));
+gulp.task('build:debug', gulp.parallel('build:chrome'));
 
 /***********************
  **                   **

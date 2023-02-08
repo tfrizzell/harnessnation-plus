@@ -3,7 +3,7 @@
   "name": "HarnessNation+",
   "short_name": "hn-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.6.2",
+  "version": "3.7.0",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
   "icons": {
@@ -17,6 +17,7 @@
     "*://*.harnessnation.com/"
   ],
   "permissions": [
+    "alarms",
     "scripting",
     "storage",
     "tabs"
@@ -48,6 +49,7 @@
       "css": [
         "public/style/theme.css",
         "public/style/common.css",
+        "public/style/stallion-score.css",
         "scripts/content/breeding/stallions.css"
       ],
       "js": [
@@ -71,11 +73,17 @@
       "matches": [
         "*://*.harnessnation.com/horse/*"
       ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/stallion-score.css",
+        "scripts/content/horse/stallion-score.css"
+      ],
       "js": [
         "lib/data-tables.web.js",
         "lib/events.web.js",
         "scripts/content/horse/pedigree.js",
-        "scripts/content/horse/progeny-table.js"
+        "scripts/content/horse/progeny-table.js",
+        "scripts/content/horse/stallion-score.js"
       ],
       "run_at": "document_start"
     },
@@ -97,6 +105,7 @@
       "css": [
         "public/style/theme.css",
         "public/style/common.css",
+        "public/style/stallion-score.css",
         "scripts/content/stable/breeding.css"
       ],
       "js": [

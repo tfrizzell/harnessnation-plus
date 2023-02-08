@@ -1,0 +1,21 @@
+@import '../../../public/style/theme.css';
+@import '../../../public/style/stallion-score.css';
+
+.hn-plus-stallion-score-available {
+    cursor: pointer;
+}
+
+.hn-plus-stallion-score-preview::before {
+    color: #4f4f4f;
+    content: 'Preview';
+    font-size: 0.8em;
+    font-style: italic;
+    left: 50%;
+    position: absolute;
+    transform: translate(-50%, 0.1em);
+    top: 100%;
+}
+
+.hn-plus-stallion-score-preview .hn-plus-stallion-score-confidence {
+    display: none;
+}

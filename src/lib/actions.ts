@@ -1,13 +1,16 @@
-import { Horse } from './horses.js';
+import { Horse, StallionScore } from './horses.js';
 import { StudFeeFormula } from './settings.js';
 
 export enum ActionType {
-    CalculateStudFee = 'CALCULATE_STUD_FEE',
-    ClearHorseCache = 'CLEAR_HORSE_CACHE',
-    GenerateBreedingReport = 'GENERATE_BREEDING_REPORT',
-    GetHorses = 'GET_HORSES',
-    SaveHorses = 'SAVE_HORSES',
-    SearchHorses = 'SEARCH_HORSES',
+    CalculateStudFee = 'ACTION__CALCULATE_STUD_FEE',
+    ClearHorseCache = 'ACTION__CLEAR_HORSE_CACHE',
+    GenerateBreedingReport = 'ACTION__GENERATE_BREEDING_REPORT',
+    GetHorse = 'ACTION__GET_HORSE',
+    GetHorses = 'ACTION__GET_HORSES',
+    PreviewStallionScore = 'ACTION__PREVIEW_STALLION_SCORE',
+    SaveHorses = 'ACTION__SAVE_HORSES',
+    SearchHorses = 'ACTION__SEARCH_HORSES',
+    UpdateStallionScores = 'ACTION__UPDATE_STALLION_SCORES',
 }
 
 export type BreedingReportData = {
@@ -18,6 +21,10 @@ export type BreedingReportData = {
 export type CalculateStudFeeData = {
     id: number;
     formula?: StudFeeFormula
+}
+
+export type HorseIdData = {
+    id: number;
 }
 
 export type HorseSearchData = {
@@ -65,8 +72,12 @@ export class Action<T> {
 
     public constructor(type: ActionType.CalculateStudFee, data: CalculateStudFeeData);
     public constructor(type: ActionType.GenerateBreedingReport, data: BreedingReportData);
+    public constructor(type: ActionType.GetHorse, data: HorseIdData);
+    public constructor(type: ActionType.GetHorses, data: void);
+    public constructor(type: ActionType.PreviewStallionScore, data: HorseIdData);
     public constructor(type: ActionType.SaveHorses, data: Horse[]);
     public constructor(type: ActionType.SearchHorses, data: HorseSearchData);
+    public constructor(type: ActionType.UpdateStallionScores, data: void);
     public constructor(type: ActionType, data: T);
     public constructor(type: ActionType, data: T) {
         this.#type = type;
@@ -186,7 +197,12 @@ export class ActionResponse<T> {
 
 export async function sendAction(type: ActionType.CalculateStudFee, data: CalculateStudFeeData): Promise<ActionResponse<number>>;
 export async function sendAction(type: ActionType.GenerateBreedingReport, data: BreedingReportData): Promise<ActionResponse<string>>;
-export async function sendAction(type: ActionType.GetHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;
+export async function sendAction(type: ActionType.GetHorse, data: HorseIdData): Promise<ActionResponse<Horse>>;
+export async function sendAction(type: ActionType.GetHorses): Promise<ActionResponse<Horse[]>>;
+export async function sendAction(type: ActionType.PreviewStallionScore, data: HorseIdData): Promise<ActionResponse<StallionScore | null>>;
+export async function sendAction(type: ActionType.SaveHorses, data: Horse[]): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.SearchHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;
+export async function sendAction(type: ActionType.UpdateStallionScores): Promise<ActionResponse<void>>;
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
     const response: ActionResponse<T> | ActionError = await chrome.runtime.sendMessage(new Action(type, data));

@@ -1,4 +1,4 @@
-@import '../../../public/style/theme.css';
+@import './theme.css';
 
 .hn-plus-button {
     align-items: center;

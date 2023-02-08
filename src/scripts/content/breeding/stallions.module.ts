@@ -1,6 +1,6 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { EventType, onInstalled, onLoad } from '../../../lib/events.js';
-import { Horse } from '../../../lib/horses.js';
+import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
 import { StallionRegistrySettings } from '../../../lib/settings.js';
 import { sleep, toTimestamp } from '../../../lib/utils.js';
 
@@ -56,6 +56,25 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
         });
     }
 
+    async function addStallionScores(): Promise<void> {
+        const cells: HTMLAnchorElement[] = Array.from(document.querySelectorAll('#saleTable > tbody > tr > td:nth-child(1)'));
+        const horses: Horse[] | undefined = (await sendAction(ActionType.GetHorses)).data;
+
+        if (horses == null)
+            return;
+
+        for (const cell of cells) {
+            const id: number | undefined = cell.innerHTML.match(/\/horse\/(\d+)/)?.slice(1)?.map(parseInt)?.[0];
+            const horse: Horse | undefined = horses.find(horse => horse.id === id);
+
+            if (horse?.stallionScore?.value == null)
+                continue;
+
+            const badge = createStallionScoreBadge(horse.stallionScore);
+            cell.insertBefore(badge, cell.firstElementChild);
+        }
+    }
+
     async function bindBloodlineSearch(): Promise<void> {
         const script: HTMLScriptElement = document.createElement('script');
         script.setAttribute('type', 'module');
@@ -103,8 +122,34 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
         while (id = pattern.exec(html)?.[1])
             ids.push(+id);
 
+        let report = (await sendAction(ActionType.GenerateBreedingReport, { ids, headers: { 1: 'Stallion' } })).data!;
+        const rows = atob(report.slice(21)).split('\n');
+
+        if (rows.length > 1) {
+            const horses: Horse[] | undefined = (await sendAction(ActionType.GetHorses)).data;
+
+            if (horses != null) {
+                report = report.slice(0, 21) +
+                    btoa(rows.map((row, i) => {
+                        if (i === 0)
+                            return `${row},"Stallion Score"`;
+
+                        const id: number = row.match(/^"(\d+)"/)?.slice(1)?.map(parseInt)?.[0] ?? 0;
+
+                        if (id > 0) {
+                            const horse: Horse | undefined = horses.find(horse => horse.id === id);
+
+                            if (horse?.stallionScore?.value != null)
+                                return `${row},"${Math.floor(horse.stallionScore.value)}"`;
+                        }
+
+                        return `${row},""`;
+                    }).join('\n'));
+            }
+        }
+
         const download: HTMLAnchorElement = document.createElement('a');
-        download.setAttribute('href', (await sendAction(ActionType.GenerateBreedingReport, { ids, headers: { 1: 'Stallion' } })).data!);
+        download.setAttribute('href', report);
         download.setAttribute('download', `hn-plus-stallion-report-${toTimestamp().replace(/\D/g, '')}.csv`);
         download.click();
     }
@@ -115,12 +160,13 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
         let data;
 
         while (data = pattern.exec(html)) {
-            const [id, name, sireId, sireName] = data.slice(1);
+            const [id, name, sireId, sireName, damId] = data.slice(1);
 
             horses[id] = {
                 id: +id,
                 name,
                 sireId: +sireId || null,
+                damId: +damId || null,
                 retired: false,
             };
 
@@ -137,6 +183,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
         mutations.forEach((mutation: MutationRecord): void => {
             if ([].find.call(mutation.addedNodes, (node: HTMLElement): boolean => node.id === 'saleTable_wrapper')) {
                 addExportButton();
+                addStallionScores();
                 bindBloodlineSearch();
                 updateHorses((mutation.target as HTMLElement).innerHTML);
             }
@@ -147,7 +194,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
 
     onInstalled((): void => {
         observer.disconnect();
-        document.querySelectorAll('.hn-plus-button-wrapper').forEach(el => el.remove());
+        document.querySelectorAll('.hn-plus-button-wrapper, .hn-plus-stallion-score').forEach(el => el.remove());
     });
 
     onLoad((): void => {
@@ -159,6 +206,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
 
     if (document.querySelector('#saleTable_wrapper')) {
         addExportButton();
+        addStallionScores();
         bindBloodlineSearch();
         updateHorses(document.querySelector('#saleTable_wrapper')!.innerHTML);
     }
