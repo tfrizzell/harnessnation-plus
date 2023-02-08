@@ -23,8 +23,7 @@
     "tabs"
   ],
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "page": "background.html"
   },
   "options_ui": {
     "page": "options/index.html",
