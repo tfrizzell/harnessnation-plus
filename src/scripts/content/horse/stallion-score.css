@@ -1,75 +1,21 @@
 @import '../../../public/style/theme.css';
+@import '../../../public/style/stallion-score.css';
 
-.hn-plus-stallion-score {
-    align-items: center;
-    aspect-ratio: 1.2;
-    background: var(--hn-plus-theme-tertiary, #8ea8c3);
-    border-radius: 0.25em;
-    color: #ffffff;
-    cursor: default;
-    display: inline-flex;
-    flex-direction: column;
+.hn-plus-stallion-score-available {
+    cursor: pointer;
+}
+
+.hn-plus-stallion-score-preview::before {
+    color: #4f4f4f;
+    content: 'Preview';
     font-size: 0.8em;
-    justify-content: center;
-    margin: 0 1em 0 0;
-    padding: 0.5em;
-    position: relative;
-    width: 3.45em;
+    font-style: italic;
+    left: 50%;
+    position: absolute;
+    transform: translate(-50%, 0.1em);
+    top: 100%;
 }
 
-.hn-plus-stallion-score * {
-    margin: 0;
-    padding: 0;
-}
-
-.hn-plus-breeding-score-value {
-    font-size: 1.2em;
-}
-
-.hn-plus-breeding-score-level {
-    font-size: 0.7em;
-}
-
-.hn-plus-breeding-score-tooltip {
-    background: #ffffff;
-    border: 1px solid var(--hn-plus-theme-primary, #23395b);
-    border-radius: 5px;
-    box-shadow: 0 0 5px 0 #4f4f4f;
-    color: var(--theme-primary, #23395b);
+.hn-plus-stallion-score-preview .hn-plus-stallion-score-confidence {
     display: none;
-    font-size: 0.95em;
-    padding: 0.357em 0.714em;
-    position: absolute;
-    right: 100%;
-    text-align: left;
-    top: 50%;
-    transform: translate(-0.75em, -50%);
-    transition: 400ms ease;
-    width: 21em;
-    z-index: 2;
-}
-
-.hn-plus-breeding-score-tooltip p:last-of-type {
-    margin-top: 0.5em;
-    text-align: right;
-}
-
-.hn-plus-breeding-score-tooltip:after {
-    border-color: transparent;
-    border-style: solid;
-    border-width: 0.7em;
-    border-left: 1em solid var(--hn-plus-theme-primary, #23395b);
-    content: "";
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.hn-plus-stallion-score:hover {
-    box-shadow: 0 0 5px 0 #4f4f4f;
-}
-
-.hn-plus-stallion-score:hover .hn-plus-breeding-score-tooltip {
-    display: block;
 }

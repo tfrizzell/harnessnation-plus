@@ -138,6 +138,7 @@ async function generateBreedingReport(data: BreedingReportData): Promise<string>
 
         return await generateBreedingReportAsync(data, breedingScoreMap);
     } finally {
+        console.debug(`%chorses.ts%c     Clearing breeding export flag`, 'color:#406e8e;font-weight:bold;', '');
         await chrome.storage.local.remove('breeding.export');
     }
 }
@@ -242,7 +243,8 @@ async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<number | und
     }
 
     if (!_doc.exists()) {
-        const { sireId, damId, retired }: HorseWithLastModified = await getHorse(horse.id);
+        const { name, sireId, damId, retired }: HorseWithLastModified = await getHorse(horse.id);
+        horse.name = name;
         horse.sireId = sireId;
         horse.damId = damId;
         horse.retired = retired;

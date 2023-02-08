@@ -26,6 +26,11 @@ export type StallionScore = {
     bloodline?: number | null;
 }
 
+export type StallionScoreBadgeOptions = {
+    preview?: boolean;
+    clickable?: boolean;
+}
+
 /**
  * Calculates the bloodline score of a particular horse.
  * @param {number} id - the id of the horse.
@@ -143,6 +148,55 @@ export async function calculateStudFee({ id, formula }: CalculateStudFeeData): P
     }
 
     return Math.min(10000000, Math.max(1000, fee));
+}
+
+/**
+ * Calculates the suggested stud fee of a particulra horse.
+ * @param {object} data - an object containing the id of the horse and the formula to use.
+ * @returns {Promise<number>} A `Promise` resolving with the suggested stud fee.
+ */
+export function createStallionScoreBadge(data: StallionScore | null | undefined): HTMLElement {
+    const badge: HTMLElement = document.createElement('div');
+    badge.classList.add('hn-plus-stallion-score');
+
+    const score: HTMLElement = document.createElement('h3');
+    score.classList.add('hn-plus-breeding-score-value');
+
+    const level: HTMLElement = document.createElement('h4');
+    level.classList.add('hn-plus-breeding-score-level');
+
+    const tooltip: HTMLElement = document.createElement('aside');
+    tooltip.classList.add('hn-plus-breeding-score-tooltip');
+
+    if (data?.value != null) {
+        const stallionScore: number = Math.floor(data.value!);
+        score.innerHTML = `<b>${stallionScore.toString()}</b>`;
+        tooltip.innerHTML = `<p>The HarnessNation+ stallion score reflects the estimated breeding ability of a stallion.</p><p class="hn-plus-stallion-score-confidence"><b>Confidence:</b> ${Math.round(100 * data.confidence!)}%</p>`;
+
+        if (stallionScore >= 110) {
+            level.textContent = 'Elite';
+            badge.classList.add('grade-a-plus');
+        } else if (stallionScore >= 90) {
+            level.textContent = 'Good';
+            badge.classList.add('grade-b-plus');
+        } else if (stallionScore >= 50) {
+            level.textContent = 'Average';
+            badge.classList.add('grade-c-plus');
+        } else if (stallionScore >= 25) {
+            level.textContent = 'Weak';
+            badge.classList.add('grade-d-plus');
+        } else if (stallionScore >= 0) {
+            level.textContent = 'Poor';
+            badge.classList.add('grade-e-plus');
+        } else
+            level.textContent = 'N/A';
+    } else {
+        score.innerHTML = '<i>N/A</i>';
+        tooltip.innerHTML = '<p>The HarnessNation+ stallion score reflects the estimated breeding ability of a stallion.</p><p>The stallion score isn\'t available for this horse.</p>';
+    }
+
+    badge.append(score, level, tooltip);
+    return badge;
 }
 
 /**

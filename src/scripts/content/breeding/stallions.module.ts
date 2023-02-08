@@ -1,6 +1,6 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { EventType, onInstalled, onLoad } from '../../../lib/events.js';
-import { Horse } from '../../../lib/horses.js';
+import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
 import { StallionRegistrySettings } from '../../../lib/settings.js';
 import { sleep, toTimestamp } from '../../../lib/utils.js';
 
@@ -54,6 +54,25 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
             chrome.storage.onChanged.removeListener(handleStateChange);
             document.querySelectorAll('.hn-plus-button-wrapper').forEach((el: Element): void => { el.remove(); });
         });
+    }
+
+    async function addStallionScores(): Promise<void> {
+        const cells: HTMLAnchorElement[] = Array.from(document.querySelectorAll('#saleTable > tbody > tr > td:first-child'));
+        const horses: Horse[] | undefined = (await sendAction(ActionType.GetHorses)).data;
+
+        if (horses == null)
+            return;
+
+        for (const cell of cells) {
+            const id: number | undefined = cell.innerHTML.match(/\/horse\/(\d+)/)?.slice(1)?.map(parseInt)?.[0];
+            const horse: Horse | undefined = horses.find(horse => horse.id === id);
+
+            if (horse?.stallionScore?.value == null)
+                continue;
+
+            const badge = createStallionScoreBadge(horse.stallionScore);
+            cell.insertBefore(badge, cell.firstElementChild);
+        }
     }
 
     async function bindBloodlineSearch(): Promise<void> {
@@ -138,6 +157,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
         mutations.forEach((mutation: MutationRecord): void => {
             if ([].find.call(mutation.addedNodes, (node: HTMLElement): boolean => node.id === 'saleTable_wrapper')) {
                 addExportButton();
+                addStallionScores();
                 bindBloodlineSearch();
                 updateHorses((mutation.target as HTMLElement).innerHTML);
             }
@@ -148,7 +168,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
 
     onInstalled((): void => {
         observer.disconnect();
-        document.querySelectorAll('.hn-plus-button-wrapper').forEach(el => el.remove());
+        document.querySelectorAll('.hn-plus-button-wrapper, .hn-plus-stallion-score').forEach(el => el.remove());
     });
 
     onLoad((): void => {
@@ -160,6 +180,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
 
     if (document.querySelector('#saleTable_wrapper')) {
         addExportButton();
+        addStallionScores();
         bindBloodlineSearch();
         updateHorses(document.querySelector('#saleTable_wrapper')!.innerHTML);
     }

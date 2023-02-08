@@ -49,6 +49,7 @@
       "css": [
         "public/style/theme.css",
         "public/style/common.css",
+        "public/style/stallion-score.css",
         "scripts/content/breeding/stallions.css"
       ],
       "js": [
@@ -74,6 +75,7 @@
       ],
       "css": [
         "public/style/theme.css",
+        "public/style/stallion-score.css",
         "scripts/content/horse/stallion-score.css"
       ],
       "js": [
