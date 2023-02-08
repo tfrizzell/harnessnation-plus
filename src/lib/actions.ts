@@ -33,7 +33,7 @@ export type HorseSearchData = {
 }
 
 export type SendResponse = {
-    (data: ActionResponse<any> | ActionError): void;
+    (data: ActionResponse<any> | ActionError | object): void;
 }
 
 export class Action<T> {
@@ -205,10 +205,11 @@ export async function sendAction(type: ActionType.SearchHorses, data: HorseSearc
 export async function sendAction(type: ActionType.UpdateStallionScores): Promise<ActionResponse<void>>;
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
-    const response: ActionResponse<T> | ActionError = await chrome.runtime.sendMessage(new Action(type, data));
+    // Firefox compatibility: `structuredClone` fails, so use `.toJSON()` to send a plain object
+    const response: ActionResponse<T> | ActionError = await chrome.runtime.sendMessage(new Action(type, data).toJSON());
 
     if (response instanceof ActionError)
         throw ActionError.fromObject(response);
 
-    return response;
+    return ActionResponse.fromObject(response) ?? response;
 }
