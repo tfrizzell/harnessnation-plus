@@ -39,6 +39,20 @@ class HNPlusToggleElement extends HTMLInputElement {
                 opacity: 0.5;
             }
         `.trim();
+
+        HNPlusToggleElement.#injectStyle();
+    }
+
+    static #injectStyle(): void {
+        if (HNPlusToggleElement.#style.isConnected)
+            return;
+
+        const ref: HTMLElement | null = document.head.querySelector('link[rel="stylesheet"], style');
+
+        if (ref != null)
+            document.head.insertBefore(HNPlusToggleElement.#style, ref);
+        else
+            document.head.append(HNPlusToggleElement.#style);
     }
 
     constructor() {
@@ -50,10 +64,8 @@ class HNPlusToggleElement extends HTMLInputElement {
         if (this.getAttribute('type') !== 'checkbox' && this.getAttribute('type') !== 'radio')
             throw new TypeError(`HNPlusToggle: Cannot bind to input type ${this.getAttribute('type')}`);
 
+        HNPlusToggleElement.#injectStyle();
         this.classList.add('hn-plus-toggle');
-
-        if (!HNPlusToggleElement.#style.isConnected)
-            document.head.insertBefore(HNPlusToggleElement.#style, document.head.querySelector('link[rel="stylesheet"], style'));
     }
 
     disconnectedCallback(): void {

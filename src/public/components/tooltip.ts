@@ -12,11 +12,12 @@ class HNPlusTooltipElement extends HTMLElement {
                 padding: 0;
             }
             hn-plus-tooltip {
+                cursor: default;
                 display: inline-block;
                 position: relative;
             }
             hn-plus-tooltip .hn-plus-icon {
-                color: var(--theme-secondary, #406e8e);
+                color: var(--hn-plus-theme-secondary, #406e8e);
                 font-size: 24px;
                 font-style: normal;
             }
@@ -25,7 +26,7 @@ class HNPlusTooltipElement extends HTMLElement {
                 border: 1px solid var(--hn-plus-theme-primary, #23395b);
                 border-radius: 5px;
                 box-shadow: 0 0 5px 0 #4f4f4f;
-                color: var(--theme-primary, #23395b);
+                color: var(--hn-plus-theme-primary, #23395b);
                 display: none;
                 flex-direction: column;
                 left: 12px;
@@ -62,6 +63,20 @@ class HNPlusTooltipElement extends HTMLElement {
                 margin-top: 1em;
             }
         `.trim();
+
+        HNPlusTooltipElement.#injectStyle();
+    }
+
+    static #injectStyle(): void {
+        if (HNPlusTooltipElement.#style.isConnected)
+            return;
+
+        const ref: HTMLElement | null = document.head.querySelector('link[rel="stylesheet"], style');
+
+        if (ref != null)
+            document.head.insertBefore(HNPlusTooltipElement.#style, ref);
+        else
+            document.head.append(HNPlusTooltipElement.#style);
     }
 
     #icon: HTMLElement;
@@ -81,12 +96,11 @@ class HNPlusTooltipElement extends HTMLElement {
     }
 
     connectedCallback(): void {
+        HNPlusTooltipElement.#injectStyle();
+
         this.#tooltip.innerHTML = this.innerHTML;
         this.innerHTML = '';
         this.append(this.#icon, this.#tooltip);
-
-        if (!HNPlusTooltipElement.#style.isConnected)
-            document.head.insertBefore(HNPlusTooltipElement.#style, document.head.querySelector('link[rel="stylesheet"], style'));
     }
 
     disconnectedCallback(): void {
