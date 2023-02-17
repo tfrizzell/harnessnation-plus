@@ -1,4 +1,4 @@
-import { Timestamp } from "@firebase/firestore";
+import { Timestamp } from 'firebase/firestore';
 
 export function parseCurrency(value: string | number): number {
     return value == null ? value : globalThis.parseFloat(value.toString().replace(/[^\d.]/g, ''));

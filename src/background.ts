@@ -25,7 +25,7 @@ function getNext__updateStallionScores(from: Date) {
     next.setUTCSeconds(0);
     next.setUTCMilliseconds(0);
 
-    if (next.getMonth() % 4 !== 0)
+    if (next.getMonth() % 3 !== 0)
         next.setMonth(next.getMonth() + (3 - next.getMonth() % 3));
 
     return next;
