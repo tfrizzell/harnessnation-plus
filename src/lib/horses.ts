@@ -101,10 +101,10 @@ export async function calculateRacingScore(id: number): Promise<number | null> {
 export function calculateStallionScore({ confidence, racing: racingScore, breeding: breedingScore, bloodline: bloodlineScore }: StallionScore): Promise<number | null> {
     if (confidence == null || (breedingScore == null && racingScore == null && bloodlineScore == null))
         return Promise.resolve(null);
-
+    
     return Promise.resolve(
-        ((1 - confidence) * (+racingScore! + bloodlineScore!) / (+(racingScore != null) + +(bloodlineScore != null)))
-        + (confidence! * +breedingScore!)
+        ((1 - +confidence) * (+racingScore! + +bloodlineScore!) / Math.max(1, +(racingScore != null) + +(bloodlineScore != null)))
+        + (+confidence! * +breedingScore!)
     );
 }
 

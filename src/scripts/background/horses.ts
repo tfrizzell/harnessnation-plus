@@ -192,7 +192,7 @@ async function getHorsesWithLastModified(): Promise<HorseWithLastModified[]> {
 
     const qRemote: Query<DocumentData | {}> = query(colRef, where('lastModified', '>', lastModified));
     const qsRemote: QuerySnapshot<HorseWithLastModified> = await getDocsFromServer(qRemote);
-    qsRemote.size && console.debug(`%chorses.ts%c     Fetched ${qsRemote.size} new horse record${qsRemote.size === 1 ? 's' : ''} from firestore`, 'color:#406e8e;font-weight:bold;', '');
+    qsRemote.size && console.debug(`%chorses.ts%c     Fetched ${qsRemote.size} new horse record${qsRemote.size === 1 ? '' : 's'} from firestore`, 'color:#406e8e;font-weight:bold;', '');
 
     const querySnapshot: QuerySnapshot<Horse> = await getDocsFromCache(colRef);
     const horses: HorseWithLastModified[] = [];

@@ -7,6 +7,8 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
         const id: number = document.body.innerHTML.match(/<b[^>]*>\s*ID\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.slice(1)?.map(parseInt)?.[0] ?? 0;
         const gender: string | undefined = document.body.innerHTML.match(/<b[^>]*>\s*Gender\s*:\s*<\/b[^>]*>\s*(\S+)/i)?.[1]?.toLowerCase();
         const breeding: boolean = /<b[^>]*>\s*Location\s*:\s*<\/b[^>]*>\s*Breeding\s+Stable/i.test(document.body.innerHTML);
+        const retired: boolean = /<br[^>]*>\s*Retired\s*<br[^>]*>/i.test(document.body.innerHTML);
+        const totalFoals: number = parseInt(document.body.innerHTML.match(/<b[^>]*>\s*Total\s+Foals\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.[1] ?? '0') || 0;
 
         if (gender !== 'stallion' || id < 1)
             return;
@@ -37,7 +39,7 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
                     badge = newBadge;
                     tooltip = newBadge.querySelector('.hn-plus-stallion-score-tooltip')!;
 
-                    if (!breeding) {
+                    if (!breeding && (!retired || totalFoals < 1)) {
                         tooltip.innerHTML += '<p>This value is a projection of what the stallion score would be if the horse were retired to stud right now.</p>';
                         badge.classList.add('hn-plus-stallion-score-preview');
                     } else
