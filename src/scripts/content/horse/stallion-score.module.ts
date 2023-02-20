@@ -14,13 +14,22 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
             return;
 
         const horse: Horse | undefined = (await sendAction(ActionType.GetHorse, { id })).data;
+        const previewOnly: boolean = (!breeding && (!retired || totalFoals < 1));
+
+        if (retired && totalFoals > 0 && horse?.stallionScore == null) {
+            const stallionScore = (await sendAction(ActionType.PreviewStallionScore, { id })).data;
+            await sendAction(ActionType.SaveHorses, [{ id, stallionScore }]);
+            await addStallionScore();
+            return;
+        }
+
         let badge = createStallionScoreBadge(horse?.stallionScore);
 
         let tooltip: HTMLElement = badge.querySelector('.hn-plus-stallion-score-tooltip')!;
         tooltip.addEventListener('click', e => e.stopPropagation());
 
         if (horse?.stallionScore?.confidence == null) {
-            tooltip.innerHTML = tooltip.innerHTML.replace(/<\/p[^>]*>$/i, ` Click the box to ${breeding ? 'evaluate' : 'preview'} the stallion score.</p>`)
+            tooltip.innerHTML = tooltip.innerHTML.replace(/<\/p[^>]*>$/i, ` Click the box to ${previewOnly ? 'preview' : 'evaluate'} the stallion score.</p>`)
             tooltip.addEventListener('click', e => e.stopPropagation());
 
             badge.classList.add('hn-plus-stallion-score-available');
@@ -39,7 +48,7 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
                     badge = newBadge;
                     tooltip = newBadge.querySelector('.hn-plus-stallion-score-tooltip')!;
 
-                    if (!breeding && (!retired || totalFoals < 1)) {
+                    if (previewOnly) {
                         tooltip.innerHTML += '<p>This value is a projection of what the stallion score would be if the horse were retired to stud right now.</p>';
                         badge.classList.add('hn-plus-stallion-score-preview');
                     } else
