@@ -1,0 +1,11 @@
+@import '../../../public/style/theme.css';
+@import '../../../public/style/stallion-score.css';
+
+.pedigree .hn-plus-stallion-score {
+    float: right;
+    margin: 0.125em 0.125em 0.125em 0.5em;
+}
+
+.pedigree .hn-plus-stallion-score-tooltip {
+    max-width: 15em;
+}

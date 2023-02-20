@@ -1,4 +1,6 @@
+@import '../../../public/style/theme.css';
 @import '../../../public/style/common.css';
+@import '../../../public/style/stallion-score.css';
 
 .hn-plus-button-wrapper {
     align-items: center;

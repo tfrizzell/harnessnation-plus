@@ -1,0 +1,15 @@
+@import '../../../public/style/theme.css';
+@import '../common/pedigree.css';
+
+td:nth-child(1) .pedigree .hn-plus-stallion-score-tooltip {
+    left: 100%;
+    right: unset;
+    transform: translate(0.75em, -50%);
+}
+
+td:nth-child(1) .pedigree .hn-plus-stallion-score-tooltip:after {
+    border: 0.7em solid transparent;
+    border-right: 1em solid var(--hn-plus-theme-primary, #23395b);
+    left: unset;
+    right: 100%;
+}

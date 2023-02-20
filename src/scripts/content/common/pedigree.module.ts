@@ -1,7 +1,14 @@
+import { ActionType, sendAction } from '../../../lib/actions.js';
 import { pastels as palette } from '../../../lib/colors.js';
 import { onInstalled } from '../../../lib/events.js';
+import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/horses.js';
 
-((): void => {
+(async (): Promise<void> => {
+    const stallionScores: Map<number, StallionScore> = new Map((await sendAction(ActionType.GetHorses)).data
+        ?.filter((horse: Horse) => horse.id != null && horse.stallionScore?.value != null)
+        ?.map((horse: Horse) => [horse.id!, horse.stallionScore!])
+        ?? []);
+
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
         mutations.forEach((mutation: MutationRecord): void => {
             let container: Element | undefined = [...mutation.addedNodes].find((node: Node): boolean => (node instanceof HTMLElement) && (node.classList.contains('pedigreeContainer') || node.querySelector('.pedigreeContainer') != null)) as Element;
@@ -21,6 +28,12 @@ import { onInstalled } from '../../../lib/events.js';
 
             container.querySelectorAll('a[href*="/horse/"]').forEach((el: Element) => {
                 const id: number = parseInt(el.getAttribute('href')!.match(/\/horse\/(\d+)/)![1]!);
+                const stallionScore: StallionScore | undefined = stallionScores.get(id);
+
+                if (stallionScore != null) {
+                    const badge = createStallionScoreBadge(stallionScore);
+                    el.parentElement?.insertBefore?.(badge, el.parentNode?.querySelector('br:last-of-type') ?? null);
+                }
 
                 if (!(id in colors))
                     return;
