@@ -9,3 +9,5 @@ firebase v9.6.1 libraries downloaded from https://www.gstatic.com/firebasejs/9.6
 `firebase-app.js.map`       | https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js.map
 `firebase-firestore.js`     | https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js
 `firebase-firestore.js.map` | https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js.map
+
+_**Note:** `firebase-firestore.js` was updated to reference the local version of `firebase-app.js` instead of the Google CDN._
