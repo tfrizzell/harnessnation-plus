@@ -1,27 +1,34 @@
 class HNPlusTooltipElement extends HTMLElement {
-    static #style: HTMLStyleElement;
+    #root: ShadowRoot;
 
-    static #initStyle(): void {
-        HNPlusTooltipElement.#style ||= document.createElement('style');
+    constructor() {
+        super();
+        this.#root = this.attachShadow({ mode: 'closed' });
+    }
 
-        HNPlusTooltipElement.#style.textContent ||= `
-            hn-plus-tooltip, hn-plus-tooltip * {
+    connectedCallback(): void {
+        const style: HTMLStyleElement = document.createElement('style');
+        style.textContent = `
+            :host, * {
                 all: revert;
                 box-sizing: border-box;
                 margin: 0;
                 padding: 0;
             }
-            hn-plus-tooltip {
+
+            :host {
                 cursor: default;
                 display: inline-block;
                 position: relative;
             }
-            hn-plus-tooltip .hn-plus-icon {
+
+            .hn-plus-icon {
                 color: var(--hn-plus-theme-secondary, #406e8e);
                 font-size: 24px;
                 font-style: normal;
             }
-            hn-plus-tooltip .hn-plus-tooltip {
+
+            .hn-plus-tooltip {
                 background: #ffffff;
                 border: 1px solid var(--hn-plus-theme-primary, #23395b);
                 border-radius: 5px;
@@ -41,7 +48,8 @@ class HNPlusTooltipElement extends HTMLElement {
                 white-space: initial !important;
                 z-index: 2;
             }
-            hn-plus-tooltip .hn-plus-tooltip:after {
+
+            .hn-plus-tooltip:after {
                 border-color: transparent;
                 border-style: solid;
                 border-width: 1rem;
@@ -52,61 +60,36 @@ class HNPlusTooltipElement extends HTMLElement {
                 left: 50%;
                 transform: translateX(-50%);
             }
-            hn-plus-tooltip .hn-plus-icon:hover + .hn-plus-tooltip,
-            hn-plus-tooltip .hn-plus-tooltip:hover {
+
+            .hn-plus-icon:hover + .hn-plus-tooltip,
+            .hn-plus-tooltip:hover {
                 display: flex;
             }
-            hn-plus-tooltip .hn-plus-tooltip ul {
+
+            .hn-plus-tooltip ul {
                 margin-left: 2em;
             }
-            hn-plus-tooltip .hn-plus-tooltip ul > li + li {
+
+            .hn-plus-tooltip ul > li + li {
                 margin-top: 1em;
             }
-        `.trim();
+        `.trim().replace(/^ {8}/g, '$1');
 
-        HNPlusTooltipElement.#injectStyle();
-    }
+        const icon: HTMLElement = document.createElement('i');
+        icon.classList.add('hn-plus-icon');
+        icon.innerHTML = '&#x1f6c8;';
 
-    static #injectStyle(): void {
-        if (HNPlusTooltipElement.#style.isConnected)
-            return;
+        const tooltip: HTMLDivElement = document.createElement('div');
+        tooltip.classList.add('hn-plus-tooltip');
+        tooltip.innerHTML = this.innerHTML;
 
-        const ref: HTMLElement | null = document.head.querySelector('link[rel="stylesheet"], style');
-
-        if (ref != null)
-            document.head.insertBefore(HNPlusTooltipElement.#style, ref);
-        else
-            document.head.append(HNPlusTooltipElement.#style);
-    }
-
-    #icon: HTMLElement;
-    #tooltip: HTMLDivElement;
-
-    constructor() {
-        super();
-        HNPlusTooltipElement.#initStyle();
-
-        this.#icon ??= document.createElement('i');
-        this.#icon.classList.add('hn-plus-icon');
-        this.#icon.innerHTML = '&#x1f6c8;';
-
-        this.#tooltip ??= document.createElement('div');
-        this.#tooltip.classList.add('hn-plus-tooltip');
-        this.#tooltip.innerHTML = this.innerHTML;
-    }
-
-    connectedCallback(): void {
-        HNPlusTooltipElement.#injectStyle();
-
-        this.#tooltip.innerHTML = this.innerHTML;
         this.innerHTML = '';
-        this.append(this.#icon, this.#tooltip);
+        this.#root.append(style, icon, tooltip);
     }
 
     disconnectedCallback(): void {
-        const html = this.#tooltip.innerHTML;
-        this.#tooltip.remove();
-        this.#icon.remove();
+        const html = this.#root.querySelector('.hn-plus-tooltip')?.innerHTML ?? '';
+        this.#root.innerHTML = '';
         this.innerHTML = html;
     }
 }
