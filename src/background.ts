@@ -9,7 +9,7 @@ import './scripts/background/horses.js';
 chrome.alarms.onAlarm.addListener(async (alarm: chrome.alarms.Alarm) => {
     switch (alarm.name) {
         case AlarmType.UpdateStallionScores: {
-            const next = getNext__updateStallionScores(new Date(alarm.scheduledTime));
+            const next = new Date(alarm.scheduledTime);
             await chrome.alarms.clear(alarm.name);
             await register__updateStallionScores(next);
         }

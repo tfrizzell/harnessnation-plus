@@ -339,7 +339,7 @@ export async function updateStallionScores(): Promise<void> {
         const lastModified: Date = horse?.stallionScore?.lastModified?.toDate?.() ?? new Date(0);
 
         if (Date.now() - lastModified.valueOf() < 2419200000)
-            break;
+            continue;
 
         if (!horse.retired) {
             const info: Horse = await getHorse(horse.id!);
