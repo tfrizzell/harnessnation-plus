@@ -9,7 +9,7 @@ import './scripts/background/horses.js';
 chrome.alarms.onAlarm.addListener(async (alarm: chrome.alarms.Alarm) => {
     switch (alarm.name) {
         case AlarmType.UpdateStallionScores: {
-            const next = getNext__updateStallionScores(new Date(alarm.scheduledTime));
+            const next = new Date(alarm.scheduledTime);
             await chrome.alarms.clear(alarm.name);
             await register__updateStallionScores(next);
         }
@@ -32,10 +32,19 @@ function getNext__updateStallionScores(from: Date) {
 }
 
 async function register__updateStallionScores(from: Date | number = new Date()) {
-    (await chrome.alarms.get(AlarmType.UpdateStallionScores))
-        || (await chrome.alarms.create(AlarmType.UpdateStallionScores, {
-            when: getNext__updateStallionScores(new Date(from?.valueOf?.() ?? from)).valueOf(),
-        }));
+    const alarm: chrome.alarms.Alarm = await chrome.alarms.get(AlarmType.UpdateStallionScores);
+
+    if (alarm == null) {
+        const next: Date = getNext__updateStallionScores(new Date(from?.valueOf?.() ?? from));
+        console.info(`background.ts%c     Scheduling 'updateStallionScores' to run at ${next.toISOString()}`, 'color:#406e8e;font-weight:bold;', '');
+
+        await chrome.alarms.create(AlarmType.UpdateStallionScores, {
+            when: next.valueOf(),
+        });
+    } else {
+        const next: Date = new Date(alarm.scheduledTime);
+        console.debug(`background.ts%c     'updateStallionScores' scheduled to run at ${next.toISOString()}`, 'color:#406e8e;font-weight:bold;', '');
+    }
 }
 
 register__updateStallionScores();
