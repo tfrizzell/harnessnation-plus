@@ -94,4 +94,4 @@ class HNPlusTooltipElement extends HTMLElement {
     }
 }
 
-customElements.define('hn-plus-tooltip', HNPlusTooltipElement);
+customElements?.define('hn-plus-tooltip', HNPlusTooltipElement);

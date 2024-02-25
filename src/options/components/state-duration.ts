@@ -181,4 +181,4 @@ export class HNPlusStateDurationElement extends HTMLElement {
     }
 }
 
-customElements.define('hn-plus-state-duration', HNPlusStateDurationElement);
+customElements?.define('hn-plus-state-duration', HNPlusStateDurationElement);

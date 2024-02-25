@@ -73,4 +73,4 @@ class HNPlusToggleElement extends HTMLInputElement {
     }
 }
 
-customElements.define('hn-plus-toggle', HNPlusToggleElement, { extends: 'input' });
+customElements?.define('hn-plus-toggle', HNPlusToggleElement, { extends: 'input' });
