@@ -4,7 +4,7 @@ import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, g
 import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, BreedingReportExportData, HorseSearchData, SendResponse } from '../../lib/actions.js';
 import { AlarmType } from '../../lib/alarms.js';
 import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, BreedingScore, Horse, StallionScore, getInfo, calculateStallionScore } from '../../lib/horses.js';
-import { regexEscape, sleep, toTimestamp } from '../../lib/utils.js';
+import { downloadDataUrl, regexEscape, sleep, toTimestamp } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
 let db: Firestore = firestore.singleton();
@@ -176,11 +176,7 @@ async function exportStallionReport(data: BreedingReportExportData): Promise<voi
     }
 
     try {
-        chrome.downloads.download({
-            url: report,
-            filename: data.filename?.trim() || `hn-plus-stallion-report-${toTimestamp().replace(/\D/g, '')}.csv`,
-            saveAs: false,
-        });
+        downloadDataUrl(report, data.filename?.trim() || `hn-plus-stallion-report-${toTimestamp().replace(/\D/g, '')}.csv`)
     } catch (e: any) {
         console.error(`%chorses.ts%c     Failed to generate stallion report: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
         console.error(e);

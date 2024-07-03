@@ -1,5 +1,30 @@
 import { Timestamp } from 'firebase/firestore';
 
+export async function downloadDataUrl(dataUrl: string, filename: string): Promise<void> {
+    const manifest: chrome.runtime.Manifest = await chrome.runtime.getManifest();
+
+    if (manifest.applications?.gecko != null) {
+        const tab: chrome.tabs.Tab = (await chrome.tabs.query({ url: '*://*/*' })).find(t => t.url)!;
+
+        chrome.scripting.executeScript({
+            target: { tabId: tab.id! },
+            args: [dataUrl, filename],
+            func: (dataUrl: string, filename: string) => {
+                const download: HTMLAnchorElement = document.createElement('a');
+                download.setAttribute('href', dataUrl);
+                download.setAttribute('download', filename);
+                download.click();
+            }
+        });
+    } else {
+        chrome.downloads.download({
+            url: dataUrl,
+            filename: filename,
+            saveAs: false,
+        });
+    }
+}
+
 export function parseCurrency(value: string | number): number {
     return value == null ? value : globalThis.parseFloat(value.toString().replace(/[^\d.]/g, ''));
 }
