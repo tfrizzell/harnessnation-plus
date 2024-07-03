@@ -1,5 +1,5 @@
 export enum EventType {
-    BloodlineSeach = 'bloodline-search.harnessnation-plus',
+    BloodlineSearch = 'bloodline-search.harnessnation-plus',
     Installed = 'installed.harnessnation-plus',
 }
 
@@ -8,7 +8,27 @@ export function onInstalled(callback: EventListenerOrEventListenerObject, option
 }
 
 export function onLoad(callback: EventListenerOrEventListenerObject, options?: AddEventListenerOptions | boolean): void {
-    window.addEventListener('DOMContentLoaded', callback, options);
+    if ('loading' === document.readyState) {
+        window.addEventListener('DOMContentLoaded', callback, options);
+        return;
+    }
+
+    const event: Event = new Event('DOMContentLoaded', {
+        bubbles: true,
+        cancelable: false,
+        composed: false,
+    }) as any;
+
+    Object.defineProperties(event, {
+        srcElement: {
+            get() { return document; }
+        },
+        target: {
+            get() { return document; }
+        },
+    });
+
+    (callback as (this: Window, ev: Event) => void).call(window, event);
 }
 
 export default {

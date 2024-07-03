@@ -1,10 +1,10 @@
 import { CollectionReference, DocumentData, DocumentReference, DocumentSnapshot, Firestore, Query, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocsFromServer, limit, orderBy, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from '../../lib/firebasejs/firebase-firestore.js';
 
-import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, HorseSearchData, SendResponse } from '../../lib/actions.js';
+import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, BreedingReportExportData, HorseSearchData, SendResponse } from '../../lib/actions.js';
 import { AlarmType } from '../../lib/alarms.js';
 import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, BreedingScore, Horse, StallionScore, getInfo, calculateStallionScore } from '../../lib/horses.js';
-import { regexEscape, sleep } from '../../lib/utils.js';
+import { regexEscape, sleep, toTimestamp } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
 let db: Firestore = firestore.singleton();
@@ -23,6 +23,18 @@ chrome.runtime.onMessage.addListener((action: Action<any>, _sender: chrome.runti
 
         case ActionType.ClearHorseCache:
             clearHorseCache()
+                .then(() => sendResponse(new ActionResponse(action)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
+
+        case ActionType.ExportBroodmareReport:
+            exportBroodmareReport(action.data)
+                .then(() => sendResponse(new ActionResponse(action)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
+
+        case ActionType.ExportStallionReport:
+            exportStallionReport(action.data)
                 .then(() => sendResponse(new ActionResponse(action)))
                 .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
@@ -121,6 +133,58 @@ async function createSearchPattern({ term, maxGenerations = 4 }: HorseSearchData
         .map((horse: Horse) => horse.name!)]
         .map((name: string) => regexEscape(name.trim()).replace(/\s+/g, '\\s*')))]
         .join('|')})`;
+}
+
+async function exportBroodmareReport(data: BreedingReportExportData): Promise<void> {
+    try {
+        chrome.downloads.download({
+            url: await generateBreedingReport(data),
+            filename: data.filename?.trim() || `hn-plus-broodmare-report-${toTimestamp().replace(/\D/g, '')}.csv`,
+            saveAs: false,
+        });
+    } catch (e: any) {
+        console.error(`%chorses.ts%c     Failed to generate broodmare report: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+        console.error(e);
+    }
+}
+
+async function exportStallionReport(data: BreedingReportExportData): Promise<void> {
+    let report = await generateBreedingReport(data);
+    const rows: string[] = atob(report.slice(21)).split('\n');
+
+    if (rows.length > 1) {
+        const horses: Horse[] = await getHorses();
+
+        if (horses != null) {
+            report = report.slice(0, 21) +
+                btoa(rows.map((row, i) => {
+                    if (i === 0)
+                        return `${row},"Stallion Score"`;
+
+                    const id: number = row.match(/^"(\d+)"/)?.slice(1)?.map(parseInt)?.[0] ?? 0;
+
+                    if (id > 0) {
+                        const horse: Horse | undefined = horses.find(horse => horse.id === id);
+
+                        if (horse?.stallionScore?.value != null)
+                            return `${row},"${Math.floor(horse.stallionScore.value)}"`;
+                    }
+
+                    return `${row},""`;
+                }).join('\n'));
+        }
+    }
+
+    try {
+        chrome.downloads.download({
+            url: report,
+            filename: data.filename?.trim() || `hn-plus-stallion-report-${toTimestamp().replace(/\D/g, '')}.csv`,
+            saveAs: false,
+        });
+    } catch (e: any) {
+        console.error(`%chorses.ts%c     Failed to generate stallion report: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+        console.error(e);
+    }
 }
 
 async function generateBreedingReport(data: BreedingReportData): Promise<string> {
