@@ -10,7 +10,7 @@ import { sleep } from '../../../lib/utils.js';
 
         try {
             console.debug(`%cstallions.search.ts%c     Executing bloodline search`, 'color:#406e8e;font-weight:bold;', '');
-            $('#saleTable').DataTable().search((e as CustomEvent).detail.pattern, true, false).draw();
+            $('#saleTable').DataTable().search((e as CustomEvent).detail, true, false).draw();
             controller = null;
         } catch (e: any) {
             console.error(`%cstallions.search.ts%c     Error while executing bloodline search: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
@@ -31,9 +31,9 @@ import { sleep } from '../../../lib/utils.js';
         }
     }
 
-    window.addEventListener(EventType.BloodlineSeach, bloodlineSearch);
+    window.addEventListener(EventType.BloodlineSearch, bloodlineSearch);
 
     onInstalled(() => {
-        window.removeEventListener(EventType.BloodlineSeach, bloodlineSearch);
+        window.removeEventListener(EventType.BloodlineSearch, bloodlineSearch);
     });
 })((window as any).$ || (window as any).jQuery);

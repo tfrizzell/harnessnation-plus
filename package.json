@@ -1,7 +1,7 @@
 {
   "name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.7.4",
+  "version": "3.7.5",
   "repository": "https://github.com/tfrizzell/harnessnation-plus.git",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "license": "MIT",
@@ -41,5 +41,6 @@
   },
   "resolutions": {
     "glob-parent": ">=5.1.2"
-  }
+  },
+  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }

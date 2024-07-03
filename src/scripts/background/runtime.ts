@@ -19,7 +19,7 @@ chrome.runtime.onStartup.addListener(async (): Promise<void> => {
 chrome.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledDetails): Promise<void> => {
     await chrome.storage.local.clear();
 
-    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL)
+    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL || await chrome.storage.sync.getBytesInUse() < 1)
         await chrome.storage.sync.set(settings);
 
     if (details.reason !== chrome.runtime.OnInstalledReason.UPDATE)

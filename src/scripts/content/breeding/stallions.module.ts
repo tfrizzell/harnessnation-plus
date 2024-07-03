@@ -2,7 +2,7 @@ import { ActionType, sendAction } from '../../../lib/actions.js';
 import { EventType, onInstalled, onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
 import { StallionRegistrySettings } from '../../../lib/settings.js';
-import { sleep, toTimestamp } from '../../../lib/utils.js';
+import { sleep } from '../../../lib/utils.js';
 
 ((): void => {
     async function addExportButton(): Promise<void> {
@@ -91,14 +91,12 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
                 controller = new AbortController();
 
                 await sleep(200, controller.signal);
-                const settings: StallionRegistrySettings = (await chrome.storage.sync.get('stallions'))?.stallions?.registry;
+                const settings: StallionRegistrySettings = (await chrome.storage.sync.get('stallions'))?.stallions?.registry ?? {};
 
-                window.dispatchEvent(new CustomEvent(EventType.BloodlineSeach, {
-                    detail: {
-                        pattern: settings.bloodlineSearch
-                            ? (await sendAction(ActionType.SearchHorses, { term: search.value, maxGenerations: settings.maxGenerations })).data
-                            : search.value
-                    }
+                window.dispatchEvent(new CustomEvent(EventType.BloodlineSearch, {
+                    detail: settings.bloodlineSearch
+                        ? (await sendAction(ActionType.SearchHorses, { term: search.value, maxGenerations: settings.maxGenerations })).data
+                        : search.value,
                 }));
             } catch (e: any) {
                 if (e !== 'Aborted by the user')
@@ -122,36 +120,7 @@ import { sleep, toTimestamp } from '../../../lib/utils.js';
         while (id = pattern.exec(html)?.[1])
             ids.push(+id);
 
-        let report = (await sendAction(ActionType.GenerateBreedingReport, { ids, headers: { 1: 'Stallion' } })).data!;
-        const rows = atob(report.slice(21)).split('\n');
-
-        if (rows.length > 1) {
-            const horses: Horse[] | undefined = (await sendAction(ActionType.GetHorses)).data;
-
-            if (horses != null) {
-                report = report.slice(0, 21) +
-                    btoa(rows.map((row, i) => {
-                        if (i === 0)
-                            return `${row},"Stallion Score"`;
-
-                        const id: number = row.match(/^"(\d+)"/)?.slice(1)?.map(parseInt)?.[0] ?? 0;
-
-                        if (id > 0) {
-                            const horse: Horse | undefined = horses.find(horse => horse.id === id);
-
-                            if (horse?.stallionScore?.value != null)
-                                return `${row},"${Math.floor(horse.stallionScore.value)}"`;
-                        }
-
-                        return `${row},""`;
-                    }).join('\n'));
-            }
-        }
-
-        const download: HTMLAnchorElement = document.createElement('a');
-        download.setAttribute('href', report);
-        download.setAttribute('download', `hn-plus-stallion-report-${toTimestamp().replace(/\D/g, '')}.csv`);
-        download.click();
+        await sendAction(ActionType.ExportStallionReport, { ids, headers: { 1: 'Stallion' } });
     }
 
     async function updateHorses(html: string): Promise<void> {

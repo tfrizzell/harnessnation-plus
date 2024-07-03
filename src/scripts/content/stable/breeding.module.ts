@@ -1,7 +1,6 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onInstalled, onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
-import { toTimestamp } from '../../../lib/utils.js';
 
 ((): void => {
     async function addExportButton(): Promise<void> {
@@ -90,10 +89,7 @@ import { toTimestamp } from '../../../lib/utils.js';
         while (id = pattern.exec(html)?.[1])
             ids.push(+id);
 
-        const download: HTMLAnchorElement = document.createElement('a');
-        download.setAttribute('href', (await sendAction(ActionType.GenerateBreedingReport, { ids })).data!);
-        download.setAttribute('download', `hn-plus-broodmare-report-${toTimestamp().replace(/\D/g, '')}.csv`);
-        download.click();
+        await sendAction(ActionType.ExportBroodmareReport, { ids });
     }
 
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
