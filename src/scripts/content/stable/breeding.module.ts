@@ -114,11 +114,11 @@ import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
         tooltip.setAttribute('type', 'module');
         tooltip.setAttribute('src', `${chrome.runtime.getURL('/public/components/tooltip.js')}?t=${Date.now()}`);
         document.body.append(tooltip);
+
+        if (document.querySelector('.horseContentContainer_3'))
+            addExportButton();
+
+        if (document.querySelector('.horseContentContainer_4'))
+            addStallionScores();
     });
-
-    if (document.querySelector('.horseContentContainer_3'))
-        addExportButton();
-
-    if (document.querySelector('.horseContentContainer_4'))
-        addStallionScores()
 })();

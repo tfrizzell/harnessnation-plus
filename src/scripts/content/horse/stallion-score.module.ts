@@ -70,7 +70,4 @@ import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/hor
         document.querySelectorAll('.hn-plus-stallion-score').forEach(el => el.remove());
         addStallionScore();
     });
-
-    if (document.readyState !== 'loading' && document.querySelector('h1.font-weight-bold.text-left') != null)
-        addStallionScore();
 })();

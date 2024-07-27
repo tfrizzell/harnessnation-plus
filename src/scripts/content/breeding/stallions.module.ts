@@ -171,12 +171,12 @@ import { sleep } from '../../../lib/utils.js';
         tooltip.setAttribute('type', 'module');
         tooltip.setAttribute('src', `${chrome.runtime.getURL('/public/components/tooltip.js')}?t=${Date.now()}`);
         document.body.append(tooltip);
-    });
 
-    if (document.querySelector('#saleTable_wrapper')) {
-        addExportButton();
-        addStallionScores();
-        bindBloodlineSearch();
-        updateHorses(document.querySelector('#saleTable_wrapper')!.innerHTML);
-    }
+        if (document.querySelector('#saleTable_wrapper')) {
+            addExportButton();
+            addStallionScores();
+            bindBloodlineSearch();
+            updateHorses(document.querySelector('#saleTable_wrapper')!.innerHTML);
+        }
+    });
 })();
