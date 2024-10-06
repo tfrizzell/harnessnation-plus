@@ -2,12 +2,11 @@ import DataTables, { DataTablesOptions } from '../../../lib/data-tables.js';
 import { onInstalled } from '../../../lib/events.js';
 
 (async (): Promise<void> => {
-    const page: string | undefined = window.location.pathname.split('/').pop();
+    const page: string = window.location.pathname.split('/').pop() ?? '';
+    const settings: DataTablesOptions | undefined = await DataTables.getSettings(page);
 
-    if (page == undefined)
+    if (null == settings)
         return;
-
-    const settings: DataTablesOptions | undefined = await DataTables.getSettings(page!);
 
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
         mutations.filter((mutation: MutationRecord): boolean =>

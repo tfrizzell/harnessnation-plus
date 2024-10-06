@@ -1,13 +1,18 @@
+/**************************************************************************************************
+ *                                                                                                *
+ * This file duplicates horse-table.module.ts. When using `import('horse-table.module.ts')`, the  *
+ * target script element is loaded before the script module, thus the functionality doesn't work. *
+ *                                                                                                *
+ **************************************************************************************************/
 (async (): Promise<void> => {
     const DataTables = window.DataTables;
     const { onInstalled } = window.Events;
 
-    const page = window.location.pathname.split('/').pop();
+    const page: string = window.location.pathname.split('/').pop() ?? '';
+    const settings = await DataTables.getSettings(page);
 
-    if (page == undefined)
+    if (null == settings)
         return;
-
-    const settings = await DataTables.getSettings(page!);
 
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
         mutations.filter((mutation: MutationRecord): boolean =>

@@ -1,3 +1,9 @@
+/***************************************************************************************************
+ *                                                                                                 *
+ * This file duplicates horse-table.module.ts. When using `import('progeny-table.module.ts')`, the *
+ * target script element is loaded before the script module, thus the functionality doesn't work.  *
+ *                                                                                                 *
+ ***************************************************************************************************/
 (async (): Promise<void> => {
     const DataTables = window.DataTables;
     const { onInstalled } = window.Events;
