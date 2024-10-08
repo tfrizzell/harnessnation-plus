@@ -123,6 +123,20 @@
         "scripts/content/stable/breeding.js"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/train"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "scripts/content/train/train.css"
+      ],
+      "js": [
+        "scripts/content/train/train.js"
+      ],
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
