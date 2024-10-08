@@ -14,7 +14,8 @@ const observer: MutationObserver = new MutationObserver((mutations: MutationReco
 
         if (container == null)
             return;
-        else if (!container.classList.contains('pedigreeContainer'))
+
+        if (!container.classList.contains('pedigreeContainer'))
             container = container.querySelector('.pedigreeContainer')!;
 
         const colors: { [key: number]: string } = [...container.innerHTML.matchAll(/<a[^>]*\/horse\/(\d+)[^>]*>/ig)]

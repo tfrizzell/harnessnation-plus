@@ -13,12 +13,11 @@
     padding: 0.5em 1em;
 }
 
-button:hover, input[type="button" i]:hover, input[type="reset" i]:hover, input[type="submit" i]:hover,
-button:focus, input[type="button" i]:focus, input[type="reset" i]:focus, input[type="submit" i]:focus {
+.hn-plus-button:is(:hover, :focus) {
     background-color: var(--hn-plus-theme-primary, #23395b);
 }
 
-button:active, input[type="button" i]:active, input[type="reset" i]:active, input[type="submit" i]:active {
+.hn-plus-button:active {
     background-color: var(--hn-plus-theme-tertiary, #8ea8c3);
 }
 

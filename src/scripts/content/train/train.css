@@ -1,0 +1,30 @@
+@import '../../../public/style/theme.css';
+@import '../../../public/style/common.css';
+
+.hn-plus-button-wrapper {
+    display: flex;
+    gap: 0.2em;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.hn-plus-button {
+    align-items: revert;
+    border: revert;
+    border-radius: revert;
+    column-gap: revert;
+    cursor: revert;
+    display: revert;
+    justify-content: revert;
+    padding: revert;
+}
+
+.hn-plus-button::before {
+    content: '';
+    display: none;
+}
+
+.hn-plus-copy-button {
+    margin-left: 0.9em;
+    margin-right: 0.9em;
+}

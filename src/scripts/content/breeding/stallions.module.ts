@@ -168,16 +168,18 @@ async function updateHorses(html: string): Promise<void> {
 
 const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
     mutations.forEach((mutation: MutationRecord): void => {
-        if ([].find.call(mutation.addedNodes, (node: HTMLElement): boolean => node.id === 'saleTable_wrapper')) {
-            removeExportButtons();
-            addExportButtons();
+        [].forEach.call(mutation.addedNodes, (node: Element) => {
+            if (node.id === 'saleTable_wrapper') {
+                removeExportButtons();
+                addExportButtons();
 
-            removeStallionScores();
-            addStallionScores();
+                removeStallionScores();
+                addStallionScores();
 
-            bindBloodlineSearch();
-            updateHorses((mutation.target as HTMLElement).innerHTML);
-        }
+                bindBloodlineSearch();
+                updateHorses((mutation.target as HTMLElement).innerHTML);
+            }
+        });
     });
 });
 

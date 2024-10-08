@@ -3,7 +3,7 @@
   "name": "HarnessNation+",
   "short_name": "hn-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.7.6",
+  "version": "3.8.0",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
   "icons": {
@@ -121,6 +121,20 @@
         "lib/events.web.js",
         "scripts/content/stable/horse-table.js",
         "scripts/content/stable/breeding.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/train"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "scripts/content/train/train.css"
+      ],
+      "js": [
+        "scripts/content/train/train.js"
       ],
       "run_at": "document_start"
     }

@@ -9,20 +9,22 @@ import { onInstalled } from '../../../lib/events.js';
         return;
 
     const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
-        mutations.filter((mutation: MutationRecord): boolean =>
-            mutation.target.nodeType === Node.ELEMENT_NODE
-            && (<HTMLElement>mutation.target).tagName === 'SCRIPT'
-            && !!(<HTMLElement>mutation.target).textContent?.match(/\bfunction loadHorses\b/)
-        ).forEach((mutation: MutationRecord): void => {
-            mutation.addedNodes?.forEach(async (script: Node): Promise<void> => {
-                if (!script?.textContent?.match(/\bfunction loadHorses\b/))
-                    return;
+        mutations.forEach((mutation: MutationRecord): void => {
+            if (
+                mutation.target.nodeType !== Node.ELEMENT_NODE
+                || (<HTMLElement>mutation.target).tagName !== 'SCRIPT'
+                || !(<HTMLElement>mutation.target).textContent?.match(/\bfunction loadHorses\b/)
+            )
+                return;
 
-                script.textContent = await DataTables.extend(
-                    `'#${page === 'breeding' ? 'breedingHorse' : 'horse'}Table_' + i`,
-                    script.textContent,
-                    settings
-                );
+            mutation.addedNodes?.forEach(async (node: Node): Promise<void> => {
+                if (node?.textContent?.match(/\bfunction loadHorses\b/)) {
+                    node.textContent = await DataTables.extend(
+                        `'#${page === 'breeding' ? 'breedingHorse' : 'horse'}Table_' + i`,
+                        node.textContent,
+                        settings
+                    );
+                }
             });
         });
     });

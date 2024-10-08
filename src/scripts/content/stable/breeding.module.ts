@@ -93,11 +93,13 @@ async function exportReport(html: string): Promise<void> {
 
 const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
     mutations.forEach((mutation: MutationRecord): void => {
-        if ([].find.call(mutation.addedNodes, (node: HTMLElement): boolean => node.id === 'breedingHorseTable_3_wrapper'))
-            addExportButton();
+        [].forEach.call(mutation.addedNodes, (node: HTMLElement) => {
+            if (node.id === 'breedingHorseTable_3_wrapper')
+                addExportButton();
 
-        if ([].find.call(mutation.addedNodes, (node: HTMLElement): boolean => node.id === 'breedingHorseTable_4_wrapper'))
-            addStallionScores();
+            if (node.id === 'breedingHorseTable_4_wrapper')
+                addStallionScores();
+        });
     });
 });
 
