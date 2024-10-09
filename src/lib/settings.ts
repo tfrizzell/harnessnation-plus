@@ -42,7 +42,7 @@ export enum StudFeeFormula {
     Ridge = 'FORMULA_RIDGE',
 }
 
-export const settings: Settings = {
+export const defaultSettings: Settings = {
     dt: {
         breeding: {
             enabled: true,
@@ -74,4 +74,4 @@ export const settings: Settings = {
     },
 }
 
-export default settings;
+export default defaultSettings;
