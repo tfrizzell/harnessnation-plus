@@ -173,16 +173,16 @@ export function createStallionScoreBadge(data: StallionScore | null | undefined)
         score.innerHTML = `<b>${stallionScore.toString()}</b>`;
         tooltip.innerHTML = `<p>The HarnessNation+ stallion score reflects the estimated breeding ability of a stallion.</p><p class="hn-plus-stallion-score-confidence"><b>Confidence:</b> ${Math.round(100 * data.confidence!)}%</p>`;
 
-        if (stallionScore >= 110) {
+        if (stallionScore >= 100) {
             level.textContent = 'Elite';
             badge.classList.add('grade-a-plus');
-        } else if (stallionScore >= 90) {
+        } else if (stallionScore >= 75) {
             level.textContent = 'Good';
             badge.classList.add('grade-b-plus');
         } else if (stallionScore >= 50) {
             level.textContent = 'Average';
             badge.classList.add('grade-c-plus');
-        } else if (stallionScore >= 25) {
+        } else if (stallionScore >= 30) {
             level.textContent = 'Weak';
             badge.classList.add('grade-d-plus');
         } else if (stallionScore >= 0) {
