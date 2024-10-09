@@ -10,13 +10,23 @@
 
 .hn-plus-button {
     align-items: revert;
+    background-color: var(--hn-plus-theme-secondary, #406e8e) !important;
     border: revert;
     border-radius: revert;
+    color: var(--hn-plus-theme-quarternary, #cbf7ed) !important;
     column-gap: revert;
     cursor: revert;
     display: revert;
     justify-content: revert;
     padding: revert;
+}
+
+.hn-plus-button:is(:hover, :focus) {
+    background-color: var(--hn-plus-theme-primary, #23395b) !important;
+}
+
+.hn-plus-button:active {
+    background-color: var(--hn-plus-theme-tertiary, #8ea8c3) !important;
 }
 
 .hn-plus-button::before {

@@ -4,13 +4,14 @@ type TrainingGroup = 'main' | 'breeding';
 type TrainingInputElement = HTMLInputElement | HTMLSelectElement;
 
 const copiedSettings: Map<TrainingGroup, Map<string, string>> = new Map();
+const buttonClasses: string[] = ['btn', 'p-2', 'btn-sm', 'waves-effect', 'waves-light', 'hn-plus-button'];
 
 function addButtons(row: Element): void {
     const wrapper: HTMLElement = document.createElement('div');
     wrapper.classList.add('hn-plus-button-wrapper');
 
     const copyButton: HTMLButtonElement = document.createElement('button');
-    copyButton.classList.add(...'btn btn-primary p-2 btn-sm waves-effect waves-light hn-plus-button hn-plus-copy-button'.split(' '));
+    copyButton.classList.add(...buttonClasses, 'hn-plus-copy-button');
     copyButton.title = 'Copy to Clipboard';
     copyButton.type = 'button';
     wrapper.append(copyButton);
@@ -25,7 +26,7 @@ function addButtons(row: Element): void {
     copyButton.append(copyIcon);
 
     const cloneButton: HTMLButtonElement = document.createElement('button');
-    cloneButton.classList.add(...'btn btn-primary p-2 btn-sm waves-effect waves-light hn-plus-button hn-plus-clone-button'.split(' '));
+    cloneButton.classList.add(...buttonClasses, 'hn-plus-clone-button');
     cloneButton.title = 'Copy to All Rows';
     cloneButton.type = 'button';
     wrapper.append(cloneButton);
@@ -55,7 +56,7 @@ function addPasteButton(row: Element): void {
         return;
 
     const pasteButton: HTMLButtonElement = document.createElement('button');
-    pasteButton.classList.add(...'btn btn-primary p-2 btn-sm waves-effect waves-light hn-plus-button hn-plus-paste-button'.split(' '));
+    pasteButton.classList.add(...buttonClasses, 'hn-plus-paste-button');
     pasteButton.title = 'Paste from Clipboard';
     pasteButton.type = 'button';
 
