@@ -12,7 +12,7 @@ function addButtons(row: Element): void {
 
     const copyButton: HTMLButtonElement = document.createElement('button');
     copyButton.classList.add(...buttonClasses, 'hn-plus-copy-button');
-    copyButton.title = 'Copy to Clipboard';
+    copyButton.title = 'Copy Training Settings';
     copyButton.type = 'button';
     wrapper.append(copyButton);
 
@@ -27,7 +27,7 @@ function addButtons(row: Element): void {
 
     const cloneButton: HTMLButtonElement = document.createElement('button');
     cloneButton.classList.add(...buttonClasses, 'hn-plus-clone-button');
-    cloneButton.title = 'Copy to All Rows';
+    cloneButton.title = 'Copy Training Settings to All Rows';
     cloneButton.type = 'button';
     wrapper.append(cloneButton);
 
@@ -57,7 +57,7 @@ function addPasteButton(row: Element): void {
 
     const pasteButton: HTMLButtonElement = document.createElement('button');
     pasteButton.classList.add(...buttonClasses, 'hn-plus-paste-button');
-    pasteButton.title = 'Paste from Clipboard';
+    pasteButton.title = 'Paste Training Settings';
     pasteButton.type = 'button';
 
     pasteButton.addEventListener('click', (e: Event): void => {
