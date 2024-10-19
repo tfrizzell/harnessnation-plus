@@ -172,7 +172,7 @@ onLoad((): void => {
         form.querySelectorAll('.horseField').forEach((row: Element): void => {
             removeButtons(row);
 
-            if (row.querySelector<HTMLSelectElement>('select.horseNameSelect')?.value)
+            if (row.querySelector<HTMLSelectElement>('select.trainingSelect')?.value)
                 addButtons(row);
         });
 
