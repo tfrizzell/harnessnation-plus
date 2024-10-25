@@ -151,8 +151,7 @@
         "scripts/content/**/*.script.js",
         "scripts/content/**/*.search.js",
         "scripts/installed.js"
-      ],
-      "use_dynamic_url": true
+      ]
     }
   ]
 }
