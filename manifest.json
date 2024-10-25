@@ -28,12 +28,7 @@
   },
   "action": {
     "default_title": "HarnessNation+",
-    "default_popup": "popup.html"
-  },
-  "options_ui": {
-    "page": "options/index.html",
-    "open_in_tab": true,
-    "browser_style": true
+    "default_popup": "popup/popup.html"
   },
   "content_scripts": [
     {
@@ -155,8 +150,7 @@
         "scripts/content/**/*.script.js",
         "scripts/content/**/*.search.js",
         "scripts/installed.js"
-      ],
-      "use_dynamic_url": true
+      ]
     }
   ]
 }

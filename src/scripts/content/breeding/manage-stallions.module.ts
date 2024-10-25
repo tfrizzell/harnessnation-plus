@@ -2,15 +2,20 @@ import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onInstalled } from '../../../lib/events.js';
 import { StudFeeFormula } from '../../../lib/settings.js';
 
+const font: HTMLLinkElement = document.createElement('link');
+font.setAttribute('rel', 'stylesheet');
+font.setAttribute('href', chrome.runtime.getURL('public/fonts/MaterialSymbolsOutlined.css'));
+document.head.append(font);
+
 document.querySelectorAll<HTMLInputElement>('#inputStudFee, #inputStudFeeUpdate').forEach((input: HTMLInputElement): void => {
     const button: HTMLButtonElement = document.createElement('button');
     button.classList.add('hn-plus-calculate-button');
     button.setAttribute('data-extension', chrome.runtime.id);
     button.setAttribute('type', 'button');
-    button.textContent = 'calculate';
 
-    const icon: HTMLImageElement = document.createElement('img');
-    icon.src = `chrome-extension://${chrome.runtime.id}/public/icons/calculate.svg`;
+    const icon: HTMLSpanElement = document.createElement('span');
+    icon.classList.add('material-symbols-outlined');
+    icon.innerHTML = 'calculate';
     button.append(icon);
 
     input.classList.add('hn-plus-calculate-input');
@@ -41,7 +46,10 @@ document.querySelectorAll<HTMLInputElement>('#inputStudFee, #inputStudFeeUpdate'
     });
 });
 
+
+
 onInstalled((): void => {
+    font.remove();
     document.querySelectorAll('.hn-plus-calculate-button').forEach(el => el.remove());
     document.querySelectorAll('.hn-plus-calculate-input').forEach(el => el.classList.remove('hn-plus-calculate-input', 'hn-plus-calculating'));
 });

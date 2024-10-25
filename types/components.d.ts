@@ -1,4 +1,4 @@
-import { HNPlusStateDurationElement } from '../src/options/components/state-duration';
+import { HNPlusStateDurationElement } from '../src/components/state-duration';
 
 export { }
 

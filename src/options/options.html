@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HarnessNation+ Settings</title>
+    <link href="/public/fonts/Roboto.css" rel="stylesheet" />
+    <link href="/public/fonts/MaterialSymbolsOutlined.css" rel="stylesheet" />
+    <link href="/public/style/theme.css" rel="stylesheet" />
+    <link href="options.css" rel="stylesheet">
+    <script src="components.js" type="module"></script>
+</head>
+
+<body>
+    <form id="settings-form" name="settings">
+        <details class="form-section" open>
+            <summary>Data Tables</summary>
+            <a name="data-tables"></a>
+
+            <fieldset>
+                <legend>Main Stable</legend>
+
+                <div class="setting-row">
+                    <label>Save table settings:</label>
+                    <input is="hn-plus-toggle" name="dt.main.enabled" type="checkbox" />
+                </div>
+
+                <div class="setting-row">
+                    <label>Save table settings for:</label>
+                    <hn-plus-state-duration name="dt.main" />
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Breeding Stable</legend>
+
+                <div class="setting-row">
+                    <label>Save table settings:</label>
+                    <input is="hn-plus-toggle" name="dt.breeding.enabled" type="checkbox" />
+                </div>
+
+                <div class="setting-row">
+                    <label>Save table settings for:</label>
+                    <hn-plus-state-duration name="dt.breeding" />
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Progeny List</legend>
+
+                <div class="setting-row">
+                    <label>Save table settings:</label>
+                    <input is="hn-plus-toggle" name="dt.progeny.enabled" type="checkbox" />
+                </div>
+
+                <div class="setting-row">
+                    <label>Save table settings for:</label>
+                    <hn-plus-state-duration name="dt.progeny" />
+                </div>
+            </fieldset>
+        </details>
+
+        <details class="form-section" open>
+            <summary>Stallion Management</summary>
+            <a name="stallion-management"></a>
+
+            <fieldset>
+                <legend>Stud Fees</legend>
+
+                <div class="setting-row">
+                    <label>Formula:</label>
+
+                    <select name="stallions.management.formula">
+                        <option value="FORMULA_APEX">Apex Formula</option>
+                        <option value="FORMULA_RIDGE">Ridge Formula</option>
+                    </select>
+
+                    <hn-plus-tooltip class="stud-fee-tooltip">
+                        <p>Select which stud fee formulas you prefer to use:</p>
+
+                        <h4>Apex Formula</h4>
+                        <ul>
+                            <li>
+                                If the stud has racing offspring:<br />
+                                <code style="white-space:nowrap">[average earanings per starter] / 4</code>
+                            </li>
+
+                            <li>
+                                If the stud does not have racing offspring:<br />
+                                <code style="white-space:nowrap">[lifetime earnings] / [lifetime starts]</code>
+                            </li>
+                        </ul>
+
+                        <h4>Ridge Formula</h4>
+                        <ul>
+                            <li>
+                                If the stud has racing offspring:<br />
+                                <code style="white-space:nowrap">5000 + ([average earanings per starter] / 2)</code>
+                            </li>
+
+                            <li>
+                                If the stud does not have racing offspring:<br />
+                                <code style="white-space:nowrap">5000 + ([lifetime earnings] / 20)</code>
+                            </li>
+                        </ul>
+                    </hn-plus-tooltip>
+                </div>
+            </fieldset>
+        </details>
+
+        <details class="form-section" open>
+            <summary>Stallion Registry</summary>
+            <a name="stallion-registry"></a>
+
+            <fieldset>
+                <legend>Search</legend>
+
+                <div class="setting-row">
+                    <label>Use bloodline search:</label>
+                    <input is="hn-plus-toggle" name="stallions.registry.bloodlineSearch" type="checkbox" />
+
+                    <hn-plus-tooltip>
+                        <p>Use this option to enable bloodline searching in the public stallion registry. This will
+                            allow you to search for an ancestor in the stallion's sire line.</p>
+                        <p>For example, searching for "Just Call Me Sparky" will match him, his sons, his sons' sons,
+                            and so on.</p>
+                    </hn-plus-tooltip>
+                </div>
+
+                <div class="setting-row">
+                    <label>Search max depth:</label>
+
+                    <select name="stallions.registry.maxGenerations">
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4" selected>4</option>
+                        <option value="5">5</option>
+                    </select>
+
+                    <hn-plus-tooltip>
+                        <p>Defines the maximum number of generations to traverse in the bloodline search.</p>
+                    </hn-plus-tooltip>
+                </div>
+
+                <div class="setting-row">
+                    <button id="clear-stallion-cache" title="Clear Stallion Cache" type="button">
+                        <i class="material-icons">clear_all</i>
+                        Clear Cache
+                    </button>
+                </div>
+            </fieldset>
+        </details>
+
+        <button class="icon-button" id="reset-settings" title="Reset To Defaults" type="reset">
+            <i class="material-icons">delete_sweep</i>
+        </button>
+    </form>
+
+    <script src="options.js" type="module"></script>
+</body>
+
+</html>

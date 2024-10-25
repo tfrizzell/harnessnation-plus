@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HarnessNation+</title>
+    <link href="/public/fonts/Roboto.css" rel="stylesheet" />
+    <link href="/public/fonts/MaterialSymbolsOutlined.css" rel="stylesheet" />
+    <link href="popup.css" rel="stylesheet" />
+</head>
+
+<body>
+    <header id="page-header">
+        <h1 class="extension-name">HarnessNation+</h1>
+    </header>
+
+    <main id="page-content">
+        <section class="active">
+            <a name="stallion-settings"></a>
+
+            <details open>
+                <summary>
+                    <h2>Stallion Management</h2>
+                </summary>
+
+                <label>
+                    <strong>
+                        Stud Fee Formula
+                        <a href="#stud-fee-formula-info" role="dialog">
+                            <span class="material-symbols-outlined">help</span>
+                        </a>
+                    </strong>
+
+                    <select id="stud-fee-formula"></select>
+                </label>
+
+                <dialog id="stud-fee-formula-info">
+                    <p>
+                        The stud fee calculator breaks its calculations down into two formulas: without racing
+                        offspring, and with racing offspring.
+                        The table below details the available formula sets.
+                    </p>
+
+                    <h4>Apex Formula Set</h4>
+                    <ul>
+                        <li>
+                            If the stud has racing offspring:<br />
+                            <code style="white-space:nowrap">[average earanings per starter] / 4</code>
+                        </li>
+
+                        <li>
+                            If the stud does not have racing offspring:<br />
+                            <code style="white-space:nowrap">[lifetime earnings] / [lifetime starts]</code>
+                        </li>
+                    </ul>
+
+                    <h4>Ridge Formula Set</h4>
+                    <ul>
+                        <li>
+                            If the stud has racing offspring:<br />
+                            <code style="white-space:nowrap">5000 + ([average earanings per starter] / 2)</code>
+                        </li>
+
+                        <li>
+                            If the stud does not have racing offspring:<br />
+                            <code style="white-space:nowrap">5000 + ([lifetime earnings] / 20)</code>
+                        </li>
+                    </ul>
+                </dialog>
+            </details>
+
+            <details open>
+                <summary>
+                    <h2>Stallion Registry</h2>
+                </summary>
+
+                <label>
+                    <strong>
+                        Use Bloodline Search
+                        <a href="#bloodline-search-info" role="dialog">
+                            <span class="material-symbols-outlined">help</span>
+                        </a>
+                    </strong>
+
+                    <input name="stallions.registry.bloodlineSearch" role="toggle" type="checkbox" />
+                </label>
+
+                <dialog id="bloodline-search-info">
+                    <p>
+                        Use this option to enable bloodline searching in the public stallion registry. This will allow
+                        you to search for an ancestor in the stallion's sire line.
+                    </p>
+
+                    <p>
+                        For example, searching for "Just Call Me Sparky" will match him, his sons, his sons' sons, and
+                        so on.
+                    </p>
+                </dialog>
+
+                <label>
+                    <strong>
+                        Max Depth
+                        <a href="#bloodline-search-max-depth-info" role="dialog">
+                            <span class="material-symbols-outlined">help</span>
+                        </a>
+                    </strong>
+
+                    <select name="stallions.registry.maxGenerations">
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                    </select>
+                </label>
+
+                <dialog id="bloodline-search-max-depth-info">
+                    <p>
+                        Defines the maximum number of generations to traverse in the bloodline search.
+                    </p>
+                </dialog>
+            </details>
+        </section>
+
+        <section>
+            <a name="table-settings"></a>
+
+            <header>
+                <h2>Table Settings</h2>
+            </header>
+
+            <p>Use the settings below to control how the tables on <a href="https://www.harnessnation.com/"
+                    target="_blank">HarnessNation</a> store your options.</p>
+        </section>
+    </main>
+
+    <footer id="page-footer">
+        <nav>
+            <a class="active" href="#stallion-settings">
+                <span class="material-symbols-outlined">calculate</span>
+                <span>Stallions</span>
+            </a>
+
+            <a href="#table-settings">
+                <span class="material-symbols-outlined">table</span>
+                <span>Tables</span>
+            </a>
+        </nav>
+    </footer>
+
+    <script type="module" src="popup.js"></script>
+</body>
+
+</html>

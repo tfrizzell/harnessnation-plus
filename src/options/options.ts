@@ -1,7 +1,7 @@
 import { ActionType, sendAction } from '../lib/actions.js';
 import { onLoad } from '../lib/events.js';
 import { Settings } from '../lib/settings.js';
-import { HNPlusStateDurationElement } from './components/state-duration.js';
+import { HNPlusStateDurationElement } from '../components/state-duration.js';
 
 function alertAsync(message?: any): Promise<void> {
     return new Promise((resolve: (value: void | PromiseLike<void>) => void) => {

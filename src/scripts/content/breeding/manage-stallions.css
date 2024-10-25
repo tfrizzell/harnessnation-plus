@@ -1,7 +1,8 @@
 @import '../../../public/style/theme.css';
+@import '../../../public/fonts/MaterialSymbolsOutlined.css';
 
 .hn-plus-calculate-button {
-    background-color: #dfe5eb;
+    background-color: #ced4da;
     border-color: #ced4da;
     border-radius: 0 .25rem .25rem 0;
     border-style: solid;
@@ -9,7 +10,6 @@
     box-sizing: border-box;
     cursor: pointer;
     display: block;
-    font-size: 0;
     float: right;
     height: calc(2.25rem + 2px);
     object-fit: contain;
@@ -19,9 +19,8 @@
     width: calc(2.25rem + 2px);
 }
 
-.hn-plus-calculate-button img {
-    height: 100%;
-    max-width: 100%;
+.hn-plus-calculate-button .material-symbols-outlined {
+    font-size: 2.25em;
 }
 
 .hn-plus-calculate-input,
@@ -51,14 +50,15 @@
     );
     background-size: 4rem 4rem;
     color: transparent;
+    cursor: wait !important;
 }
 
 .hn-plus-calculating + .hn-plus-calculate-button {
-    cursor: none;
+    cursor: wait !important;
 }
 
-.hn-plus-calculating + .hn-plus-calculate-button::before {
-    opacity: 0.25;
+.hn-plus-calculating + .hn-plus-calculate-button .material-symbols-outlined {
+    opacity: 0.5;
 }
 
 @keyframes hn-plus-calculating {

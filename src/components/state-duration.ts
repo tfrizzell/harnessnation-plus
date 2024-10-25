@@ -1,5 +1,5 @@
-import { DataTablesMode } from '../../lib/data-tables.js';
-import { DataTablesDisplayUnits, DataTablesSettings } from '../../lib/settings.js';
+import { DataTablesMode } from '../lib/data-tables.js';
+import { DataTablesDisplayUnits, DataTablesSettings } from '../lib/settings.js';
 
 declare type StateDurationMode = {
     value: DataTablesMode;
