@@ -58,8 +58,14 @@ gulp.task('build', gulp.series('clean', 'copy:icons', 'copy:public', 'compile'))
  **                   **
  ***********************/
 
-const copyManifest = browser => () =>
-    gulp.src(['./manifest.json'])
+ const copyManifest = browser => () =>
+    gulp.src([`./manifests/manifest-${browser}.json`], { base: './' })
+        .pipe(rename(path => {
+            if (path.basename === `manifest-${browser}`) {
+                path.dirname = './';
+                path.basename = path.basename.replace(/^manifest-.*/, 'manifest');
+            }
+        }))
         .pipe(gulp.dest(DIR_DIST));
 
 gulp.task('build:chrome', gulp.series('build', copyManifest('chrome')));
@@ -77,9 +83,14 @@ const package = browser => () => {
     const zipFile = `hn-plus-${browser}.zip`;
     del(zipFile);
 
-    return gulp.src([...FILES, './manifest.json'])
+    return gulp.src([...FILES, `manifests/manifest-${browser}.json`], { base: './' })
         .pipe(rename(path => {
             path.dirname = path.dirname.replace(/^dist[/\\]+/, '').replace(/^dist$/, '.');
+
+            if (path.basename === `manifest-${browser}`) {
+                path.dirname = '.';
+                path.basename = path.basename.replace(/^manifest-.*/, 'manifest');
+            }
         }))
         .pipe(zip(zipFile))
         .pipe(gulp.dest('./'));

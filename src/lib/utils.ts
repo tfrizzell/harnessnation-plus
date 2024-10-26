@@ -1,28 +1,24 @@
 import { Timestamp } from 'firebase/firestore';
 
-export async function downloadDataUrl(dataUrl: string, filename: string): Promise<void> {
-    const manifest: chrome.runtime.Manifest = await chrome.runtime.getManifest();
+export type DownloadOptions = {
+    contentType?: string;
+    saveAs?: boolean
 
-    if (manifest.applications?.gecko != null) {
-        const tab: chrome.tabs.Tab = (await chrome.tabs.query({ url: '*://*/*' })).find(t => t.url)!;
+}
+export async function downloadFile(file: string | Blob, filename: string, options: DownloadOptions = {}): Promise<void> {
+    if (null != window?.URL?.createObjectURL) {
+        if (!(file instanceof Blob))
+            file = new Blob([file], options.contentType ? { type: options.contentType } : undefined)
 
-        chrome.scripting.executeScript({
-            target: { tabId: tab.id! },
-            args: [dataUrl, filename],
-            func: (dataUrl: string, filename: string) => {
-                const download: HTMLAnchorElement = document.createElement('a');
-                download.setAttribute('href', dataUrl);
-                download.setAttribute('download', filename);
-                download.click();
-            }
-        });
-    } else {
-        chrome.downloads.download({
-            url: dataUrl,
-            filename: filename,
-            saveAs: false,
-        });
+        file = URL.createObjectURL(file)
     }
+
+    chrome.downloads.download({
+        url: file.toString(),
+        filename,
+        saveAs: options.saveAs ?? false,
+    });
+
 }
 
 export function parseCurrency(value: string | number): number {
