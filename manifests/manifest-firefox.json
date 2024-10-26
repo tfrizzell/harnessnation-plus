@@ -1,0 +1,161 @@
+{
+  "manifest_version": 3,
+  "name": "HarnessNation+",
+  "short_name": "hn-plus",
+  "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
+  "version": "3.8.0",
+  "author": "Trevor Frizzell <trevor@frizzell.ca>",
+  "homepage_url": "https://github.com/tfrizzell/harnessnation-plus",
+  "icons": {
+    "16": "icons/hn-plus16.png",
+    "32": "icons/hn-plus32.png",
+    "48": "icons/hn-plus48.png",
+    "128": "icons/hn-plus128.png"
+  },
+  "host_permissions": [
+    "*://*.harnessnation.com/"
+  ],
+  "permissions": [
+    "alarms",
+    "downloads",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "action": {
+    "default_title": "HarnessNation+",
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.harnessnation.com/breeding/inhouse",
+        "*://*.harnessnation.com/breeding/pedigree/generate"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "public/style/stallion-score.css",
+        "scripts/content/common/pedigree.css"
+      ],
+      "js": [
+        "scripts/content/common/pedigree.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/breeding/stallions"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "public/style/stallion-score.css",
+        "scripts/content/breeding/stallions.css"
+      ],
+      "js": [
+        "scripts/content/breeding/stallions.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/breeding/manage/stallions"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "scripts/content/breeding/manage-stallions.css"
+      ],
+      "js": [
+        "scripts/content/breeding/manage-stallions.js"
+      ]
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/horse/*"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/stallion-score.css",
+        "scripts/content/horse/stallion-score.css",
+        "scripts/content/common/pedigree.css",
+        "scripts/content/horse/pedigree.css"
+      ],
+      "js": [
+        "lib/data-tables.web.js",
+        "lib/events.web.js",
+        "scripts/content/common/pedigree.js",
+        "scripts/content/horse/progeny-table.js",
+        "scripts/content/horse/stallion-score.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/stable/main"
+      ],
+      "js": [
+        "lib/data-tables.web.js",
+        "lib/events.web.js",
+        "scripts/content/stable/horse-table.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/stable/breeding"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "public/style/stallion-score.css",
+        "scripts/content/stable/breeding.css"
+      ],
+      "js": [
+        "lib/data-tables.web.js",
+        "lib/events.web.js",
+        "scripts/content/stable/horse-table.js",
+        "scripts/content/stable/breeding.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/train"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "scripts/content/train/train.css"
+      ],
+      "js": [
+        "scripts/content/train/train.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "*://*.harnessnation.com/*"
+      ],
+      "resources": [
+        "lib/**",
+        "public/**",
+        "scripts/content/**/*.module.js",
+        "scripts/content/**/*.script.js",
+        "scripts/content/**/*.search.js",
+        "scripts/installed.js"
+      ]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{c1639310-3c7e-41eb-832a-faa3dd04aef9}"
+    }
+  }
+}
