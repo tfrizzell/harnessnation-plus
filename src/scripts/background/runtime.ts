@@ -33,20 +33,21 @@ chrome.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledD
                 await chrome.scripting.executeScript({
                     target: { tabId: tab.id! },
                     func: () => {
-                        import(chrome.runtime.getURL('scripts/installed.js'));
+                        import(chrome.runtime.getURL('/scripts/installed.js'));
                     },
                 });
 
-                await Promise.all([
-                    !css?.length ? null : chrome.scripting.insertCSS({
+                if (css.length > 0)
+                    await chrome.scripting.insertCSS({
                         target: { tabId: tab.id! },
                         files: css
-                    }),
-                    !js?.length ? null : chrome.scripting.executeScript({
+                    });
+
+                if (js.length > 0)
+                    await chrome.scripting.executeScript({
                         target: { tabId: tab.id! },
                         files: js
-                    })
-                ]);
+                    });
             });
         }
     });

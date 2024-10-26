@@ -4,7 +4,7 @@ import { StudFeeFormula } from '../../../lib/settings.js';
 
 const font: HTMLLinkElement = document.createElement('link');
 font.setAttribute('rel', 'stylesheet');
-font.setAttribute('href', chrome.runtime.getURL('public/fonts/MaterialSymbolsOutlined.css'));
+font.setAttribute('href', chrome.runtime.getURL('/public/fonts/MaterialSymbolsOutlined.css'));
 document.head.append(font);
 
 document.querySelectorAll<HTMLInputElement>('#inputStudFee, #inputStudFeeUpdate').forEach((input: HTMLInputElement): void => {
