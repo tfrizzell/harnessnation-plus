@@ -1,8 +1,6 @@
 @import url('/public/style/theme.css');
 
 * {
-    --hn-plus-theme-primary: #0c1426;
-    --hn-plus-theme-secondary: #f7ae26;
     --border-color: color-mix(in hsl, var(--hn-plus-theme-primary) 25%, #ffffff);
     box-sizing: border-box;
     margin: 0;
