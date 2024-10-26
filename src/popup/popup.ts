@@ -1,3 +1,7 @@
+import { ActionType, sendAction } from '../lib/actions.js';
+import { DataTablesMode } from '../lib/data-tables.js';
+import { DataTablesDisplayUnits, StudFeeFormula } from '../lib/settings.js';
+
 document.querySelectorAll<HTMLAnchorElement>('#page-footer > nav > a').forEach(a => {
     const sectionName = a.getAttribute('href')?.replace(/^#/, '');
 
@@ -15,7 +19,7 @@ document.querySelectorAll<HTMLAnchorElement>('#page-footer > nav > a').forEach(a
     });
 });
 
-document.querySelectorAll<HTMLDialogElement>('dialog').forEach(dialog => {
+function bindDialogEventListeners(dialog: HTMLDialogElement): void {
     dialog.addEventListener('click', (e: MouseEvent) => {
         if (dialog == e.target)
             dialog.close();
@@ -29,7 +33,9 @@ document.querySelectorAll<HTMLDialogElement>('dialog').forEach(dialog => {
         e.preventDefault();
         dialog.close();
     });
-});
+}
+
+document.querySelectorAll<HTMLDialogElement>('dialog').forEach(bindDialogEventListeners);
 
 document.querySelectorAll<HTMLAnchorElement>('a[role="dialog" i]').forEach(a => {
     const dialogName = a.getAttribute('href')?.replace(/^#/, '');
@@ -48,7 +54,113 @@ chrome.storage.sync.get().then(settings => {
         for (const key of keys.reverse())
             obj = obj?.[key];
 
+        if (name.match(/^dt\..*?\.duration$/)) {
+            console.log(name, obj[key], obj['displayUnits']);
+            return obj[key] / obj['displayUnits'];
+        }
+
         return obj[key];
+    }
+
+    async function handleButtonClick(button: HTMLButtonElement, e: MouseEvent): Promise<void> {
+        button.disabled = true;
+
+        const dialog: HTMLDialogElement = document.createElement('dialog');
+        bindDialogEventListeners(dialog);
+        dialog.addEventListener('close', () => dialog.remove());
+
+        try {
+            switch (button.getAttribute('name')) {
+                case 'clear-stallion-cache':
+                    if (!confirm('You are about to clear the stallion cache. This may cause a delay the next time you view stallion scores or execute a bloodline search while the cache is rebuilt. Are you sure you want to do this?'))
+                        return;
+
+                    await sendAction(ActionType.ClearHorseCache);
+                    dialog.innerHTML = '<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:green">check_circle</span> The stallion bloodline cache has been cleared!</p>';
+                    break;
+
+                case 'reset-settings':
+                    if (!confirm('You are about to reset all settings to their default values. Are you sure you want to do this?'))
+                        return;
+
+                    await chrome.storage.sync.clear();
+                    await chrome.storage.sync.set({});
+                    dialog.innerHTML = '<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:green">check_circle</span> Your settings have been reset to the defaults!</p>';
+                    break;
+            }
+        } catch (e: any) {
+            if (e) {
+                console.error(`%cpopup.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+                dialog.innerHTML = `<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ${e.message}</p>`;
+            }
+        }
+
+        if (dialog.innerHTML) {
+            document.body.append(dialog);
+            dialog.showModal();
+            setTimeout(() => dialog.close(), 2000);
+        }
+
+        button.disabled = false;
+    }
+
+    function populateOptions(select: HTMLSelectElement) {
+        const options: { value: any, label: string, default?: boolean } | any = [];
+
+        switch (select.getAttribute('name')) {
+            case 'dt.breeding.displayUnits':
+            case 'dt.main.displayUnits':
+            case 'dt.progeny.displayUnits':
+                options.push(
+                    { value: DataTablesDisplayUnits.Minutes, label: 'Minute(s)' },
+                    { value: DataTablesDisplayUnits.Hours, label: 'Hour(s)' },
+                    { value: DataTablesDisplayUnits.Days, label: 'Day(s)', default: true },
+                    { value: DataTablesDisplayUnits.Weeks, label: 'Week(s)' },
+                    { value: DataTablesDisplayUnits.Years, label: 'Year(s)' },
+                );
+                break;
+
+            case 'dt.breeding.mode':
+            case 'dt.main.mode':
+            case 'dt.progeny.mode':
+                options.push(
+                    { value: DataTablesMode.Default, label: 'Site Default', default: true },
+                    { value: DataTablesMode.Custom, label: 'Custom' },
+                );
+                break;
+
+            case 'stallions.registry.maxGenerations':
+                options.push(2, 3, 4, 5);
+                break;
+
+            case 'stallions.management.formula':
+                options.push(...Object.entries(StudFeeFormula)
+                    .filter(([name, value]) => Number.isNaN(parseInt(name)))
+                    .map(([name, value]) => <any>{
+                        value: value,
+                        label: `${name} Formula`,
+                    }));
+                break;
+
+            default:
+                return;
+        }
+
+        while (null != select.firstChild)
+            select.firstChild.remove();
+
+        for (let option of options) {
+            if (typeof option !== 'object')
+                option = { value: option, label: option } as any;
+
+            const opt: HTMLOptionElement = document.createElement('option');
+            opt.setAttribute('value', option.value);
+            opt.innerHTML = option.label;
+            select.append(opt);
+
+            if (option.default)
+                opt.toggleAttribute('selected', true);
+        }
     }
 
     function setSetting(name: string, value: any): void {
@@ -58,7 +170,7 @@ chrome.storage.sync.get().then(settings => {
         for (const key of keys.reverse())
             obj = (obj[key] ??= {});
 
-        const valueType = typeof obj[key];
+        const prev_value = obj[key];
 
         switch (typeof obj[key]) {
             case 'boolean':
@@ -69,25 +181,32 @@ chrome.storage.sync.get().then(settings => {
                 break;
 
             case 'number':
-                if (Number.isNaN(parseInt(value)))
+                if (Number.isNaN(parseFloat(value)))
                     throw TypeError(`${value} is not a valid integer value`);
 
-                obj[key] = parseInt(value);
+                obj[key] = parseFloat(value);
                 break;
 
             default:
                 obj[key] = value;
         }
 
+        if (name.match(/^dt\..*?\.duration$/))
+            obj['duration'] = obj['duration'] * obj['displayUnits'];
+        else if (name.match(/^dt\..*?\.displayUnits$/))
+            obj['duration'] = obj['duration'] * obj['displayUnits'] / prev_value;
+
         chrome.storage.sync.set(settings);
-        console.log(settings);
     }
 
     document.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input[name], select[name]').forEach(input => {
+        input.dataset.initializing = ''
         const key: string = input.getAttribute('name')!;
         const validOptions: string[] = [];
 
         if (input instanceof HTMLSelectElement) {
+            populateOptions(input);
+
             for (const option of input.options)
                 validOptions.push(option.value)
         }
@@ -107,26 +226,14 @@ chrome.storage.sync.get().then(settings => {
 
             setSetting(key, value);
         });
+
+        setTimeout(() => delete input.dataset.initializing, 400);
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('button[name]').forEach(button => {
+        button.addEventListener('click', (e: MouseEvent) => {
+            e.preventDefault();
+            handleButtonClick(button, e);
+        });
     });
 });
-// const data = await chrome.storage.sync.get();
-// const form = document.forms.settings;
-// for (const input of [].filter.call(form.elements, (el) => !!el.name)) {
-//     const value = input.name.split('.').reduce((obj, key) => obj?.[key], data);
-//     if (value == null)
-//         continue;
-//     if (input.type === 'checkbox')
-//         input.checked = value;
-//     else if (input.type === 'radio')
-//         input.checked = (input.value == value);
-//     else
-//         input.value = value;
-//     input.addEventListener('input', (e) => { saveInput(e.target); });
-// }
-// for (const custom of form.querySelectorAll('hn-plus-state-duration[name]')) {
-//     const value = custom.name.split('.').reduce((obj, key) => obj?.[key], data);
-//     if (value == null)
-//         continue;
-//     custom.value = value;
-//     custom.addEventListener('input', (e) => { saveInput(e.target); });
-// }

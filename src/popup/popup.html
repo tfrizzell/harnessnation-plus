@@ -6,6 +6,7 @@
     <link href="/public/fonts/Roboto.css" rel="stylesheet" />
     <link href="/public/fonts/MaterialSymbolsOutlined.css" rel="stylesheet" />
     <link href="popup.css" rel="stylesheet" />
+    <script src="/public/components/tooltip.js"></script>
 </head>
 
 <body>
@@ -22,7 +23,11 @@
                     <h2>Stallion Management</h2>
                 </summary>
 
-                <label>
+                <p>
+                    Use the settings below to update your stallion management feature settings.
+                </p>
+
+                <div class="input-row">
                     <strong>
                         Stud Fee Formula
                         <a href="#stud-fee-formula-info" role="dialog">
@@ -30,8 +35,8 @@
                         </a>
                     </strong>
 
-                    <select id="stud-fee-formula"></select>
-                </label>
+                    <select name="stallions.management.formula"></select>
+                </div>
 
                 <dialog id="stud-fee-formula-info">
                     <p>
@@ -73,7 +78,11 @@
                     <h2>Stallion Registry</h2>
                 </summary>
 
-                <label>
+                <p>
+                    Use the settings below to update your stallion registry feature settings.
+                </p>
+
+                <div class="input-row">
                     <strong>
                         Use Bloodline Search
                         <a href="#bloodline-search-info" role="dialog">
@@ -81,8 +90,8 @@
                         </a>
                     </strong>
 
-                    <input name="stallions.registry.bloodlineSearch" role="toggle" type="checkbox" />
-                </label>
+                    <input data-initializing name="stallions.registry.bloodlineSearch" role="toggle" type="checkbox" />
+                </div>
 
                 <dialog id="bloodline-search-info">
                     <p>
@@ -96,7 +105,7 @@
                     </p>
                 </dialog>
 
-                <label>
+                <div class="input-row">
                     <strong>
                         Max Depth
                         <a href="#bloodline-search-max-depth-info" role="dialog">
@@ -110,38 +119,154 @@
                         <option>4</option>
                         <option>5</option>
                     </select>
-                </label>
+                </div>
 
                 <dialog id="bloodline-search-max-depth-info">
                     <p>
                         Defines the maximum number of generations to traverse in the bloodline search.
                     </p>
                 </dialog>
+
+                <section class="actions">
+                    <button name="clear-stallion-cache" type="button">
+                        <span class="material-symbols-outlined">cached</span>
+                        Clear Cache
+                    </button>
+                </section>
             </details>
         </section>
 
         <section>
             <a name="table-settings"></a>
 
-            <header>
-                <h2>Table Settings</h2>
-            </header>
+            <details open>
+                <summary>
+                    <h2>Main Stable</h2>
+                </summary>
 
-            <p>Use the settings below to control how the tables on <a href="https://www.harnessnation.com/"
-                    target="_blank">HarnessNation</a> store your options.</p>
+                <p>
+                    Use the settings below to control how the table options are stored on your main stable page.
+                </p>
+
+                <div class="input-row">
+                    <strong>
+                        Save Settings
+                    </strong>
+
+                    <input data-initializing name="dt.main.enabled" role="toggle" type="checkbox" />
+                </div>
+
+                <div class="input-row">
+                    <strong>
+                        Duration
+                    </strong>
+
+                    <div class="save-duration">
+                        <select name="dt.main.mode"></select>
+                        <input min="0" name="dt.main.duration" type="number" />
+                        <select name="dt.main.displayUnits"></select>
+                    </div>
+                </div>
+            </details>
+
+            <details open>
+                <summary>
+                    <h2>Breeding Stable</h2>
+                </summary>
+
+                <p>
+                    Use the settings below to control how the table options are stored on your breeding stable page.
+                </p>
+
+                <div class="input-row">
+                    <strong>
+                        Save Settings
+                    </strong>
+
+                    <input data-initializing name="dt.breeding.enabled" role="toggle" type="checkbox" />
+                </div>
+
+                <div class="input-row">
+                    <strong>
+                        Duration
+                    </strong>
+
+                    <div class="save-duration">
+                        <select name="dt.breeding.mode"></select>
+                        <input min="0" name="dt.breeding.duration" type="number" />
+                        <select name="dt.breeding.displayUnits"></select>
+                    </div>
+                </div>
+            </details>
+
+            <details open>
+                <summary>
+                    <h2>Horse Progeny</h2>
+                </summary>
+
+                <p>
+                    Use the settings below to control how the table options are stored for the stallion and broodmare progeny popups.
+                </p>
+
+                <div class="input-row">
+                    <strong>
+                        Save Settings
+                    </strong>
+
+                    <input data-initializing name="dt.progeny.enabled" role="toggle" type="checkbox" />
+                </div>
+
+                <div class="input-row">
+                    <strong>
+                        Duration
+                    </strong>
+
+                    <div class="save-duration">
+                        <select name="dt.progeny.mode"></select>
+                        <input min="0" name="dt.progeny.duration" type="number" />
+                        <select name="dt.progeny.displayUnits"></select>
+                    </div>
+                </div>
+            </details>
+        </section>
+
+        <section>
+            <a name="extension-settings"></a>
+
+            <details open>
+                <summary>
+                    <h2>Extension Settings</h2>
+                </summary>
+
+                <p>
+                    To reset your extensions to their defaults, click the button below.
+                </p>
+
+                <section class="actions" style="text-align:center">
+                    <button name="reset-settings" type="button">
+                        <span class="material-symbols-outlined">delete_sweep</span>
+                        Reset All Settings
+                    </button>
+                </section>
+            </details>
         </section>
     </main>
 
     <footer id="page-footer">
         <nav>
             <a class="active" href="#stallion-settings">
-                <span class="material-symbols-outlined">calculate</span>
+                <span class="material-symbols-outlined">warehouse</span>
                 <span>Stallions</span>
             </a>
 
             <a href="#table-settings">
                 <span class="material-symbols-outlined">table</span>
                 <span>Tables</span>
+            </a>
+
+            <a href="#extension-settings">
+                <span class="material-symbols-outlined">settings</span>
+                <span>Settings</span>
             </a>
         </nav>
     </footer>
