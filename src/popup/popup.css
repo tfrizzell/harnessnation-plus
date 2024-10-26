@@ -53,7 +53,7 @@ button:is(:hover, :focus) {
 }
 
 button:active {
-    background: color-mix(in hsl, var(--hn-plus-theme-primary, ) 93%, #ffffff);
+    background: color-mix(in hsl, var(--hn-plus-theme-primary) 93%, #ffffff);
 }
 
 input,

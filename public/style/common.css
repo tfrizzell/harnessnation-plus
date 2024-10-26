@@ -2,7 +2,7 @@
 
 .hn-plus-button {
     align-items: center;
-    background: color-mix(in hsl, var(--hn-plus-theme-primary, #0c1426) 90%, #ffffff);
+    background: color-mix(in hsl, var(--hn-plus-theme-primary) 90%, #ffffff);
     border: none;
     border-radius: 0.5em;
     color: #ffffff;
@@ -14,11 +14,11 @@
 }
 
 .hn-plus-button:is(:hover, :focus) {
-    background: color-mix(in hsl, var(--hn-plus-theme-primary, #0c1426) 87%, #ffffff);
+    background: color-mix(in hsl, var(--hn-plus-theme-primary) 87%, #ffffff);
 }
 
 .hn-plus-button:active {
-    background: color-mix(in hsl, var(--hn-plus-theme-primary, #0c1426) 93%, #ffffff);
+    background: color-mix(in hsl, var(--hn-plus-theme-primary) 93%, #ffffff);
 }
 
 .hn-plus-button::before {

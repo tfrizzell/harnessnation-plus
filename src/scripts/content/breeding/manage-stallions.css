@@ -40,13 +40,14 @@
 .form-control.hn-plus-calculating {
 	animation: hn-plus-calculating 750ms linear infinite;
 	background-image: linear-gradient(135deg, 
+        #ffffff 0%, 
         #ffffff 25%, 
-        var(--hn-plus-theme-tertiary, #8ea8c3) 25%, 
-        var(--hn-plus-theme-tertiary, #8ea8c3) 50%, 
+        var(--hn-plus-theme-tertiary) 25%, 
+        var(--hn-plus-theme-tertiary) 50%, 
         #ffffff 50%, 
         #ffffff 75%, 
-        var(--hn-plus-theme-tertiary, #8ea8c3) 75%, 
-        var(--hn-plus-theme-tertiary, #8ea8c3) 100%
+        var(--hn-plus-theme-tertiary) 75%, 
+        var(--hn-plus-theme-tertiary) 100%
     );
     background-size: 4rem 4rem;
     color: transparent;
