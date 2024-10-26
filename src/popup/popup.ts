@@ -54,10 +54,8 @@ chrome.storage.sync.get().then(settings => {
         for (const key of keys.reverse())
             obj = obj?.[key];
 
-        if (name.match(/^dt\..*?\.duration$/)) {
-            console.log(name, obj[key], obj['displayUnits']);
+        if (name.match(/^dt\..*?\.duration$/))
             return obj[key] / obj['displayUnits'];
-        }
 
         return obj[key];
     }
