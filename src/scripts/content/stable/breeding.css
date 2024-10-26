@@ -25,7 +25,7 @@
 
 .hn-plus-stallion-score-tooltip:after {
     border: 0.7em solid transparent;
-    border-right: 1em solid var(--hn-plus-theme-primary, #23395b);
+    border-right: 1em solid var(--hn-plus-theme-primary);
     left: unset;
     right: 100%;
 }

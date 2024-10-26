@@ -1,10 +1,5 @@
 :root {
-    --hn-plus-theme-primary: #23395b;
-    --hn-plus-theme-secondary: #406e8e;
-    --hn-plus-theme-tertiary: #8ea8c3;
-    --hn-plus-theme-quarternary: #cbf7ed;
-    --hn-plus-theme-quinary: #f4f5ff;
-    --hn-plus-theme-text: #161935;
-
-    --hn-plus-logo-color: #ffffff;
+    --hn-plus-theme-primary: #0c1426;
+    --hn-plus-theme-secondary: #f7ae26;
+    --hn-plus-theme-tertiary: color-mix(in hsl, var(--hn-plus-theme-primary) 25%, #ffffff);
 }

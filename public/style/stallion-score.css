@@ -10,7 +10,7 @@
 .hn-plus-stallion-score {
     align-items: center;
     aspect-ratio: 1.01;
-    background: var(--hn-plus-theme-tertiary, #8ea8c3);
+    background: var(--hn-plus-theme-tertiary);
     border-radius: 0.25em;
     color: #ffffff;
     cursor: default;
@@ -39,10 +39,10 @@
 
 .hn-plus-stallion-score-tooltip {
     background: #ffffff;
-    border: 1px solid var(--hn-plus-theme-primary, #23395b);
+    border: 1px solid var(--hn-plus-theme-primary);
     border-radius: 5px;
     box-shadow: 0 0 5px 0 #4f4f4f;
-    color: var(--hn-plus-theme-primary, #23395b);
+    color: var(--hn-plus-theme-primary);
     display: none;
     font-size: 0.95em;
     padding: 0.357em 0.714em;
@@ -58,7 +58,7 @@
 
 .hn-plus-stallion-score-tooltip:after {
     border: 0.7em solid transparent;
-    border-left: 1em solid var(--hn-plus-theme-primary, #23395b);
+    border-left: 1em solid var(--hn-plus-theme-primary);
     content: "";
     left: 100%;
     position: absolute;

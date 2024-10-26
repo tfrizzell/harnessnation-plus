@@ -10,10 +10,10 @@
 
 .hn-plus-button {
     align-items: revert;
-    background-color: var(--hn-plus-theme-secondary, #406e8e) !important;
+    background: color-mix(in hsl, var(--hn-plus-theme-primary) 90%, #ffffff) !important;
     border: revert;
     border-radius: revert;
-    color: var(--hn-plus-theme-quarternary, #cbf7ed) !important;
+    color: #ffffff !important;
     column-gap: revert;
     cursor: revert;
     display: revert;
@@ -22,11 +22,11 @@
 }
 
 .hn-plus-button:is(:hover, :focus) {
-    background-color: var(--hn-plus-theme-primary, #23395b) !important;
+    background-color: color-mix(in hsl, var(--hn-plus-theme-primary) 87%, #ffffff) !important;
 }
 
 .hn-plus-button:active {
-    background-color: var(--hn-plus-theme-tertiary, #8ea8c3) !important;
+    background-color: color-mix(in hsl, var(--hn-plus-theme-primary) 93%, #ffffff) !important;
 }
 
 .hn-plus-button::before {
