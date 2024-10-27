@@ -6,19 +6,74 @@ export type DownloadOptions = {
 
 }
 export async function downloadFile(file: string | Blob, filename: string, options: DownloadOptions = {}): Promise<void> {
-    if (null != window?.URL?.createObjectURL) {
-        if (!(file instanceof Blob))
-            file = new Blob([file], options.contentType ? { type: options.contentType } : undefined)
-
-        file = URL.createObjectURL(file)
+    if (typeof file === 'string' && /^data:([^;]+);/i.test(file)) {
+        const [contentType, encoding, content] = /^data:([^;]+);(?:([^,]+),)?(.*)$/.exec(file)!.slice(1);
+        return await downloadFile('base64' === encoding ? window.atob(content) : content, filename, { contentType, ...options });
     }
 
-    chrome.downloads.download({
-        url: file.toString(),
-        filename,
-        saveAs: options.saveAs ?? false,
-    });
+    options ??= {}
 
+    if (!options.contentType?.trim()) {
+        switch (filename.split('.')[-1]) {
+            case 'csv':
+                options.contentType = 'text/csv';
+                break;
+
+            case 'html':
+                options.contentType = 'text/html';
+                break;
+
+            case 'json':
+                options.contentType = 'application/json';
+                break;
+
+            case 'xls':
+                options.contentType = 'application/vnd.ms-excel';
+                break;
+
+            case 'xlsx':
+                options.contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                break;
+
+            default:
+                options.contentType = 'text/plain';
+                break;
+        }
+    }
+
+    let revokeObjectUrl = false;
+
+    if (null != window.URL?.createObjectURL) {
+        if (!(file instanceof Blob))
+            file = new Blob([file], { type: options.contentType });
+
+        file = window.URL.createObjectURL(file);
+        revokeObjectUrl = true;
+    } else if (file instanceof Blob) {
+        file = await new Promise<string>(resolve => {
+            const reader = new FileReader();
+
+            reader.addEventListener('loadend', () => {
+                resolve(<string>reader.result);
+            });
+
+            reader.readAsDataURL(<Blob>file);
+        });
+    } else
+        file = `data:${options.contentType};base64,${window.btoa(file)}`;
+
+    try {
+        await chrome.downloads.download({
+            url: file,
+            filename,
+            saveAs: options.saveAs ?? false,
+        });
+
+        await chrome.downloads.search({ filename });
+    } finally {
+        if (revokeObjectUrl)
+            window.URL.revokeObjectURL(file);
+    }
 }
 
 export function parseCurrency(value: string | number): number {
