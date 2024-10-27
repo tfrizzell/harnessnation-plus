@@ -6,6 +6,11 @@ type TrainingInputElement = HTMLInputElement | HTMLSelectElement;
 const copiedSettings: Map<TrainingGroup, Map<string, string>> = new Map();
 const buttonClasses: string[] = ['btn', 'p-2', 'btn-sm', 'waves-effect', 'waves-light', 'hn-plus-button'];
 
+const font: HTMLLinkElement = document.createElement('link');
+font.setAttribute('rel', 'stylesheet');
+font.setAttribute('href', chrome.runtime.getURL('/public/fonts/MaterialSymbolsOutlined.css'));
+document.head.append(font);
+
 function addButtons(row: Element): void {
     const wrapper: HTMLElement = document.createElement('div');
     wrapper.classList.add('hn-plus-button-wrapper');
@@ -21,8 +26,9 @@ function addButtons(row: Element): void {
         copySettings(row);
     });
 
-    const copyIcon: HTMLElement = document.createElement('i');
-    copyIcon.classList.add('fas', 'fa-copy');
+    const copyIcon: HTMLElement = document.createElement('span');
+    copyIcon.classList.add('material-symbols-outlined');
+    copyIcon.innerHTML = 'content_copy';
     copyButton.append(copyIcon);
 
     const cloneButton: HTMLButtonElement = document.createElement('button');
@@ -31,8 +37,9 @@ function addButtons(row: Element): void {
     cloneButton.type = 'button';
     wrapper.append(cloneButton);
 
-    const cloneIcon: HTMLElement = document.createElement('i');
-    cloneIcon.classList.add('fas', 'fa-clone');
+    const cloneIcon: HTMLElement = document.createElement('span');
+    cloneIcon.classList.add('material-symbols-outlined');
+    cloneIcon.innerHTML = 'copy_all';
     cloneButton.append(cloneIcon);
 
     cloneButton.addEventListener('click', (e: Event): void => {
@@ -65,8 +72,9 @@ function addPasteButton(row: Element): void {
         pasteSettings(row);
     });
 
-    const pasteIcon: HTMLElement = document.createElement('i');
-    pasteIcon.classList.add('fas', 'fa-clone');
+    const pasteIcon: HTMLElement = document.createElement('span');
+    pasteIcon.classList.add('material-symbols-outlined');
+    pasteIcon.innerHTML = 'content_paste';
     pasteButton.append(pasteIcon);
 
     wrapper.insertBefore(pasteButton, wrapper.firstElementChild);
@@ -74,6 +82,9 @@ function addPasteButton(row: Element): void {
 
 function copySettings(row: Element): void {
     copiedSettings.set(getTrainingGroup(row), getSettings(row));
+
+    row.closest('form')?.querySelector('.horseField.hn-plus-copy-source')?.classList.remove('hn-plus-copy-source');
+    row.closest('.horseField')?.classList.add('hn-plus-copy-source');
 
     row.closest('form')?.querySelectorAll('.horseField').forEach((row: Element): void => {
         addPasteButton(row);
@@ -161,6 +172,7 @@ const observer: MutationObserver = new MutationObserver((mutations: MutationReco
 observer.observe(window.document, { childList: true, subtree: true });
 
 onInstalled((): void => {
+    font.remove();
     observer.disconnect();
     document.querySelectorAll('button.autoSelectHorses').forEach((button: Element): void => button.removeEventListener('click', handleAutoSelect));
     removeButtons();

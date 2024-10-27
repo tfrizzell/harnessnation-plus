@@ -9,15 +9,15 @@
 }
 
 .hn-plus-button {
-    align-items: revert;
+    align-items: center !important;
     background: color-mix(in hsl, var(--hn-plus-theme-primary) 90%, #ffffff) !important;
     border: revert;
     border-radius: revert;
     color: #ffffff !important;
     column-gap: revert;
     cursor: revert;
-    display: revert;
-    justify-content: revert;
+    display: inline-flex !important;
+    justify-content: center !important;
     padding: revert;
 }
 
@@ -34,7 +34,22 @@
     display: none;
 }
 
+.hn-plus-button .material-symbols-outlined {
+    font-size: 1em;
+}
+
 .hn-plus-copy-button {
     margin-left: 0.9em;
     margin-right: 0.9em;
+}
+
+.horseField.hn-plus-copy-source {
+    background: color-mix(in hsl, var(--hn-plus-theme-secondary) 10%, #ffffff);
+    margin-bottom: 1.5625em;
+    outline: thin solid var(--hn-plus-theme-secondary);
+}
+
+.horseField.hn-plus-copy-source> :has(hr) {
+    margin-top: -100%;
+    transform: translateY(100%);
 }
