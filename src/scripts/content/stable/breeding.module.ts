@@ -1,32 +1,35 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onInstalled, onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
+import { removeAll } from '../../../lib/utils.js';
 
-async function addExportButton(): Promise<void> {
-    const exportRunning: boolean = (await chrome.storage.local.get('breeding.export'))?.['breeding.export'] ?? false;
+const tooltipScriptUrl = chrome.runtime.getURL('/public/components/tooltip.js');
 
-    document.querySelectorAll('#breedingHorseTable_3_wrapper').forEach((el: Element): void => {
-        [el.parentNode, el.parentNode?.parentNode].forEach((node: ParentNode | null | undefined): void => {
+async function addExportButtons(): Promise<void> {
+    const exportRunning = (await chrome.storage.local.get('breeding.export'))?.['breeding.export'] ?? false;
+
+    document.querySelectorAll('#breedingHorseTable_3_wrapper').forEach(el => {
+        [el.parentNode, el.parentNode?.parentNode].forEach(node => {
             if (node == null)
                 return;
 
-            const wrapper: HTMLDivElement = document.createElement('div');
-            wrapper.classList.add('hn-plus-button-wrapper');
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('hn-plus-button-wrapper', 'hn-plus-export-button');
 
             if (node === el.parentNode)
                 node.insertBefore(wrapper, el);
             else
                 node.append(wrapper);
 
-            const button: HTMLButtonElement = document.createElement('button');
+            const button = document.createElement('button');
             button.classList.add('hn-plus-button');
             button.disabled = exportRunning;
             button.textContent = 'Report (CSV)';
             button.type = 'button';
 
-            button.addEventListener('click', async (e: Event): Promise<void> => {
+            button.addEventListener('click', async e => {
                 e.preventDefault();
-                const message: NodeJS.Timeout = setTimeout(() => alert('Your broodmare report is being generated in the background and will be downloaded automatically upon completion. You are free to continue browsing without impacting this process.'), 50);
+                const message = setTimeout(() => alert('Your broodmare report is being generated in the background and will be downloaded automatically upon completion. You are free to continue browsing without impacting this process.'), 50);
 
                 try {
                     await exportReport(el.innerHTML);
@@ -38,7 +41,7 @@ async function addExportButton(): Promise<void> {
                 }
             });
 
-            const tooltip: HNPlusTooltipElement = document.createElement('hn-plus-tooltip') as HNPlusTooltipElement;
+            const tooltip = document.createElement('hn-plus-tooltip');
             tooltip.textContent = 'Generate a CSV export of all broodmares listed in this table. This report includes data from their progeny report and may take several minutes to generate.';
             wrapper.append(tooltip, button);
 
@@ -47,30 +50,27 @@ async function addExportButton(): Promise<void> {
                     return;
 
                 if (changes['breeding.export']?.newValue)
-                    document.querySelectorAll('.hn-plus-button').forEach((el: Element): void => { (<HTMLButtonElement>el).disabled = true; });
+                    document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = true; });
                 else
-                    document.querySelectorAll('.hn-plus-button').forEach((el: Element): void => { (<HTMLButtonElement>el).disabled = false; });
+                    document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = false; });
             }
 
             chrome.storage.onChanged.addListener(handleStateChange);
-
-            onInstalled((): void => {
-                chrome.storage.onChanged.removeListener(handleStateChange);
-            });
+            onInstalled(() => chrome.storage.onChanged.removeListener(handleStateChange));
         });
     });
 }
 
 async function addStallionScores(): Promise<void> {
-    const cells: HTMLAnchorElement[] = Array.from(document.querySelectorAll('#breedingHorseTable_4 > tbody > tr > td:nth-child(2)'));
-    const horses: Horse[] | undefined = (await sendAction(ActionType.GetHorses)).data;
+    const cells = Array.from(document.querySelectorAll<HTMLTableCellElement>('#breedingHorseTable_4 > tbody > tr > td:nth-child(2)'));
+    const horses = (await sendAction(ActionType.GetHorses)).data;
 
     if (horses == null)
         return;
 
     for (const cell of cells) {
-        const id: number | undefined = cell.innerHTML.match(/\/horse\/(\d+)/)?.slice(1)?.map(parseInt)?.[0];
-        const horse: Horse | undefined = horses.find(horse => horse.id === id);
+        const id = cell.innerHTML.match(/\/horse\/(\d+)/)?.slice(1)?.map(parseInt)?.[0];
+        const horse = horses.find(horse => horse.id === id);
 
         if (horse?.stallionScore?.value == null)
             continue;
@@ -80,8 +80,18 @@ async function addStallionScores(): Promise<void> {
     }
 }
 
+function addTooltips(): void {
+    if (document.querySelector(`script[src*="${tooltipScriptUrl}"]`))
+        return;
+
+    const tooltip = document.createElement('script');
+    tooltip.setAttribute('type', 'module');
+    tooltip.setAttribute('src', `${tooltipScriptUrl}?t=${Date.now()}`);
+    document.body.append(tooltip);
+}
+
 async function exportReport(html: string): Promise<void> {
-    const pattern: RegExp = /<tr[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
+    const pattern = /<tr[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
     const ids: number[] = [];
     let id: string | undefined;
 
@@ -91,11 +101,23 @@ async function exportReport(html: string): Promise<void> {
     await sendAction(ActionType.ExportBroodmareReport, { ids });
 }
 
-const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
-    mutations.forEach((mutation: MutationRecord): void => {
+function removeExportButtons(): void {
+    removeAll('.horseContentContainer_3 .hn-plus-export-button');
+}
+
+function removeStallionScores(): void {
+    removeAll('.horseContentContainer_4 .hn-plus-stallion-score');
+}
+
+function removeTooltips(): void {
+    removeAll(`script[src*="${tooltipScriptUrl}"]`);
+}
+
+const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
         [].forEach.call(mutation.addedNodes, (node: HTMLElement) => {
             if (node.id === 'breedingHorseTable_3_wrapper')
-                addExportButton();
+                addExportButtons();
 
             if (node.id === 'breedingHorseTable_4_wrapper')
                 addStallionScores();
@@ -103,23 +125,17 @@ const observer: MutationObserver = new MutationObserver((mutations: MutationReco
     });
 });
 
-observer.observe(window.document, { childList: true, subtree: true });
+observer.observe(document, { childList: true, subtree: true });
+onInstalled(() => observer.disconnect());
 
-const tooltip: HTMLScriptElement = document.createElement('script');
-tooltip.setAttribute('type', 'module');
-tooltip.setAttribute('src', `${chrome.runtime.getURL('/public/components/tooltip.js')}?t=${Date.now()}`);
-
-onInstalled((): void => {
-    observer.disconnect();
-    tooltip.remove();
-    document.querySelectorAll('.hn-plus-button-wrapper, .hn-plus-stallion-score').forEach(el => el.remove());
-});
-
-onLoad((): void => {
-    document.body.append(tooltip);
+onLoad(() => {
+    removeStallionScores();
+    removeExportButtons();
+    removeTooltips();
+    addTooltips();
 
     if (document.querySelector('.horseContentContainer_3'))
-        addExportButton();
+        addExportButtons();
 
     if (document.querySelector('.horseContentContainer_4'))
         addStallionScores();

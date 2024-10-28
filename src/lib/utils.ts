@@ -92,6 +92,10 @@ export function regexEscape(value: string): string {
     return value?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+export function removeAll(...selectors: string[]): void {
+    document.querySelectorAll(selectors.join(', ')).forEach((el: Element) => el.remove());
+}
+
 export function sleep(value: number, abortSignal: AbortSignal | null = null): Promise<void> {
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(resolve, value);

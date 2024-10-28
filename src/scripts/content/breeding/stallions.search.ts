@@ -1,7 +1,7 @@
 import { EventType, onInstalled } from '../../../lib/events.js';
 import { sleep } from '../../../lib/utils.js';
 
-const $ = (window as any).$ || (window as any).jQuery
+const $ = (<any>window).$ || (<any>window).jQuery
 $('#saleTable_filter input[type="search"]').unbind();
 
 let controller: AbortController | null;
@@ -11,7 +11,7 @@ async function bloodlineSearch(this: Window, e: Event, retries: number = 10): Pr
 
     try {
         console.debug(`%cstallions.search.ts%c     Executing bloodline search`, 'color:#406e8e;font-weight:bold;', '');
-        $('#saleTable').DataTable().search((e as CustomEvent).detail, true, false).draw();
+        $('#saleTable').DataTable().search((<CustomEvent>e).detail, true, false).draw();
         controller = null;
     } catch (e: any) {
         console.error(`%cstallions.search.ts%c     Error while executing bloodline search: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
@@ -32,8 +32,7 @@ async function bloodlineSearch(this: Window, e: Event, retries: number = 10): Pr
     }
 }
 
+window.removeEventListener(EventType.BloodlineSearch, bloodlineSearch);
 window.addEventListener(EventType.BloodlineSearch, bloodlineSearch);
 
-onInstalled(() => {
-    window.removeEventListener(EventType.BloodlineSearch, bloodlineSearch);
-});
+onInstalled(() => window.removeEventListener(EventType.BloodlineSearch, bloodlineSearch));

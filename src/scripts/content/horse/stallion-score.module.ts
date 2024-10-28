@@ -1,19 +1,20 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
-import { onInstalled, onLoad } from '../../../lib/events.js';
+import { onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/horses.js';
+import { removeAll } from '../../../lib/utils.js';
 
-async function addStallionScore() {
-    const id: number = document.body.innerHTML.match(/<b[^>]*>\s*ID\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.slice(1)?.map(parseInt)?.[0] ?? 0;
-    const gender: string | undefined = document.body.innerHTML.match(/<b[^>]*>\s*Gender\s*:\s*<\/b[^>]*>\s*(\S+)/i)?.[1]?.toLowerCase();
-    const breeding: boolean = /<b[^>]*>\s*Location\s*:\s*<\/b[^>]*>\s*Breeding\s+Stable/i.test(document.body.innerHTML);
-    const retired: boolean = /<br[^>]*>\s*Retired\s*<br[^>]*>/i.test(document.body.innerHTML);
-    const totalFoals: number = parseInt(document.body.innerHTML.match(/<b[^>]*>\s*Total\s+Foals\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.[1] ?? '0') || 0;
+async function addStallionScore(): Promise<void> {
+    const id = document.body.innerHTML.match(/<b[^>]*>\s*ID\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.slice(1)?.map(parseInt)?.[0] ?? 0;
+    const gender = document.body.innerHTML.match(/<b[^>]*>\s*Gender\s*:\s*<\/b[^>]*>\s*(\S+)/i)?.[1]?.toLowerCase();
+    const breeding = /<b[^>]*>\s*Location\s*:\s*<\/b[^>]*>\s*Breeding\s+Stable/i.test(document.body.innerHTML);
+    const retired = /<br[^>]*>\s*Retired\s*<br[^>]*>/i.test(document.body.innerHTML);
+    const totalFoals = parseInt(document.body.innerHTML.match(/<b[^>]*>\s*Total\s+Foals\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.[1] ?? '0') || 0;
 
     if (gender !== 'stallion' || id < 1)
         return;
 
-    const horse: Horse | undefined = (await sendAction(ActionType.GetHorse, { id })).data;
-    const previewOnly: boolean = (!breeding && (!retired || totalFoals < 1));
+    const horse = (await sendAction(ActionType.GetHorse, { id })).data;
+    const previewOnly = (!breeding && (!retired || totalFoals < 1));
 
     if (retired && totalFoals > 0 && horse?.stallionScore == null) {
         const stallionScore = (await sendAction(ActionType.PreviewStallionScore, { id })).data;
@@ -24,7 +25,7 @@ async function addStallionScore() {
 
     let badge = createStallionScoreBadge(horse?.stallionScore);
 
-    let tooltip: HTMLElement = badge.querySelector('.hn-plus-stallion-score-tooltip')!;
+    let tooltip = badge.querySelector('.hn-plus-stallion-score-tooltip')!;
     tooltip.addEventListener('click', e => e.stopPropagation());
 
     if (horse?.stallionScore?.confidence == null) {
@@ -38,7 +39,7 @@ async function addStallionScore() {
             tooltip.innerHTML = '<p>Please wait while the stallion score is calculated...</p>';
 
             badge.classList.remove('hn-plus-stallion-score-available');
-            const data: StallionScore | null | undefined = (await sendAction(ActionType.PreviewStallionScore, { id })).data;
+            const data = (await sendAction(ActionType.PreviewStallionScore, { id })).data;
 
             if (data != null) {
                 const newBadge = createStallionScoreBadge(data);
@@ -57,17 +58,13 @@ async function addStallionScore() {
         }, { once: true });
     }
 
-    const name: HTMLElement | null = document.querySelector('h1.font-weight-bold.text-left');
+    const name = document.querySelector('h1.font-weight-bold.text-left');
     name?.parentElement?.nextElementSibling?.insertBefore(badge, name?.parentElement?.nextElementSibling.firstChild);
 }
 
-async function removeStallionScore(): Promise<void> {
-    document.querySelectorAll('.hn-plus-stallion-score').forEach(el => el.remove());
+function removeStallionScore(): void {
+    removeAll('.hn-plus-stallion-score')
 }
-
-onInstalled(() => {
-    removeStallionScore();
-});
 
 onLoad(() => {
     removeStallionScore();
