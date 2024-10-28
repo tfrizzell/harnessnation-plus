@@ -219,8 +219,9 @@ export async function sendAction<T>(type: ActionType, data?: any): Promise<Actio
     // Firefox compatibility: `structuredClone` fails, so use `.toJSON()` to send a plain object
     const response = await chrome.runtime.sendMessage<object, ActionResponse<T> | ActionError>(new Action(type, data).toJSON());
 
-    if (response instanceof ActionError)
-        throw ActionError.fromObject(response);
+    if (response instanceof ActionError) {
+        throw ActionError.of(response);
+    }
 
-    return ActionResponse.fromObject(response) ?? response;
+    return ActionResponse.of(response) ?? response;
 }
