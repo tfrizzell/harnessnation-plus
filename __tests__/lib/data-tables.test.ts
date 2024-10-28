@@ -1,25 +1,25 @@
 import DataTables, { DataTablesMode, DataTablesOptions } from '../../src/lib/data-tables';
 import { DataTablesSettings } from '../../src/lib/settings';
 
-describe(`DataTables`, (): void => {
-    test(`exists`, (): void => {
+describe(`DataTables`, () => {
+    test(`exists`, () => {
         expect(DataTables).not.toBeUndefined();
     });
 
-    test(`is an object`, (): void => {
+    test(`is an object`, () => {
         expect(typeof DataTables).toEqual('object');
     });
 
-    describe(`function extend`, (): void => {
-        test(`exists`, (): void => {
+    describe(`function extend`, () => {
+        test(`exists`, () => {
             expect(DataTables).toHaveProperty('extend');
         });
 
-        test(`is a function`, (): void => {
+        test(`is a function`, () => {
             expect(typeof DataTables.extend).toEqual('function');
         });
 
-        test(`returns the same script if the table isn't found`, async (): Promise<void> => {
+        test(`returns the same script if the table isn't found`, async () => {
             const script: string = `
                 table = $('#test').DataTable({
                     "paging":   false,
@@ -36,7 +36,7 @@ describe(`DataTables`, (): void => {
             expect(await DataTables.extend('#test-1', script, { saveState: true, stateDuration: 31557600, saveSearch: false })).toEqual(script);
         });
 
-        test(`returns an extended data table configuration when the default options are used`, async (): Promise<void> => {
+        test(`returns an extended data table configuration when the default options are used`, async () => {
             expect(await DataTables.extend('#test', `
                 table = $('#test').DataTable({
                     "paging":   false,
@@ -65,7 +65,7 @@ describe(`DataTables`, (): void => {
             `);
         });
 
-        test(`returns an extended data table configuration when custom options are used`, async (): Promise<void> => {
+        test(`returns an extended data table configuration when custom options are used`, async () => {
             expect(await DataTables.extend('#test', `
                 table = $('#test').DataTable({
                     "paging":   false,
@@ -96,7 +96,7 @@ describe(`DataTables`, (): void => {
             `);
         });
 
-        test(`returns an extended data table when custom options with with search saving disabled configuration are used`, async (): Promise<void> => {
+        test(`returns an extended data table when custom options with with search saving disabled configuration are used`, async () => {
             expect(await DataTables.extend('#test', `
                 table = $('#test').DataTable({
                     "paging":   false,
@@ -130,7 +130,7 @@ describe(`DataTables`, (): void => {
         });
     });
 
-    describe(`getSettings`, (): void => {
+    describe(`getSettings`, () => {
         const mockData: any = {
             dt: {
                 test1: <DataTablesSettings>{ enabled: true, duration: 1, mode: DataTablesMode.Default },
@@ -161,23 +161,23 @@ describe(`DataTables`, (): void => {
             },
         };
 
-        test(`exists`, (): void => {
+        test(`exists`, () => {
             expect(DataTables).toHaveProperty('getSettings');
         });
 
-        test(`is a function`, (): void => {
+        test(`is a function`, () => {
             expect(typeof DataTables.getSettings).toEqual('function');
         });
 
-        test(`returns an object containing saveState if enabled is true and mode is DataTablesMode.Default`, (): void => {
+        test(`returns an object containing saveState if enabled is true and mode is DataTablesMode.Default`, () => {
             expect(DataTables.getSettings('test1')).resolves.toEqual({ saveState: true });
         });
 
-        test(`returns an object containing saveState and stateDuration if enabled is true and mode is DataTablesMode.Custom`, (): void => {
+        test(`returns an object containing saveState and stateDuration if enabled is true and mode is DataTablesMode.Custom`, () => {
             expect(DataTables.getSettings('test2')).resolves.toEqual({ saveState: true, stateDuration: mockData.dt.test2.duration });
         });
 
-        test(`returns undefined if the key isn't found`, (): void => {
+        test(`returns undefined if the key isn't found`, () => {
             expect(DataTables.getSettings('test3')).resolves.toBeUndefined();
         });
     });

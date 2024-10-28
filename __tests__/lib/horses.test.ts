@@ -30,16 +30,16 @@ global.fetch = jest.fn((input: RequestInfo, init?: RequestInit): Promise<any> =>
     return Promise.reject(`${url} not found`);
 }) as jest.Mock;
 
-describe(`calculateBreedingScore`, (): void => {
-    test(`exists`, (): void => {
+describe(`calculateBreedingScore`, () => {
+    test(`exists`, () => {
         expect(calculateBreedingScore).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof calculateBreedingScore).toEqual('function');
     });
 
-    test(`returns the expected values`, async (): Promise<void> => {
+    test(`returns the expected values`, async () => {
         const values: ScoreTestData[] = [
             [14, { value: 126.46416, confidence: 1 }],
             [10474, { value: 102.26093, confidence: 1 }],
@@ -57,16 +57,16 @@ describe(`calculateBreedingScore`, (): void => {
     });
 });
 
-describe(`calculateRacingScore`, (): void => {
-    test(`exists`, (): void => {
+describe(`calculateRacingScore`, () => {
+    test(`exists`, () => {
         expect(calculateRacingScore).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof calculateRacingScore).toEqual('function');
     });
 
-    test(`returns the expected values`, async (): Promise<void> => {
+    test(`returns the expected values`, async () => {
         const values: ScoreTestData[] = [
             [14, 69.66064],
             [10474, 136.97471],
@@ -82,16 +82,16 @@ describe(`calculateRacingScore`, (): void => {
     });
 });
 
-describe(`calculateStudFee`, (): void => {
-    test(`exists`, (): void => {
+describe(`calculateStudFee`, () => {
+    test(`exists`, () => {
         expect(calculateStudFee).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof calculateStudFee).toEqual('function');
     });
 
-    test(`returns the expected values`, async (): Promise<void> => {
+    test(`returns the expected values`, async () => {
         const values: StudFeeTestData[] = [
             [StudFeeFormula.Apex, 14, 82000],
             [StudFeeFormula.Apex, 10474, 72000],
@@ -108,16 +108,16 @@ describe(`calculateStudFee`, (): void => {
     });
 });
 
-describe(`getHorse`, (): void => {
-    test(`exists`, (): void => {
+describe(`getHorse`, () => {
+    test(`exists`, () => {
         expect(getHorse).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof getHorse).toEqual('function');
     });
 
-    test(`returns the expected values`, async (): Promise<void> => {
+    test(`returns the expected values`, async () => {
         const values: HorseTestData[] = [
             [14, { id: 14, name: 'Astronomical', sireId: null, damId: null, retired: true }],
             [10474, { id: 10474, name: 'Readly Express', sireId: null, damId: null, retired: true }],

@@ -368,7 +368,7 @@ async function saveHorses(horses: Horse[]): Promise<void> {
 
     while ((chunk = _horses.splice(0, 25)) && chunk.length > 0) {
         const batch = writeBatch(db);
-        updatedIds.push(...(await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)))).filter(id => id != null));
+        updatedIds.push(...<number[]>(await Promise.all(chunk.map((horse: Horse) => saveHorse(horse, batch)))).filter(id => id != null));
         await batch.commit();
     }
 

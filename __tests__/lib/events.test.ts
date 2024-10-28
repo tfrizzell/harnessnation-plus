@@ -1,35 +1,35 @@
 import { EventType, onInstalled, onLoad } from '../../src/lib/events';
 
-describe(`EventType`, (): void => {
-    test(`exists`, (): void => {
+describe(`EventType`, () => {
+    test(`exists`, () => {
         expect(EventType).not.toBeUndefined();
     });
 });
 
-describe(`onInstalled`, (): void => {
-    test(`exists`, (): void => {
+describe(`onInstalled`, () => {
+    test(`exists`, () => {
         expect(onInstalled).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof onInstalled).toEqual('function');
     });
 
-    test(`returns nothing`, (): void => {
-        expect(onInstalled((): void => { })).toBeUndefined();
+    test(`returns nothing`, () => {
+        expect(onInstalled(() => { })).toBeUndefined();
     });
 });
 
-describe(`onLoad`, (): void => {
-    test(`exists`, (): void => {
+describe(`onLoad`, () => {
+    test(`exists`, () => {
         expect(onLoad).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof onLoad).toEqual('function');
     });
 
-    test(`returns nothing`, (): void => {
-        expect(onLoad((): void => { })).toBeUndefined();
+    test(`returns nothing`, () => {
+        expect(onLoad(() => { })).toBeUndefined();
     });
 });

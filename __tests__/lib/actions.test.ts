@@ -1,13 +1,13 @@
 import { Action, ActionError, ActionResponse, ActionType, HorseSearchData, sendAction } from '../../src/lib/actions';
 
-describe(`ActionType`, (): void => {
-    test(`exists`, (): void => {
+describe(`ActionType`, () => {
+    test(`exists`, () => {
         expect(ActionType).not.toBeUndefined();
     });
 });
 
-describe(Action.name, (): void => {
-    const type: ActionType = ActionType.SearchHorses;
+describe(Action.name, () => {
+    const type = ActionType.SearchHorses;
     const data: HorseSearchData = { term: 'Astronomical', maxGenerations: 4 };
     const action: Action<HorseSearchData> = new Action(type, data);
     const json: string = JSON.stringify(action);
@@ -15,16 +15,16 @@ describe(Action.name, (): void => {
     const jAction: Action<HorseSearchData> | null = Action.fromJSON(json);
     const oAction: Action<HorseSearchData> | null = Action.fromObject(jsonObject);
 
-    test(`exists`, (): void => {
+    test(`exists`, () => {
         expect(Action).not.toBeUndefined();
     });
 
-    test(`is a class`, (): void => {
+    test(`is a class`, () => {
         expect(typeof Action).toEqual('function');
         expect(typeof Action.constructor).toEqual('function');
     });
 
-    test(`has the properties 'type' and 'data'`, (): void => {
+    test(`has the properties 'type' and 'data'`, () => {
         expect(action).toHaveProperty('type');
         expect(action.type).toEqual(type);
 
@@ -32,7 +32,7 @@ describe(Action.name, (): void => {
         expect(action.data).toEqual(data);
     });
 
-    test(`toJSON generates a typed JSON object`, (): void => {
+    test(`toJSON generates a typed JSON object`, () => {
         expect(jsonObject).toHaveProperty('__type');
         expect(jsonObject.__type).toEqual(Action.name);
 
@@ -43,7 +43,7 @@ describe(Action.name, (): void => {
         expect(jsonObject.data).toEqual(action.data);
     });
 
-    test(`fromJSON recreates the ${Action.name} instance`, (): void => {
+    test(`fromJSON recreates the ${Action.name} instance`, () => {
         expect(jAction).toBeInstanceOf(Action);
 
         expect(jAction).toHaveProperty('type');
@@ -53,7 +53,7 @@ describe(Action.name, (): void => {
         expect(jAction!.data).toEqual(action.data);
     });
 
-    test(`fromObject recreates the ${Action.name} instance`, (): void => {
+    test(`fromObject recreates the ${Action.name} instance`, () => {
         expect(oAction).toBeInstanceOf(Action);
 
         expect(oAction).toHaveProperty('type');
@@ -64,7 +64,7 @@ describe(Action.name, (): void => {
     });
 });
 
-describe(ActionError.name, (): void => {
+describe(ActionError.name, () => {
     const action: Action<HorseSearchData> = new Action(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 });
     const message: string = 'Unsupported operation';
     const error: ActionError = new ActionError(action, message);
@@ -73,16 +73,16 @@ describe(ActionError.name, (): void => {
     const errorFromJson: ActionError | null = ActionError.fromJSON(json);
     const errorFromObject: ActionError | null = ActionError.fromObject(jsonObject);
 
-    test(`exists`, (): void => {
+    test(`exists`, () => {
         expect(ActionError).not.toBeUndefined();
     });
 
-    test(`is a class`, (): void => {
+    test(`is a class`, () => {
         expect(typeof ActionError).toEqual('function');
         expect(typeof ActionError.constructor).toEqual('function');
     });
 
-    test(`has the properties 'action', 'message', and 'stack'`, (): void => {
+    test(`has the properties 'action', 'message', and 'stack'`, () => {
         expect(error).toBeInstanceOf(ActionError);
 
         expect(error).toHaveProperty('action');
@@ -95,7 +95,7 @@ describe(ActionError.name, (): void => {
         expect(error.stack).toBeDefined();
     });
 
-    test(`toJSON generates a typed JSON object`, (): void => {
+    test(`toJSON generates a typed JSON object`, () => {
         expect(jsonObject).toHaveProperty('__type');
         expect(jsonObject.__type).toEqual(ActionError.name);
 
@@ -109,7 +109,7 @@ describe(ActionError.name, (): void => {
         expect(jsonObject.stack).toEqual(error.stack);
     });
 
-    test(`fromJSON recreates the ${ActionError.name} instance`, (): void => {
+    test(`fromJSON recreates the ${ActionError.name} instance`, () => {
         expect(errorFromJson).toBeInstanceOf(ActionError);
 
         expect(errorFromJson).toHaveProperty('action');
@@ -122,7 +122,7 @@ describe(ActionError.name, (): void => {
         expect(errorFromJson!.stack).toEqual(error.stack);
     });
 
-    test(`fromObject recreates the ${ActionError.name} instance`, (): void => {
+    test(`fromObject recreates the ${ActionError.name} instance`, () => {
         expect(errorFromObject).toBeInstanceOf(ActionError);
 
         expect(errorFromObject).toHaveProperty('action');
@@ -136,7 +136,7 @@ describe(ActionError.name, (): void => {
     });
 });
 
-describe(`ActionResponse`, (): void => {
+describe(`ActionResponse`, () => {
     const action: Action<HorseSearchData> = new Action(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 });
     const data: RegExp | string = 'Astronomical';
     const response: ActionResponse<RegExp | string> = new ActionResponse(action, data);
@@ -145,16 +145,16 @@ describe(`ActionResponse`, (): void => {
     const responseFromJson: ActionResponse<RegExp | string> | null = ActionResponse.fromJSON(json);
     const responseFromObject: ActionResponse<RegExp | string> | null = ActionResponse.fromObject(jsonObject);
 
-    test(`exists`, (): void => {
+    test(`exists`, () => {
         expect(ActionResponse).not.toBeUndefined();
     });
 
-    test(`is a class`, (): void => {
+    test(`is a class`, () => {
         expect(typeof ActionResponse).toEqual('function');
         expect(typeof ActionResponse.constructor).toEqual('function');
     });
 
-    test(`has the properties 'action' and 'data'`, (): void => {
+    test(`has the properties 'action' and 'data'`, () => {
         expect(response).toBeInstanceOf(ActionResponse);
 
         expect(response).toHaveProperty('action');
@@ -164,7 +164,7 @@ describe(`ActionResponse`, (): void => {
         expect(response.data).toEqual(data);
     });
 
-    test(`toJSON generates a typed JSON object`, (): void => {
+    test(`toJSON generates a typed JSON object`, () => {
         expect(jsonObject).toHaveProperty('__type');
         expect(jsonObject.__type).toEqual(ActionResponse.name);
 
@@ -175,7 +175,7 @@ describe(`ActionResponse`, (): void => {
         expect(jsonObject.data).toEqual(response.data);
     });
 
-    test(`fromJSON recreates the ${ActionResponse.name} instance`, (): void => {
+    test(`fromJSON recreates the ${ActionResponse.name} instance`, () => {
         expect(responseFromJson).toBeInstanceOf(ActionResponse);
 
         expect(responseFromJson).toHaveProperty('action');
@@ -185,7 +185,7 @@ describe(`ActionResponse`, (): void => {
         expect(responseFromJson!.data).toEqual(response.data);
     });
 
-    test(`fromObject recreates the ${ActionResponse.name} instance`, (): void => {
+    test(`fromObject recreates the ${ActionResponse.name} instance`, () => {
         expect(responseFromObject).toBeInstanceOf(ActionResponse);
 
         expect(responseFromObject).toHaveProperty('action');
@@ -196,16 +196,16 @@ describe(`ActionResponse`, (): void => {
     });
 });
 
-describe(`sendAction`, (): void => {
-    test(`exists`, (): void => {
+describe(`sendAction`, () => {
+    test(`exists`, () => {
         expect(sendAction).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof sendAction).toEqual('function');
     });
 
-    test(`returns a promise`, (): void => {
+    test(`returns a promise`, () => {
         expect(sendAction(ActionType.SearchHorses)).toBeInstanceOf(Promise);
     });
 });

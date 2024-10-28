@@ -4,16 +4,16 @@ type NumberTestData = [string | number, number];
 type PercentageTestData = [number, number, string];
 type TimestampTestData = [Date | string | number, string];
 
-describe(`parseCurrency`, (): void => {
-    test(`exists`, (): void => {
+describe(`parseCurrency`, () => {
+    test(`exists`, () => {
         expect(parseCurrency).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof parseCurrency).toEqual('function');
     });
 
-    test(`properly converts strings to numbers`, (): void => {
+    test(`properly converts strings to numbers`, () => {
         const values: NumberTestData[] = [
             ['1000000', 1000000],
             ['1000000.00', 1000000.00],
@@ -34,16 +34,16 @@ describe(`parseCurrency`, (): void => {
     });
 });
 
-describe(`parseInt`, (): void => {
-    test(`exists`, (): void => {
+describe(`parseInt`, () => {
+    test(`exists`, () => {
         expect(parseInt).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof parseInt).toEqual('function');
     });
 
-    test(`properly converts strings to numbers`, (): void => {
+    test(`properly converts strings to numbers`, () => {
         const values: NumberTestData[] = [
             ['1000000', 1000000],
             ['1000000.00', 1000000],
@@ -64,16 +64,16 @@ describe(`parseInt`, (): void => {
     });
 });
 
-describe(`reduceChanges`, (): void => {
-    test(`exists`, (): void => {
+describe(`reduceChanges`, () => {
+    test(`exists`, () => {
         expect(reduceChanges).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof reduceChanges).toEqual('function');
     });
 
-    test(`reduces changes as expected`, (): void => {
+    test(`reduces changes as expected`, () => {
         expect({
             a: 'a',
             b: 'b',
@@ -91,7 +91,7 @@ describe(`reduceChanges`, (): void => {
     });
 });
 
-describe(`regexEscape`, (): void => {
+describe(`regexEscape`, () => {
     const specialCharacters: string[] = [
         '.',
         '*',
@@ -109,38 +109,38 @@ describe(`regexEscape`, (): void => {
         '\\',
     ];
 
-    test(`exists`, (): void => {
+    test(`exists`, () => {
         expect(regexEscape).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof regexEscape).toEqual('function');
     });
 
     for (const value of specialCharacters) {
-        test(`'regexEscape' properly escapes the special character '${value}'`, (): void => {
+        test(`'regexEscape' properly escapes the special character '${value}'`, () => {
             expect(regexEscape(value)).toEqual(`\\${value}`);
         });
     }
 
     // Using extended ASCII instead of UTF-8 or Unicode due to the amount of time
     // it takes to iterate over 2-billion possible characters.
-    test(`'regexEscape' does not escape non-special ASCII characters`, (): void => {
+    test(`'regexEscape' does not escape non-special ASCII characters`, () => {
         for (const value of Array(256).fill(0).map((_, i) => String.fromCharCode(i)).filter(c => !specialCharacters.includes(c)))
             expect(regexEscape(value)).toEqual(value);
     });
 });
 
-describe(`sleep`, (): void => {
-    test(`exists`, (): void => {
+describe(`sleep`, () => {
+    test(`exists`, () => {
         expect(sleep).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof sleep).toEqual('function');
     });
 
-    test(`sleeps for 100ms then returns`, async (): Promise<void> => {
+    test(`sleeps for 100ms then returns`, async () => {
         const start = performance.now();
         await sleep(100);
         const time = Math.round(performance.now() - start);
@@ -148,7 +148,7 @@ describe(`sleep`, (): void => {
         expect(time).toBeLessThanOrEqual(199);
     });
 
-    test(`can be aborted`, async (): Promise<void> => {
+    test(`can be aborted`, async () => {
         try {
             const controller = new AbortController();
             setTimeout(() => controller.abort(), 50);
@@ -160,16 +160,16 @@ describe(`sleep`, (): void => {
     });
 });
 
-describe(`toPercentage`, (): void => {
-    test(`exists`, (): void => {
+describe(`toPercentage`, () => {
+    test(`exists`, () => {
         expect(toPercentage).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof toPercentage).toEqual('function');
     });
 
-    test(`properly computes a percentage`, (): void => {
+    test(`properly computes a percentage`, () => {
         const values: PercentageTestData[] = [
             [25, 100, '25.00%'],
             [50, 25, '200.00%'],
@@ -183,17 +183,17 @@ describe(`toPercentage`, (): void => {
             expect(toPercentage(nom, den)).toEqual(expected);
     });
 
-    test(`returns 0.00% when given 0 as a denominator`, (): void => {
+    test(`returns 0.00% when given 0 as a denominator`, () => {
         expect(toPercentage(25, 0)).toEqual('0.00%');
     });
 });
 
-describe(`toTimestamp`, (): void => {
-    test(`exists`, (): void => {
+describe(`toTimestamp`, () => {
+    test(`exists`, () => {
         expect(toTimestamp).not.toBeUndefined();
     });
 
-    test(`is a function`, (): void => {
+    test(`is a function`, () => {
         expect(typeof toTimestamp).toEqual('function');
     });
 
