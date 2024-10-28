@@ -6,7 +6,7 @@ import './scripts/background/horses.js';
 
 
 
-chrome.alarms.onAlarm.addListener(async (alarm: chrome.alarms.Alarm) => {
+chrome.alarms.onAlarm.addListener(async alarm => {
     switch (alarm.name) {
         case AlarmType.UpdateStallionScores: {
             const next = new Date(alarm.scheduledTime);

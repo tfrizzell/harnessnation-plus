@@ -8,16 +8,16 @@ export function onInstalled(callback: EventListenerOrEventListenerObject, option
 }
 
 export function onLoad(callback: EventListenerOrEventListenerObject, options?: AddEventListenerOptions | boolean): void {
-    if ('loading' === document.readyState) {
+    if (document.readyState === 'loading') {
         window.addEventListener('DOMContentLoaded', callback, options);
         return;
     }
 
-    const event: Event = new Event('DOMContentLoaded', {
+    const event = new Event('DOMContentLoaded', {
         bubbles: true,
         cancelable: false,
         composed: false,
-    }) as any;
+    });
 
     Object.defineProperties(event, {
         srcElement: {

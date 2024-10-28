@@ -37,7 +37,7 @@ export type StallionScoreBadgeOptions = {
  * @returns {Promise<number>} A `Promise` resolving with the bloodline score.
  */
 export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<number | null> {
-    const horse: Horse | undefined = horses.find(horse => horse.id === id);
+    const horse = horses.find(horse => horse.id === id);
 
     if (horse?.sireId == null)
         return Promise.resolve(null);
@@ -52,12 +52,12 @@ export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<nu
  * @returns {Promise<BreedingScore>} A `Promise` resolving with the breeding score and its confidence level.
  */
 export async function calculateBreedingScore(id: number): Promise<BreedingScore> {
-    const report: string = await getProgenyReport(id);
-    const totalStarters: number = parseInt(report.match(/<b[^>]*>\s*Total\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const totalEarnings: number = parseCurrency(report.match(/<b[^>]*>\s*Total\s+Earnings\s*:\s*<\/b[^>]*>\s*([$\d,]+(?:\.\d+)?)/is)?.[1] ?? '$0');
-    const stakeStarters: number = parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const stakeWinners: number = parseInt(report.match(/<b[^>]*>\s*Stake\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const [stakeStarts, stakePlaces]: [number, number] = (report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\([$\d,]+(?:\.\d+)?\)/is)?.slice(1).map(parseCurrency)
+    const report = await getProgenyReport(id);
+    const totalStarters = parseInt(report.match(/<b[^>]*>\s*Total\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
+    const totalEarnings = parseCurrency(report.match(/<b[^>]*>\s*Total\s+Earnings\s*:\s*<\/b[^>]*>\s*([$\d,]+(?:\.\d+)?)/is)?.[1] ?? '$0');
+    const stakeStarters = parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
+    const stakeWinners = parseInt(report.match(/<b[^>]*>\s*Stake\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
+    const [stakeStarts, stakePlaces] = (report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\([$\d,]+(?:\.\d+)?\)/is)?.slice(1).map(parseCurrency)
         ?? [0, 0, 0, 0]).reduce(([starts, places], value, index) => [starts + +(index === 0) * value, places + +(index !== 0) * value], [0, 0]);
 
     return {
@@ -76,9 +76,9 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
  * @returns {Promise<number>} A `Promise` resolving with the racing score.
  */
 export async function calculateRacingScore(id: number): Promise<number | null> {
-    const profile: string = await getInfo(id);
-    const [starts, wins, places, shows, earnings]: number[] = profile.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
-    const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings]: number[] = profile.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0, 0];
+    const profile = await getInfo(id);
+    const [starts, wins, places, shows, earnings] = profile.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
+    const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings] = profile.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0, 0];
 
     return starts < 1 ? null :
         0.3 * (
@@ -101,7 +101,7 @@ export async function calculateRacingScore(id: number): Promise<number | null> {
 export function calculateStallionScore({ confidence, racing: racingScore, breeding: breedingScore, bloodline: bloodlineScore }: StallionScore): Promise<number | null> {
     if (confidence == null || (breedingScore == null && racingScore == null && bloodlineScore == null))
         return Promise.resolve(null);
-    
+
     return Promise.resolve(
         ((1 - +confidence) * (+racingScore! + +bloodlineScore!) / Math.max(1, +(racingScore != null) + +(bloodlineScore != null)))
         + (+confidence! * +breedingScore!)
@@ -114,12 +114,12 @@ export function calculateStallionScore({ confidence, racing: racingScore, breedi
  * @returns {Promise<number>} A `Promise` resolving with the suggested stud fee.
  */
 export async function calculateStudFee({ id, formula }: CalculateStudFeeData): Promise<number> {
-    const report: string = await getProgenyReport(id);
-    const starters: number = parseInt(report?.match(/<b[^>]*>\s*Total\s*Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/i)?.pop() ?? '0');
-    let fee: number = 2500;
+    const report = await getProgenyReport(id);
+    const starters = parseInt(report?.match(/<b[^>]*>\s*Total\s*Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/i)?.pop() ?? '0');
+    let fee = 2500;
 
     if (starters > 0) {
-        const avgEarnings: number = parseCurrency(report?.match(/<b[^>]*>\s*Average\s*Earnings\s*per\s*Starter\s*:\s*<\/b[^>]*>\s*([$\d,\.]+(?:\.\d+)?)/i)?.pop() ?? '$0');
+        const avgEarnings = parseCurrency(report?.match(/<b[^>]*>\s*Average\s*Earnings\s*per\s*Starter\s*:\s*<\/b[^>]*>\s*([$\d,\.]+(?:\.\d+)?)/i)?.pop() ?? '$0');
 
         switch (formula) {
             case StudFeeFormula.Apex:
@@ -132,8 +132,8 @@ export async function calculateStudFee({ id, formula }: CalculateStudFeeData): P
                 break;
         }
     } else {
-        const info: string = await getInfo(id);
-        const [starts, earnings]: number[] = info?.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)(?:\s*-\s*[\d,]+){3}\s*\(([$\d,\.]+(?:\.\d+)?)\)/i)?.slice(1)?.map(parseCurrency) ?? [0, 0];
+        const info = await getInfo(id);
+        const [starts, earnings] = info?.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)(?:\s*-\s*[\d,]+){3}\s*\(([$\d,\.]+(?:\.\d+)?)\)/i)?.slice(1)?.map(parseCurrency) ?? [0, 0];
 
         switch (formula) {
             case StudFeeFormula.Apex:
@@ -156,20 +156,20 @@ export async function calculateStudFee({ id, formula }: CalculateStudFeeData): P
  * @returns {Promise<number>} A `Promise` resolving with the suggested stud fee.
  */
 export function createStallionScoreBadge(data: StallionScore | null | undefined): HTMLElement {
-    const badge: HTMLElement = document.createElement('div');
+    const badge = document.createElement('div');
     badge.classList.add('hn-plus-stallion-score');
 
-    const score: HTMLElement = document.createElement('h3');
+    const score = document.createElement('h3');
     score.classList.add('hn-plus-stallion-score-value');
 
-    const level: HTMLElement = document.createElement('h4');
+    const level = document.createElement('h4');
     level.classList.add('hn-plus-stallion-score-level');
 
-    const tooltip: HTMLElement = document.createElement('aside');
+    const tooltip = document.createElement('aside');
     tooltip.classList.add('hn-plus-stallion-score-tooltip');
 
     if (data?.value != null) {
-        const stallionScore: number = Math.floor(data.value!);
+        const stallionScore = Math.floor(data.value!);
         score.innerHTML = `<b>${stallionScore.toString()}</b>`;
         tooltip.innerHTML = `<p>The HarnessNation+ stallion score reflects the estimated breeding ability of a stallion.</p><p class="hn-plus-stallion-score-confidence"><b>Confidence:</b> ${Math.round(100 * data.confidence!)}%</p>`;
 
@@ -205,7 +205,7 @@ export function createStallionScoreBadge(data: StallionScore | null | undefined)
  * @returns {Promise<string>} A `Promise` that resolves with the report as a base64-encoded data URI.
  */
 export async function generateBreedingReport({ ids, headers }: BreedingReportData): Promise<string> {
-    const csv: Array<BreedingReportRow> = [
+    const report: BreedingReportRow[] = [
         [
             'ID',
             'Name',
@@ -237,23 +237,23 @@ export async function generateBreedingReport({ ids, headers }: BreedingReportDat
         ].filter(v => !!v).map((v, i) => headers?.[i] ?? v),
     ];
 
-    const _ids: number[] = [...ids];
+    const _ids = Array.from(ids);
     let batch: number[] | null;
 
     while ((batch = _ids.splice(0, 10)) && batch.length > 0) {
         const rows = await Promise.all(batch.map(id => getBreedingReportRow(id)));
-        csv.push(...rows.map(row => row.slice(0, csv[0].length)));
+        report.push(...rows.map(row => row.slice(0, report[0].length)));
 
         if (_ids.length > 0) {
             await sleep(30000);
 
-            if (csv.length % 50 === 0)
+            if (report.length % 50 === 0)
                 await sleep(15000);
         }
     }
 
-    return `data:text/csv;base64,${btoa(
-        csv.filter(row => Array.isArray(row))
+    return `data:text/csv;base64,${window.btoa(
+        report.filter(row => Array.isArray(row))
             .map(row => row.map(col => `"${(col?.toString() ?? '')
                 .replace('"', '\\"')}"`)
                 .join(','))
@@ -266,16 +266,16 @@ export async function generateBreedingReport({ ids, headers }: BreedingReportDat
  * @returns {Promise<BreedingReportRow>} A `Promise` that resolves with an array of row data values.
  */
 async function getBreedingReportRow(id: number): Promise<BreedingReportRow> {
-    const [profile, report]: [string, string] = await Promise.all([
+    const [profile, report] = await Promise.all([
         getInfo(id),
         getProgenyReport(id),
     ]);
 
-    const totalFoals: number = parseInt(profile.match(/<b[^>]*>\s*Total\s+Foals\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const totalStarters: number = parseInt(report.match(/<b[^>]*>\s*Total\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const totalWinners: number = parseInt(report.match(/<b[^>]*>\s*Total\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const stakeStarters: number = parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const stakeWinners: number = parseInt(report.match(/<b[^>]*>\s*Stake\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
+    const totalFoals = parseInt(profile.match(/<b[^>]*>\s*Total\s+Foals\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
+    const totalStarters = parseInt(report.match(/<b[^>]*>\s*Total\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
+    const totalWinners = parseInt(report.match(/<b[^>]*>\s*Total\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
+    const stakeStarters = parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
+    const stakeWinners = parseInt(report.match(/<b[^>]*>\s*Stake\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
 
     return [
         +id,
@@ -310,7 +310,7 @@ async function getBreedingReportRow(id: number): Promise<BreedingReportRow> {
  * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
  */
 export async function getHorse(id: number): Promise<Horse> {
-    const info: string = await getInfo(id);
+    const info = await getInfo(id);
 
     return {
         id,
@@ -340,5 +340,5 @@ export async function getProgenyReport(id: number): Promise<string> {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ horseId: id })
-    }).then((res: Response) => res.text());
+    }).then(res => res.text());
 }

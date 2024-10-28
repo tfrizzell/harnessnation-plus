@@ -217,7 +217,7 @@ export async function sendAction(type: ActionType.UpdateStallionScores): Promise
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
     // Firefox compatibility: `structuredClone` fails, so use `.toJSON()` to send a plain object
-    const response: ActionResponse<T> | ActionError = await chrome.runtime.sendMessage(new Action(type, data).toJSON());
+    const response = await chrome.runtime.sendMessage<object, ActionResponse<T> | ActionError>(new Action(type, data).toJSON());
 
     if (response instanceof ActionError)
         throw ActionError.fromObject(response);

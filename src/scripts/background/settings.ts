@@ -1,7 +1,7 @@
 import { default as settings, Settings } from '../../lib/settings.js';
 import { reduceChanges } from '../../lib/utils.js';
 
-chrome.storage.onChanged.addListener(async (changes: { [key: string]: chrome.storage.StorageChange }, areaName: chrome.storage.AreaName): Promise<void> => {
+chrome.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName !== 'sync')
         return;
 

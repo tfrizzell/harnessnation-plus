@@ -5,7 +5,7 @@ import { DataTablesDisplayUnits, StudFeeFormula } from '../lib/settings.js';
 document.querySelectorAll<HTMLAnchorElement>('#page-footer > nav > a').forEach(a => {
     const sectionName = a.getAttribute('href')?.replace(/^#/, '');
 
-    a.addEventListener('click', (e: MouseEvent) => {
+    a.addEventListener('click', e => {
         e.preventDefault();
 
         if (a.classList.contains('active'))
@@ -20,16 +20,16 @@ document.querySelectorAll<HTMLAnchorElement>('#page-footer > nav > a').forEach(a
 });
 
 function bindDialogEventListeners(dialog: HTMLDialogElement): void {
-    dialog.addEventListener('click', (e: MouseEvent) => {
+    dialog.addEventListener('click', e => {
         if (dialog == e.target)
             dialog.close();
     });
 
-    dialog.addEventListener('keydown', (e: KeyboardEvent) => {
+    dialog.addEventListener('keydown', e => {
         e.preventDefault();
     });
 
-    dialog.addEventListener('keyup', (e: KeyboardEvent) => {
+    dialog.addEventListener('keyup', e => {
         e.preventDefault();
         dialog.close();
     });
@@ -40,7 +40,7 @@ document.querySelectorAll<HTMLDialogElement>('dialog').forEach(bindDialogEventLi
 document.querySelectorAll<HTMLAnchorElement>('a[role="dialog" i]').forEach(a => {
     const dialogName = a.getAttribute('href')?.replace(/^#/, '');
 
-    a.addEventListener('click', (e: MouseEvent) => {
+    a.addEventListener('click', e => {
         e.preventDefault();
         document.querySelector<HTMLDialogElement>(`dialog#${dialogName}`)?.showModal();
     });
@@ -63,7 +63,7 @@ chrome.storage.sync.get().then(settings => {
     async function handleButtonClick(button: HTMLButtonElement, e: MouseEvent): Promise<void> {
         button.disabled = true;
 
-        const dialog: HTMLDialogElement = document.createElement('dialog');
+        const dialog = document.createElement('dialog');
         bindDialogEventListeners(dialog);
         dialog.addEventListener('close', () => dialog.remove());
 
@@ -144,14 +144,14 @@ chrome.storage.sync.get().then(settings => {
                 return;
         }
 
-        while (null != select.firstChild)
+        while (select.firstChild != null)
             select.firstChild.remove();
 
         for (let option of options) {
             if (typeof option !== 'object')
-                option = { value: option, label: option } as any;
+                option = { value: option, label: option };
 
-            const opt: HTMLOptionElement = document.createElement('option');
+            const opt = document.createElement('option');
             opt.setAttribute('value', option.value);
             opt.innerHTML = option.label;
             select.append(opt);
@@ -168,7 +168,7 @@ chrome.storage.sync.get().then(settings => {
         for (const key of keys.reverse())
             obj = (obj[key] ??= {});
 
-        const prev_value = obj[key];
+        const prev_value: any = obj[key];
 
         switch (typeof obj[key]) {
             case 'boolean':
@@ -199,7 +199,7 @@ chrome.storage.sync.get().then(settings => {
 
     document.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input[name], select[name]').forEach(input => {
         input.dataset.initializing = ''
-        const key: string = input.getAttribute('name')!;
+        const key = input.getAttribute('name')!;
         const validOptions: string[] = [];
 
         if (input instanceof HTMLSelectElement) {
@@ -229,7 +229,7 @@ chrome.storage.sync.get().then(settings => {
     });
 
     document.querySelectorAll<HTMLButtonElement>('button[name]').forEach(button => {
-        button.addEventListener('click', (e: MouseEvent) => {
+        button.addEventListener('click', e => {
             e.preventDefault();
             handleButtonClick(button, e);
         });

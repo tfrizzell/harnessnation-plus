@@ -8,7 +8,7 @@ export type DownloadOptions = {
 export async function downloadFile(file: string | Blob, filename: string, options: DownloadOptions = {}): Promise<void> {
     if (typeof file === 'string' && /^data:([^;]+);/i.test(file)) {
         const [contentType, encoding, content] = /^data:([^;]+);(?:([^,]+),)?(.*)$/.exec(file)!.slice(1);
-        return await downloadFile('base64' === encoding ? window.atob(content) : content, filename, { contentType, ...options });
+        return await downloadFile(encoding === 'base64' ? window.atob(content) : content, filename, { contentType, ...options });
     }
 
     options ??= {}
@@ -43,7 +43,7 @@ export async function downloadFile(file: string | Blob, filename: string, option
 
     let revokeObjectUrl = false;
 
-    if (null != window.URL?.createObjectURL) {
+    if (window.URL?.createObjectURL != null) {
         if (!(file instanceof Blob))
             file = new Blob([file], { type: options.contentType });
 
@@ -93,10 +93,10 @@ export function regexEscape(value: string): string {
 }
 
 export function sleep(value: number, abortSignal: AbortSignal | null = null): Promise<void> {
-    return new Promise((resolve: (value: void | PromiseLike<void>) => void, reject: (reason?: any) => void): void => {
-        const timeout: NodeJS.Timeout = setTimeout(resolve, value);
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(resolve, value);
 
-        abortSignal?.addEventListener('abort', (): void => {
+        abortSignal?.addEventListener('abort', () => {
             clearTimeout(timeout);
             reject('Aborted by the user');
         });
