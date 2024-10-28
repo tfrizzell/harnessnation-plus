@@ -361,12 +361,12 @@ describe(sendAction.name, () => {
     });
 
     test(`resolves with an ${ActionResponse.name}`, async () => {
-        global.chrome.runtime.sendMessage = jest.fn((action: any): Promise<ActionResponse<RegExp | string>> => Promise.resolve(new ActionResponse<RegExp | string>(Action.of<HorseSearchData>(action)!, 'Astronomical')));
+        chrome.runtime.sendMessage = jest.fn((action: any): Promise<ActionResponse<RegExp | string>> => Promise.resolve(new ActionResponse<RegExp | string>(Action.of<HorseSearchData>(action)!, 'Astronomical')));
         await expect(sendAction(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 })).resolves.toBeInstanceOf(ActionResponse);
     });
 
     test(`rejects with an ${ActionError.name}`, async () => {
-        global.chrome.runtime.sendMessage = jest.fn((action: any): Promise<ActionError> => Promise.resolve(new ActionError(Action.of<HorseSearchData>(action)!, 'Invalid action')));
+        chrome.runtime.sendMessage = jest.fn((action: any): Promise<ActionError> => Promise.resolve(new ActionError(Action.of<HorseSearchData>(action)!, 'Invalid action')));
         await expect(sendAction(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 })).rejects.toBeInstanceOf(ActionError);
     });
 });
