@@ -1,8 +1,195 @@
-import { parseCurrency, parseInt, reduceChanges, regexEscape, sleep, toPercentage, toTimestamp } from '../../src/lib/utils';
+import { Timestamp } from '@firebase/firestore';
+import { downloadFile, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, sleep, toDate, toPercentage, toTimestamp } from '../../src/lib/utils';
 
 type NumberTestData = [string | number, number];
 type PercentageTestData = [number, number, string];
 type TimestampTestData = [Date | string | number, string];
+
+afterAll(() => {
+    jest.clearAllTimers();
+    jest.clearAllMocks();
+});
+
+describe(`downloadFile`, () => {
+    const textContent = 'Hello World';
+    const base64Content = 'SGVsbG8gV29ybGQ=';
+    const blobContent = new Blob([textContent], { type: 'text/plain' });
+
+    const downloadedFiles: Map<string, chrome.downloads.DownloadOptions | null> = new Map();
+
+    beforeAll(() => {
+        global.chrome.downloads.download = jest.fn((options: chrome.downloads.DownloadOptions): Promise<number> => {
+            const id = downloadedFiles.size + 1;
+            downloadedFiles.set(options.filename || `${Date.now()}.file`, options);
+            return Promise.resolve(id);
+        })
+    });
+
+    afterAll(() => {
+        (<jest.Mock>global.chrome.downloads.download).mockClear();
+    });
+
+    test(`exists`, () => {
+        expect(downloadFile).not.toBeUndefined();
+    });
+
+    test(`is a function`, () => {
+        expect(typeof downloadFile).toEqual('function');
+    });
+
+    test(`returns a promise`, () => {
+        expect(downloadFile(textContent, 'test-return-promise.txt')).toBeInstanceOf(Promise);
+    });
+
+    for (const [ext, contentType] of [
+        ['csv', 'text/csv'],
+        ['html', 'text/html'],
+        ['json', 'application/json'],
+        ['txt', 'text/plain'],
+        ['xls', 'application/vnd.ms-excel'],
+        ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ['readme', 'text/plain'],
+    ]) {
+        test(`infers the correct content type for ${ext}`, async () => {
+            const filename = `test-content-type.${ext}`;
+
+            await expect(downloadFile(textContent, filename)).resolves;
+            await new Promise(process.nextTick);
+
+            expect(downloadedFiles.get(filename)).toEqual({
+                url: `data:${contentType};base64,${base64Content}`,
+                filename: filename,
+                saveAs: false,
+            });
+        });
+    }
+
+    test(`accepts the contentType and saveAs options`, async () => {
+        const filename = `test-options.txt`;
+
+        await expect(downloadFile(textContent, filename, { contentType: 'text/html', saveAs: true })).resolves;
+        await new Promise(process.nextTick);
+
+        expect(downloadedFiles.get(filename)).toEqual({
+            url: `data:text/html;base64,${base64Content}`,
+            filename: filename,
+            saveAs: true,
+        });
+    });
+
+    test(`downloads an unencoded string`, async () => {
+        const filename = 'test-unencoded-string.txt';
+
+        await expect(downloadFile(textContent, filename)).resolves;
+        await new Promise(process.nextTick);
+
+        expect(downloadedFiles.get(filename)).toEqual({
+            url: `data:text/plain;base64,${base64Content}`,
+            filename: filename,
+            saveAs: false,
+        });
+    });
+
+    test(`downloads an unencoded data uri`, async () => {
+        const filename = 'test-unencoded-data-uri.txt';
+
+        await expect(downloadFile(`data:text/plain;${textContent}`, filename)).resolves;
+        await new Promise(process.nextTick);
+
+        expect(downloadedFiles.get(filename)).toEqual({
+            url: `data:text/plain;base64,${base64Content}`,
+            filename: filename,
+            saveAs: false,
+        });
+    });
+
+    test(`downloads an encoded data uri`, async () => {
+        const filename = 'test-encoded-data-uri.txt';
+
+        await expect(downloadFile(`data:text/plain;base64,${base64Content}`, filename)).resolves;
+        await new Promise(process.nextTick);
+
+        expect(downloadedFiles.get(filename)).toEqual({
+            url: `data:text/plain;base64,${base64Content}`,
+            filename: filename,
+            saveAs: false,
+        });
+    });
+
+    test(`downloads a ${Blob.name}`, async () => {
+        const _FileReader = global.FileReader;
+
+        const mockFileReader = jest.spyOn(global, 'FileReader').mockImplementation((): FileReader => {
+            const inst = new _FileReader();
+
+            inst.readAsDataURL = (blob) => {
+                blob.text().then(content => {
+                    Object.defineProperty(inst, 'result', { value: `data:${blob.type};base64,${global.window.btoa(content)}` });
+                    inst.dispatchEvent(new Event('load'));
+                });
+            }
+
+            return inst;
+        });
+
+        try {
+            const filename = 'test-blob.txt';
+
+            await expect(downloadFile(blobContent, filename)).resolves;
+            await new Promise(process.nextTick);
+
+            expect(downloadedFiles.get(filename)).toEqual({
+                url: `data:text/plain;base64,${base64Content}`,
+                filename: filename,
+                saveAs: false,
+            });
+        } finally {
+            mockFileReader.mockReset();
+        }
+    });
+
+    for (const content of [textContent, blobContent]) {
+        const type = typeof content === 'object' ? content.constructor.name : typeof content;
+
+        test(`downloads a ${type} using window.URL.createObjectURL`, async () => {
+            const createdUrls: string[] = [];
+            let createdUrlCount: number = 0;
+
+            global.window.URL.createObjectURL = jest.fn((obj: Blob): string => {
+                const result = `data:${obj.type};base64,${base64Content}`;
+                createdUrls.push(result!);
+                createdUrlCount++;
+                return result!;
+            });
+
+            global.window.URL.revokeObjectURL = jest.fn((id: string): void => {
+                const index = createdUrls.indexOf(id);
+
+                if (index >= 0)
+                    createdUrls.splice(0, 1);
+            });
+
+            try {
+                const filename = `test-${type.toLowerCase()}-from-createobjecturl.txt`;
+
+                await expect(downloadFile(content, filename)).resolves;
+                await new Promise(process.nextTick);
+
+                expect(downloadedFiles.get(filename)).toEqual({
+                    url: `data:text/plain;base64,${base64Content}`,
+                    filename: filename,
+                    saveAs: false,
+                });
+
+                expect(createdUrlCount).toBe(1);
+                expect(createdUrls.length).toBe(0);
+            } finally {
+                (<jest.Mock>global.window.URL.revokeObjectURL).mockReset();
+                (<jest.Mock>global.window.URL.createObjectURL).mockReset();
+            }
+        });
+    }
+});
 
 describe(`parseCurrency`, () => {
     test(`exists`, () => {
@@ -11,6 +198,10 @@ describe(`parseCurrency`, () => {
 
     test(`is a function`, () => {
         expect(typeof parseCurrency).toEqual('function');
+    });
+
+    test(`returns null when given null`, () => {
+        expect(parseCurrency(<any>null)).toBeNull();
     });
 
     test(`properly converts strings to numbers`, () => {
@@ -41,6 +232,10 @@ describe(`parseInt`, () => {
 
     test(`is a function`, () => {
         expect(typeof parseInt).toEqual('function');
+    });
+
+    test(`returns null when given null`, () => {
+        expect(parseInt(<any>null)).toBeNull();
     });
 
     test(`properly converts strings to numbers`, () => {
@@ -89,6 +284,22 @@ describe(`reduceChanges`, () => {
             }).reduce(reduceChanges, {})
         }).toEqual({ a: 'b', b: 'a' });
     });
+
+    test(`ignores change entries with no new value`, () => {
+        expect({
+            a: 'a',
+            b: 'b',
+            ...Object.entries({
+                a: {
+                    oldValue: 'a',
+                    newValue: 'b'
+                },
+                b: {
+                    oldValue: 'b',
+                },
+            }).reduce(reduceChanges, {})
+        }).toEqual({ a: 'b', b: 'b' });
+    });
 });
 
 describe(`regexEscape`, () => {
@@ -131,6 +342,28 @@ describe(`regexEscape`, () => {
     });
 });
 
+describe(`removeAll`, () => {
+    test(`exists`, () => {
+        expect(removeAll).not.toBeUndefined();
+    });
+
+    test(`is a function`, () => {
+        expect(typeof removeAll).toEqual('function');
+    });
+
+    test(`removes matching elements from the DOM`, () => {
+        global.document.body.innerHTML = '<div class="one">1</div><div class="two">2</div><div class="one">1</div><div class="three">3</div>';
+        expect(global.document.querySelectorAll('.one').length).toBe(2)
+        expect(global.document.querySelectorAll('.two').length).toBe(1)
+        expect(global.document.querySelectorAll('.three').length).toBe(1)
+
+        removeAll('.one', '.three');
+        expect(global.document.querySelectorAll('.one').length).toBe(0)
+        expect(global.document.querySelectorAll('.two').length).toBe(1)
+        expect(global.document.querySelectorAll('.three').length).toBe(0)
+    });
+});
+
 describe(`sleep`, () => {
     test(`exists`, () => {
         expect(sleep).not.toBeUndefined();
@@ -157,6 +390,24 @@ describe(`sleep`, () => {
         } catch (e) {
             expect(e).toEqual('Aborted by the user');
         }
+    });
+});
+
+describe(`toDate`, () => {
+    test(`exists`, () => {
+        expect(toDate).not.toBeUndefined();
+    });
+
+    test(`is a function`, () => {
+        expect(typeof toDate).toEqual('function');
+    });
+
+    test(`returns a default value of new Date(0)`, () => {
+        expect(toDate(undefined)).toEqual(new Date(0));
+    });
+
+    test(`converts a Timestamp object`, () => {
+        expect(toDate(<Timestamp>{ seconds: 1730165342, nanoseconds: 322 })).toEqual(new Date(1730165342322));
     });
 });
 
@@ -195,6 +446,15 @@ describe(`toTimestamp`, () => {
 
     test(`is a function`, () => {
         expect(typeof toTimestamp).toEqual('function');
+    });
+
+    test(`returns the current timestamp if no value is given`, () => {
+        jest.useFakeTimers('modern').setSystemTime(new Date(1_640_995_200_000))
+        try {
+            expect(toTimestamp()).toEqual('2022-01-01T00:00:00');
+        } finally {
+            jest.useRealTimers();
+        }
     });
 
     test(`properly converts values to timestamps`, () => {

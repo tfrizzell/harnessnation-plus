@@ -1,5 +1,10 @@
 import { EventType, onInstalled, onLoad } from '../../src/lib/events';
 
+afterAll(() => {
+    jest.clearAllTimers();
+    jest.clearAllMocks();
+});
+
 describe(`EventType`, () => {
     test(`exists`, () => {
         expect(EventType).not.toBeUndefined();
@@ -34,7 +39,7 @@ describe(`onLoad`, () => {
     });
 
     test(`waits for DOMContentLoaded if document.readyState is loading`, () => {
-        Object.defineProperty(document, 'readyState', {
+        Object.defineProperty(global.document, 'readyState', {
             configurable: true,
             value: 'loading',
         });
@@ -61,26 +66,26 @@ describe(`onLoad`, () => {
 
         Object.defineProperties(event, {
             srcElement: {
-                get() { return document; }
+                get() { return global.document; }
             },
             target: {
-                get() { return document; }
+                get() { return global.document; }
             },
         });
 
-        Object.defineProperty(document, 'readyState', {
+        Object.defineProperty(global.document, 'readyState', {
             configurable: true,
             value: 'interactive',
         });
 
         window.dispatchEvent(event);
         expect(value).toBe(true);
-        expect(srcElement).toBe(document);
-        expect(target).toBe(document);
+        expect(srcElement).toBe(global.document);
+        expect(target).toBe(global.document);
     });
 
     test(`runs immediately if document.readyState is interactive`, () => {
-        Object.defineProperty(document, 'readyState', {
+        Object.defineProperty(global.document, 'readyState', {
             configurable: true,
             value: 'interactive',
         });
@@ -101,7 +106,7 @@ describe(`onLoad`, () => {
     });
 
     test(`runs immediately if document.readyState is complete`, () => {
-        Object.defineProperty(document, 'readyState', {
+        Object.defineProperty(global.document, 'readyState', {
             configurable: true,
             value: 'complete',
         });
