@@ -3,8 +3,8 @@ import { Timestamp } from 'firebase/firestore';
 export type DownloadOptions = {
     contentType?: string;
     saveAs?: boolean
-
 }
+
 export async function downloadFile(file: string | Blob, filename: string, options: DownloadOptions = {}): Promise<void> {
     if (typeof file === 'string' && /^data:([^;]+);/i.test(file)) {
         const [contentType, encoding, content] = /^data:([^;]+);(?:([^,]+),)?(.*)$/.exec(file)!.slice(1);
@@ -14,7 +14,7 @@ export async function downloadFile(file: string | Blob, filename: string, option
     options ??= {}
 
     if (!options.contentType?.trim()) {
-        switch (filename.split('.')[-1]) {
+        switch (filename.split('.')?.pop()?.toLowerCase()) {
             case 'csv':
                 options.contentType = 'text/csv';
                 break;
@@ -53,7 +53,7 @@ export async function downloadFile(file: string | Blob, filename: string, option
         file = await new Promise<string>(resolve => {
             const reader = new FileReader();
 
-            reader.addEventListener('loadend', () => {
+            reader.addEventListener('load', () => {
                 resolve(<string>reader.result);
             });
 
@@ -68,8 +68,6 @@ export async function downloadFile(file: string | Blob, filename: string, option
             filename,
             saveAs: options.saveAs ?? false,
         });
-
-        await chrome.downloads.search({ filename });
     } finally {
         if (revokeObjectUrl)
             window.URL.revokeObjectURL(file);

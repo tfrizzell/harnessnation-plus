@@ -1,21 +1,555 @@
-                <!-- Begin Horse Name and Awards/Status Row -->
-                <div class="row mt-0 mb-0">
-                    <div class="col-sm-6 m-0 p-0">
-                        <h1 class="h1-responsive font-weight-bold text-left my-2 mb-1">Astronomical</h1>
-                    </div>
-                    <div class="col-sm-6 text-right">
-                                                        <img src="/assets/img/icons/trophyhorse.png" data-horse-id="14" class="goldHorseTrophy trophy-horse-page">
-                                                                                                                                                    <img src="/assets/img/icons/newtrophygold.png" data-horse-id="14" class="trophyGold trophy-horse-page">
-                                                                                                                                <img src="/assets/img/icons/newtrophybronze.png" data-horse-id="14" class="trophyBronze trophy-horse-page">
-                                                                                                                                                        <span class="badge grade-a grade-horse-page">A</span>
-                                                                                                                                                                                                                                                                                    </div>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-50727313-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-50727313-1');
+        gtag('set', {'user_id': '4'});
+    </script>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="referrer" content="strict-origin" />
+    <title>HarnessNation | Virtual Harness Horse Racing</title>
+
+    <!-- JQuery -->
+    <script type="text/javascript" src="/v2/js/jquery-3.3.1.min.js"></script>
+
+    <link href="/v2/fontawesome/css/fontawesome.css" rel="stylesheet">
+    <link href="/v2/fontawesome/css/regular.css" rel="stylesheet">
+    <link href="/v2/fontawesome/css/solid.css" rel="stylesheet">
+    <link href="/v2/fontawesome/css/brands.css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS -->
+    <link href="/v2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Material Design Bootstrap -->
+    <link href="/v2/css/mdb.css" rel="stylesheet">
+    <!-- Custom HN Styles -->
+    <link href="/v2/css/harnessnation-styles.css" rel="stylesheet">
+
+    <!-- Temporary support of old layout -->
+    <link href="/assets/css/jBox.css" rel="stylesheet" type="text/css">
+    <link href="/assets/plugins/jbox/themes/NoticeBorder.css" rel="stylesheet" type="text/css">
+
+    
+    <!-- Facebook Pixel Code -->
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '918484735204557');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+                   src="https://www.facebook.com/tr?id=918484735204557&ev=PageView&noscript=1"
+        /></noscript>
+    <!-- End Facebook Pixel Code -->
+
+</head>
+
+<body class="hidden-sn black-skin">
+
+<!--Double navigation-->
+<header>
+    <!-- Sidebar navigation -->
+    <div id="slide-out" class="side-nav sn-bg-4">
+        <ul class="custom-scrollbar">
+            <!-- Logo -->
+            <li>
+                <div class="logo-wrapper waves-light">
+                    <a href="https://www.harnessnation.com/"><img src="/v2/img/logo/hn_logo_small.png" alt="HarnessNation | Virtual Harness Horse Racing" class="img-fluid flex-center"></a>
                 </div>
-                <!-- End horse name and awards/status row -->
+            </li>
+            <!--/. Logo -->
+            <!--Search Form-->
+            <li>
+                <form method="POST" action="https://www.harnessnation.com/search" accept-charset="UTF-8" class="search-form" role="search"><input name="_token" type="hidden" value="nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak">
+                <div class="form-group md-form mt-0 pt-1 waves-light">
+                    <input type="text" class="form-control" placeholder="Search" name="inputSearchTerm" style='font-family:"Roboto"'>
+                </div>
+                </form>
+            </li>
+            <!--/.Search Form-->
+            <!-- Side navigation links -->
+            <li>
+                <ul class="collapsible collapsible-accordion">
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-farm"></i> My Stable<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/stable/dashboard" class="waves-effect">Stable Dashboard</a>
+                                </li>
+                                <li>
+                                    <a href="/payments" class="waves-effect">Payment Center</a>
+                                </li>
+                                <li>
+                                    <a href="/stable/accounting" class="waves-effect">Stable Accounting</a>
+                                </li>
+                                <li>
+                                    <a href="/sell/stable" class="waves-effect">Stable Sales</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="waves-effect _switchStableModalButton" data-toggle="modal" data-target="#_switchStableModal">Switch Stable</a>
+                                </li>
+                                <li>
+                                    <a href="/stable/weeklypay" class="waves-effect">Weekly Pay</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-horse"></i> My Horses<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/stable/main" class="waves-effect">Main Stable</a>
+                                </li>
+                                <li>
+                                    <a href="/stable/breeding" class="waves-effect">Breeding Stable</a>
+                                </li>
+                                <li>
+                                    <a href="/stable/homebreds" class="waves-effect">Homebred Horses</a>
+                                </li>
+                                <li>
+                                    <a href="/improve/geld" class="waves-effect">Geld a Horse</a>
+                                </li>
+                                <li>
+                                    <a href="/move/horse" class="waves-effect">Move a Horse</a>
+                                </li>
+                                <li>
+                                    <a href="/register/horse" class="waves-effect">Name a Horse</a>
+                                </li>
+                                <li>
+                                    <a href="/improve/regumate" class="waves-effect">Regumate</a>
+                                </li>
+                                <li>
+                                    <a href="/retire/breeding" class="waves-effect">Retire a Horse: Breeding</a>
+                                </li>
+                                <li>
+                                    <a href="/retire/permanent" class="waves-effect">Retire a Horse: Permanent</a>
+                                </li>
+                                <li>
+                                    <a href="/transfer/horse" class="waves-effect">Transfer a Horse</a>
+                                </li>
+                                <li>
+                                    <a href="/train" class="waves-effect">Training Center</a>
+                                </li>
+                                <li>
+                                    <a href="/train/consult" class="waves-effect">Trainer Consultation</a>
+                                </li>
+                                <li>
+                                    <a href="/vet-clinic" class="waves-effect">Vet Clinic</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-tags"></i> Horse Sales<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/auctions" class="waves-effect">Auction Center</a>
+                                </li>
+                                <li>
+                                    <a href="/auctions/bids" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Manage Bids</a>
+                                </li>
+                                <li>
+                                    <a href="/auctions/entries" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Manage Entries</a>
+                                </li>
+                                <li>
+                                    <a href="/buy/horse" class="waves-effect">Buy a Horse</a>
+                                </li>
+                                <li>
+                                    <a href="/create/horse" class="waves-effect">Create a Horse</a>
+                                </li>
+                                <li>
+                                    <a href="/stable/history/sale" class="waves-effect">Horse Sale History</a>
+                                </li>
+                                <li>
+                                    <a href="/stable/history/purchase" class="waves-effect">Horse Purchase History</a>
+                                </li>
+                                <li>
+                                    <a href="/stable/history/public/sale" class="waves-effect">Public Horse Sale History</a>
+                                </li>
+                                <li>
+                                    <a href="/sell/horse" class="waves-effect">Sell a Horse</a>
+                                </li>
+                                <li>
+                                    <a href="/sell/horse" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Manage Horse Sales</a>
+                                </li>
+                                <li>
+                                    <a href="/sell/horse/private" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Private Horse Sales</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-book-heart"></i> Breeding Center<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/breeding/inhouse" class="waves-effect">In-House Breeding</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/manage/broodmares" class="waves-effect">Manage Broodmares</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/grading/mare" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Mare Grading</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/grading/retired/mare" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Retired Mare Grading</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/manage/stallions" class="waves-effect">Manage Stallions</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/register/stallion" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Register Stallions</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/grading/retired/stallion" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Retired Stallion Grading</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/grading/stallion" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Stallion Grading</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/pedigree/generate" class="waves-effect">Pedigree Generator</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/private/offers" class="waves-effect">Private Breeding Offers</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/mares" class="waves-effect">Public Broodmare Registry</a>
+                                </li>
+                                <li>
+                                    <a href="/breeding/stallions" class="waves-effect">Public Stallion Registry</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-chart-bar"></i> Racing Office<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/racing-office/enter" class="waves-effect">Enter a Race</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/my-entries" class="waves-effect">My Entries</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/my-results" class="waves-effect">My Results</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/claiming-races" class="waves-effect">Claiming Races</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/claiming-races/pending" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Pending Claims</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/qualifying" class="waves-effect">Qualifying</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/race-results" class="waves-effect">Race Results</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/info/calendar" class="waves-effect">Racing Calendar</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/info/weather" class="waves-effect">Weather Forecast</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-trophy"></i> Stake Races<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/racing-office/stakes/schedule" class="waves-effect">Stake Schedule</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/stakes/nominations" class="waves-effect">My Nominations</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/stakes/sponsor" class="waves-effect">Sponsorship</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-newspaper"></i> News &amp; Standings<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/racing-office/awards" class="waves-effect">Annual Awards</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/standings/broodmares" class="waves-effect">Broodmare Standings</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/hall-of-fame" class="waves-effect">Hall of Fame</a>
+                                </li>
+                                <li>
+                                    <a href="/news" class="waves-effect">News Center</a>
+                                </li>
+                                <li>
+                                    <a href="/news/submit" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Submit News</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/standings/horses" class="waves-effect">Horse Standings</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/standings/stables" class="waves-effect">Stable Standings</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/standings/stallions" class="waves-effect">Stallion Standings</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/top-times/daily" class="waves-effect">Top Times: Daily</a>
+                                </li>
+                                <li>
+                                    <a href="/racing-office/top-times" class="waves-effect">Top Times: Lifetime</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-star"></i> Credits &amp; Premium Features<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/credits" class="waves-effect">HarnessNation Credits</a>
+                                </li>
+                                <li>
+                                    <a href="/premium/money" class="waves-effect">HarnessNation Money</a>
+                                </li>
+                                <li>
+                                    <a href="/premium/features" class="waves-effect">Extra Features</a>
+                                </li>
+                                <li>
+                                    <a href="/change/stable/conference" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Conference Change</a>
+                                </li>
+                                <li>
+                                    <a href="/change/stable/name" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Stable Name Change</a>
+                                </li>
+                                <li>
+                                    <a href="/premium/memberships" class="waves-effect">Premium Memberships</a>
+                                </li>
+                                <li>
+                                    <a href="/premium/stalls" class="waves-effect">Stalls: Add Stalls</a>
+                                </li>
+                                <li>
+                                    <a href="/premium/stalls/move" class="waves-effect">Stalls: Move Stalls</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-user"></i> Account<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/account/details" class="waves-effect">Account Details</a>
+                                </li>
+                                <li>
+                                    <a href="/accounting/user" class="waves-effect">HN Credit Accounting</a>
+                                </li>
+                                <li>
+                                    <a href="/account/details" class="waves-effect">My Profile</a>
+                                </li>
+                                <li>
+                                    <a href="/stable/settings" class="waves-effect">Settings</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-comments"></i> Messaging<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="/chat" class="waves-effect">Chatroom</a>
+                                </li>
+                                <li>
+                                    <a href="/notices" class="waves-effect">Game Notifications</a>
+                                </li>
+                                <li>
+                                    <a href="https://forum.harnessnation.com/" class="waves-effect">Message Boards</a>
+                                </li>
+                                <li>
+                                    <a href="/online-users" class="waves-effect">Online Users</a>
+                                </li>
+                                <li>
+                                    <a href="/messages" class="waves-effect">Private Messages</a>
+                                </li>
+                                <li>
+                                    <a href="/stable/watchlist" class="waves-effect">Watch List</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li><a class="collapsible-header waves-effect arrow-r"><i class="fas fa-question-circle"></i> Help &amp; More<i class="fas fa-angle-down rotate-icon"></i></a>
+                        <div class="collapsible-body">
+                            <ul>
+                                <li>
+                                    <a href="https://harnessnation.zendesk.com/hc/en-us" class="waves-effect">Support Center</a>
+                                </li>
+                                <li>
+                                    <a href="https://harnessnation.zendesk.com/hc/en-us/requests/new" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> Contact Support</a>
+                                </li>
+                                <li>
+                                    <a href="https://harnessnation.zendesk.com/hc/en-us/requests" class="waves-effect"><i class="far fa-long-arrow-alt-right"></i> My Requests</a>
+                                </li>
+                                <li>
+                                    <a href="/about" class="waves-effect">About HarnessNation</a>
+                                </li>
+                                <li>
+                                    <a href="/cookies" class="waves-effect">Cookie Policy</a>
+                                </li>
+                                <li>
+                                    <a href="https://harnessnation.zendesk.com/hc/en-us/sections/360007071612-FAQ" class="waves-effect">FAQ</a>
+                                </li>
+                                <li>
+                                    <a href="https://harnessnation.zendesk.com/hc/en-us/categories/360002286531-Playing-Guides" class="waves-effect">Playing Guides</a>
+                                </li>
+                                <li>
+                                    <a href="/privacy-policy" class="waves-effect">Privacy Policy</a>
+                                </li>
+                                <li>
+                                    <a href="/rules" class="waves-effect">Rules &amp; Regulations</a>
+                                </li>
+                                <li>
+                                    <a href="/site-map" class="waves-effect">Site Map</a>
+                                </li>
+                                <li>
+                                    <a href="/terms-of-service" class="waves-effect">Terms of Service</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <!--/. Side navigation links -->
+        </ul>
+        <div class="sidenav-bg mask-strong"></div>
+    </div>
+    <!--/. Sidebar navigation -->
+    <!-- Navbar -->
+    <nav class="navbar fixed-top navbar-toggleable-md navbar-expand-lg scrolling-navbar double-nav">
+        <!-- SideNav slide-out button -->
+        <div class="float-left">
+            <a href="#" data-activates="slide-out" class="button-collapse"><i class="fas fa-bars"></i></a>
+        </div>
+        <!-- Breadcrumb-->
+        <div class="breadcrumb-dn mr-auto">
+            <p><a href="/"><img src="/v2/img/logo/hn_logo_small.png" class="img-fluid" alt="HarnessNation - Virtual Harness Horse Racing"></a></p>
+        </div>
+                <ul class="nav navbar-nav nav-flex-icons ml-auto">
+            <li class="nav-item">
+                                    <a href="/notices" title="Notifications" class="nav-link">
+                        <i class="far fa-bullhorn"></i>
+                    </a>
+                            </li>
+            <li class="nav-item">
+                                    <a href="/messages" title="Private Messages" class="nav-link">
+                        <i class="far fa-comments"></i>
+                    </a>
+                            </li>
+            <li class="nav-item">
+                                    <a href="/breeding/private/offers" title="Private Breeding Offers" class="nav-link">
+                        <i class="far fa-book-heart"></i>
+                    </a>
+                            </li>
+            <li class="nav-item">
+                                    <a href="/payments" title="Payment Center Offers" class="nav-link">
+                        <i class="far fa-envelope-open-dollar"></i>
+                    </a>
+                            </li>
+            <li class="nav-item">
+                                    <a href="/sell/horse/private" title="Private Horse Sales" class="nav-link">
+                        <i class="far fa-tags"></i>
+                    </a>
+                            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">
+                    <i class="far fa-farm"></i> <span class="clearfix d-none d-sm-inline-block">Stable</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink2">
+                    <b>Apex Racing Stable</b><br/>
+                    <hr>
+                    <small>#4</small><br/>
+                    <small>$158,670,691</small><br/>
+                    <small>274 Credits</small><br/>
+                    <hr>
+                    <a class="dropdown-item" href="/stable/dashboard">Stable Dashboard</a>
+                    <a class="dropdown-item" href="/stable/main">Main Stable</a>
+                    <a class="dropdown-item" href="/stable/breeding">Breeding Stable</a>
+                </div>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">
+                    <i class="far fa-user-circle"></i> <span class="clearfix d-none d-sm-inline-block">Account</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                    <b>ApexRacing</b><br/>
+                    <hr>
+                    <small>274 Credits</small><br/>
+                    <hr>
+                    <a class="dropdown-item" href="/account/details">Account Dashboard</a>
+                    <a class="dropdown-item" href="/create/stable">Create Stable</a>
+                    <a href="#" class="waves-effect _switchStableModalButton dropdown-item" data-toggle="modal" data-target="#_switchStableModal">Switch Stable</a>
+                    <a class="dropdown-item" href="/logout">Logout</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+    <!-- /.Navbar -->
+</header>
+<!--/.Double navigation-->
 
-                <!-- Begin Horse Note Section -->
-                                    <!-- End Horse Note Section -->
 
-                <!-- Begin Main Body of Horse Details -->
+    <main>
+
+        <div class="container">
+
+            <section class="pb-3">
+
+            <div class="row">
+    <div class="col-12 text-right">
+        <span class="text-muted">
+            <small>
+                Tuesday October 29th, 2024 | 9:34 pm EDT
+            </small>
+        </span>
+    </div>
+</div>
+            
+            <!-- Begin displaying horse -->
+            
+                <!-- Begin Horse Name and Awards/Status Row -->
+                    <div class="row mt-0 mb-0">
+                        <div class="col-sm-6 m-0 p-0">
+                            <h1 class="h1-responsive font-weight-bold text-left my-2 mb-1">Astronomical</h1>
+                        </div>
+                        <div class="col-sm-6 text-right">
+                                                            <img src="/assets/img/icons/trophyhorse.png" data-horse-id="14" class="goldHorseTrophy trophy-horse-page">
+                                                                                                                                                        <img src="/assets/img/icons/newtrophygold.png" data-horse-id="14" class="trophyGold trophy-horse-page">
+                                                                                                                                    <img src="/assets/img/icons/newtrophybronze.png" data-horse-id="14" class="trophyBronze trophy-horse-page">
+                                                                                                                                                            <span class="badge grade-a grade-horse-page">A</span>
+                                                                                                                                                                                                                                                                                        </div>
+                    </div>
+                    <!-- End horse name and awards/status row -->
+
+                    <!-- Begin Horse Note Section -->
+                                        <!-- End Horse Note Section -->
+
+                    <!-- Begin Main Body of Horse Details -->
                     <div class="row">
                         <!-- Left Column of Horse Details -->
                         <div class="col-sm-4 m-0 p-0">
@@ -49,6 +583,7 @@
                                                                                         <b>Last Six Starts</b><br/>
                                 Wins: 3<Br/>
                                 Earnings: $81,812<br/>
+                                Stakes Eligible: $0<br/>
                                 <br/>
                                                                                         <button class="m-0 mt-1 mb-3 p-1 pl-2 pr-1 btn btn-sm btn-flat btn-secondary text-white" id="pastRaceRecordsBtn" data-horse-id="14" data-toggle="modal" data-target="#pastRaceRecordsModal"><i class="fa fa-history"></i> Past Season Race Records</button><br/>
                                 <div class="modal fade" id="pastRaceRecordsModal" tabindex="-1" role="dialog" aria-labelledby="pastRaceRecordsModal">
@@ -85,7 +620,7 @@
                 timeout: 30000,
                 async: true,
                 beforeSend: function(request) {
-                    request.setRequestHeader('X-CSRF-TOKEN','');
+                    request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
                     $("#pastRaceRecordsModalContent").hide();
                     $("#pastRaceRecordsModalLoadingContainer").show();
                 },
@@ -195,7 +730,7 @@
                 timeout: 30000,
                 async: true,
                 beforeSend: function(request) {
-                    request.setRequestHeader('X-CSRF-TOKEN','');
+                    request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
                     $("#idealGradedStakesModalContent").hide();
                     $("#idealGradedStakesModalLoadingContainer").show();
                 },
@@ -222,3 +757,1391 @@
                         <!-- End Right Column -->
                     </div>
                     <!-- End Main Horse Details Section -->
+
+                    <!-- Begin secondary row of horse details and status section -->
+                    <div class="row">
+                        <!-- Begin left column EMPTY -->
+                        <div class="col-sm-3 m-0 p-0">
+
+                        </div>
+                        <!-- End left column -->
+                        <!-- Begin center section of current statuses -->
+                        <div class="col-sm-6 m-0 p-0 mt-2">
+                                                                                                                                        </div>
+                        <!-- End center section of statuses -->
+
+
+                    </div>
+                    <!-- End secondary row of horse details and statuses -->
+
+                    <!-- Include horse picture and action buttons -->
+                <br/>
+<div class="row">
+        <div class="col-sm-6 m-0 p-0">
+        <img src="/assets/img/horses/stallion1/markings/horse-marking-blank.png" class="rightHindMarking img-fluid horseImageMarking">
+    <img src="/assets/img/horses/stallion1/markings/socks-hind-left.png" class="leftHindMarking img-fluid horseImageMarking">
+    <img src="/assets/img/horses/stallion1/markings/horse-marking-blank.png" class="rightFrontMarking img-fluid horseImageMarking">
+    <img src="/assets/img/horses/stallion1/markings/horse-marking-blank.png" class="leftFrontMarking img-fluid horseImageMarking">
+    <img src="/assets/img/horses/stallion1/markings/face-star.png" class="faceMarkingImage img-fluid horseImageMarking">
+    <img src="/assets/img/horses/stallion1/bay.png" id="stallion1" class="primaryHorseImage img-fluid">
+    </div>
+</div>                <!-- End include of horse picture and action buttons -->
+
+                    <!-- Begin Race History Container -->
+                    <div id="viewHorseRaceHistoryContainer" class="row mb-1 mt-1">
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            Loading Race Results...<br/>
+                            <div class="progress md-progress primary-color-dark mt-3">
+                                <div class="indeterminate"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-1 mt-1" id="viewAllHorseRaceHistoryContainer" style="display:none;">
+                        <div class="col-xs-12 col-sm-12 col-md-12" style="text-align:center;">
+                            <button class="btn btn-sm btn-secondary" id="viewAllRacesBtn" data-horse-id="14" data-toggle="modal" data-target="#raceHistoryModal"><i class="far fa-chart-bar"></i> View All Race Results</button>
+                        </div>
+                    </div>
+                    <!-- End Race History Container -->
+
+                    <!-- Begin Training History Container -->
+                    <div id="viewHorseTrainingHistoryContainer" class="row mb-1 mt-1">
+                        <div class="col-12">
+                            Loading Training History...<br/>
+                            <div class="progress md-progress primary-color-dark mt-3">
+                                <div class="indeterminate"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-1 mt-1" id="viewAllTrainingHistory" style="display:none;">
+                        <div class="col-12" style="text-align:center;">
+                            <button class="btn btn-sm btn-secondary" id="viewAllTrainingBtn" data-horse-id="14" data-toggle="modal" data-target="#trainingHistoryModal"><i class="far fa-list"></i> View All Training History</button>
+                        </div>
+                    </div>
+                    <!-- End Training History Container -->
+
+                    <!-- Begin optional history containers (Sale, Injury, Progeny) -->
+                                                                <Br/>
+<div class="row m-0 p-0">
+    <h2 class="h2-responsive font-weight-bold text-left my-2 mb-1">Injury History</h2>
+    <div class="col-12">
+        <div class="row">
+                                    <div class="col-sm-2"></div>
+                <div class="col-sm-8 m-0 p-0 table-responsive">
+                    <table class="table table-hover table-condensed table-sm">
+                        <thead>
+                        <tr>
+                            <th>Injury</th>
+                            <th>Injury Started</th>
+                            <th>Injury Healed</th>
+                            <th>Notes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                                                    <tr>
+                                <td>
+                                                                            Bone Chip in Knee
+                                                                    </td>
+                                <td>
+                                    November 18th, 2017
+                                </td>
+                                <td>
+                                    December 16th, 2017
+                                </td>
+                                <td>
+                                    <!-- placeholder for vet clinic information -->
+                                </td>
+                            </tr>
+                                                </tbody>
+                    </table>
+                </div>
+                    </div>
+    </div>
+
+</div>                                                                                    <Br/>
+<div class="row m-0 p-0">
+    <div class="col-sm-2 m-0 p-0">
+
+    </div>
+    <div class="col-sm-8 m-0 p-0">
+        <div class="card text-white bg-success mb-3" id="salePanel">
+            <div class="card-header bg-primary">
+                <i class="fas fa-horse"></i> Progeny
+            </div>
+            <div class="card-body bg-white black-text">
+                <p>
+                                                                        This horse has not bred this season.
+                                                <Br/>
+                        <br/>
+                                        <b>Total Foals:</b> 778<Br/>
+                </p>
+            </div>
+            <div class="card-footer bg-white">
+                <button class="btn btn-block btn-primary view-horse-action-btn mb-3 progenyListBtn" data-horse-id="14" data-toggle="modal" data-target="#progenyModal"><i class="far fa-list"></i> Progeny List</button>
+                <button class="btn btn-small btn-block btn-secondary view-horse-action-btn progenyReportBtn" data-horse-id="14" data-toggle="modal" data-target="#progenyReportModal"><i class="far fa-chart-area"></i> Progeny Report</button>
+            </div>
+        </div>
+    </div>
+</div>                                        <!-- End optional history containers -->
+
+                    <!-- Begin Main Stable and Breeding Stable Lists -->
+                    <div class="row m-0 p-0 mt-5">
+                        <div class="col-sm-12 col-md-3 m-0 p-0">
+
+                        </div>
+                        <div class="col-sm-12 col-md-6 m-0 p-0">
+                                                            <form id="mainStableForm">
+                                    <div class="row">
+                                        <div class="col-12 m-0 p-0">
+                                            <label for="inputMainHorse">Main Stable Horses</label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-8 m-0 p-0 pr-2">
+                                            <select class="mdb-select md-form mt-0 viewHorseSelect" required id="inputMainHorse" searchable="Search Here" name="mainHorse"><option value="80539">A Garden State TM</option><option value="79570">A Plus Apex</option><option value="79573">Abbie Apex</option><option value="79544">Abra Apex</option><option value="79568">Accelerant Apex</option><option value="79555">Achilles Apex</option><option value="79554">Aero Apex</option><option value="79540">Alexander Apex</option><option value="79553">Amber Apex</option><option value="79556">Anhinga Apex</option><option value="79567">Anne Apex</option><option value="79559">Ant Apex</option><option value="79542">Apollonia Apex</option><option value="79569">Appletini Apex</option><option value="79571">Aristocrat Apex</option><option value="81028">ATMAI FIRELIGHT TFM</option><option value="79539">Aurelia Apex</option><option value="84724">Babylon Apex</option><option value="85098">Basket Apex</option><option value="85079">Battalion Apex</option><option value="84723">Baxter Apex</option><option value="85103">Bea Apex</option><option value="85080">Belle Apex</option><option value="85216">Belltower Apex</option><option value="85214">Bender Apex</option><option value="84713">Bermuda Apex</option><option value="85076">Blaze Apex</option><option value="85213">Blue Apex</option><option value="84717">Bold Apex</option><option value="85078">Bomba Apex</option><option value="85097">Bonanza Apex</option><option value="85083">Boulevard Apex</option><option value="72695">Bourbon Babe</option><option value="84712">Brisk Apex</option><option value="86802">Caballine Apex</option><option value="86813">Cabernet Apex</option><option value="86814">Cache Apex</option><option value="86824">Calliope Apex</option><option value="86808">Calypso Apex</option><option value="86763">Camper Apex</option><option value="86815">Capricious Apex</option><option value="86805">Carbonara Apex</option><option value="86760">Caribbean Apex</option><option value="88145">Carnage Apex</option><option value="88141">Carnation Apex</option><option value="86769">Cat Apex</option><option value="86818">Cauldron Apex</option><option value="88800">Causeway Apex</option><option value="86806">Cayman Apex</option><option value="86807">Celestine Apex</option><option value="88147">Ceres Apex</option><option value="88142">Chagrin Apex</option><option value="86801">Champion Apex</option><option value="86798">Charleston Apex</option><option value="88146">Charon Apex</option><option value="86771">Cheerleader Apex</option><option value="86766">Cheesesteak Apex</option><option value="86811">Cherished Apex</option><option value="79123">Chestnut Temptation</option><option value="86816">Chicago Apex</option><option value="86804">Chickadee Apex</option><option value="86817">Chinook Apex</option><option value="86761">Choreographer Apex</option><option value="86812">Cisco Apex</option><option value="86809">Citrine Apex</option><option value="88144">Clone Apex</option><option value="81396">CM WEE AS ME</option><option value="86797">Cocoa Apex</option><option value="86810">Cognac Apex</option><option value="86819">Combinatorial Apex</option><option value="88143">Combustion Apex</option><option value="86768">Crown Apex</option><option value="88794">Cruising Apex</option><option value="86765">Crunch Apex</option><option value="86767">Crustacean Apex</option><option value="86759">Curvaceous Apex</option><option value="86770">Custom Apex</option><option value="75865">Extreme Close Up</option><option value="72706">Her Majesty</option><option value="81887">KNIGHTs STALLION </option><option value="68313">Pearls Falcon</option><option value="68979">Rage Machine</option><option value="83077">Royal Dream</option><option value="80203">SS SKY CROC</option><option value="83474">True Crime Podcast</option><option value="57907">Urchin Apex</option><option value="60931">Vanity Apex</option><option value="79659">Victor van Reker</option><option value="61020">Vital Apex</option><option value="65720">Whitby Apex</option><option value="66046">Wince Apex</option><option value="65114">Winter Apex</option><option value="66040">Woodwind Apex</option><option value="65719">Wren Apex</option><option value="70258">Xamira Apex</option><option value="69723">Xavin Apex</option><option value="70262">Xenocratic Apex</option><option value="69729">Xenon Apex</option><option value="70259">Xenops Apex</option><option value="69727">Xorn Apex</option><option value="69730">Xzibit Apex</option><option value="73960">Yantra Apex</option><option value="74326">Yeast Apex</option><option value="74327">Yoga Apex</option><option value="72999">Yokozuna Apex</option><option value="73957">Yonder Apex</option><option value="74324">Yonkers Apex</option><option value="75761">Zamira Apex</option><option value="88440">ZBS Slot Machine Hanover</option><option value="76577">Zenana Apex</option><option value="75759">Zenith Apex</option><option value="76422">Zeppelin Apex</option><option value="76414">Zero Apex</option><option value="75762">Zeus Apex</option><option value="76584">Zirconia Apex</option><option value="75766">Ziv Apex</option><option value="76569">Zone Apex</option><option value="76421">Zumba Apex</option><option value="76580">Zuul Apex</option><option value="76567">Zymosis Apex</option></select>
+                                        </div>
+                                        <div class="col-4 m-0 p-0">
+                                            <button class="btn btn-sm btn-secondary" type="submit" id="mainStableGo">View Horse <i class="fas fa-arrow-right"></i></button>
+                                        </div>
+                                    </div>
+                                </form>
+                                                                                        <form id="breedingStableForm">
+                                    <div class="row">
+                                        <div class="col-12 m-0 p-0 pr-2">
+                                            <label for="inputBreedingHorse">Breeding Stable Horses</label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-8 m-0 p-0">
+                                            <select class="mdb-select md-form mt-0 viewHorseSelect" required id="inputBreedingHorse" searchable="Search Here" name="breedingHorse"><option value="55704">Ashley Graham</option><option value="77420">Ashotinthedark Ridge</option><option value="29829">Atlanta Chocolate</option><option value="36048">Atmai Discopoint</option><option value="69150">Captain Dan</option><option value="90527">Dad Bod Apex</option><option value="90560">Daffodil Apex</option><option value="90525">Daisy Apex</option><option value="90554">Dan Apex</option><option value="90534">Danbury Apex</option><option value="90524">Dancefloors Apex</option><option value="90548">Danielle Apex</option><option value="90550">Dapper Apex</option><option value="90559">Dark Matter Apex</option><option value="90528">Darla Apex</option><option value="90532">Darwin Apex</option><option value="90541">Dashing Apex</option><option value="90533">Date Night Apex</option><option value="90561">Deanne Apex</option><option value="90522">Decatur Apex</option><option value="90545">Deimos Apex</option><option value="90549">Delgado Apex</option><option value="90529">Demon Apex</option><option value="90536">Desire Apex</option><option value="90551">Destroyer Apex</option><option value="90543">Diabolical Apex</option><option value="90530">Dialect Apex</option><option value="90538">Diamond Apex</option><option value="90539">Disaronno Apex</option><option value="90523">Disco Apex</option><option value="90547">Distinct Apex</option><option value="90562">Divisive Apex</option><option value="90556">Doppler Apex</option><option value="90558">Doris Apex</option><option value="90552">Double Down Apex</option><option value="90531">Dove Apex</option><option value="90544">Downtown Apex</option><option value="90546">Dragon Apex</option><option value="90526">Dragon Roll Apex</option><option value="90542">Dragonet Apex</option><option value="90537">Dreamy Apex</option><option value="90521">Driven Apex</option><option value="90557">Druid Apex</option><option value="90555">Duvetyn Apex</option><option value="90540">Dynamic Apex</option><option value="90553">Dynasty Apex</option><option value="90535">Dystopic Apex</option><option value="47759">Expressionist</option><option value="55705">Highway To Heaven</option><option value="50249">KB Dancer Express</option><option value="23584">Kerry Apex</option><option value="26317">Lioness Apex</option><option value="26327">Louisville Apex</option><option value="30930">Nana Apex</option><option value="35324">Obliquity Apex</option><option value="35294">Odelia Apex</option><option value="35319">Omega Apex</option><option value="35323">Osprey Apex</option><option value="38010">Pacific Apex</option><option value="38327">Picnic Apex</option><option value="42674">Quartz Apex</option><option value="41675">Quasimodo Apex</option><option value="43199">Quintessential Apex</option><option value="46549">Rebecca Apex</option><option value="46558">Royal Apex</option><option value="45953">Ruby Apex</option><option value="50444">Shiraz Apex</option><option value="50448">Special Apex</option><option value="50576">Striking Apex</option><option value="66974">Sushi Pizza</option><option value="54111">Tilapia Apex</option><option value="55857">Treacherous Apex</option><option value="54777">Triple Play Apex</option><option value="56736">Ultramarine Apex</option><option value="56738">Unbeatable Apex</option><option value="59631">Underdog Apex</option><option value="56851">Unique Apex</option><option value="56735">Unwritten Apex</option><option value="56737">Uplifting Apex</option><option value="60945">Vanilla Apex</option><option value="61023">Vanuatu Apex</option><option value="61012">Vegas Apex</option><option value="60940">Venerable Apex</option><option value="60939">Vibrant Apex</option><option value="61014">Vice Apex</option><option value="49452">Wallys Chick</option><option value="65714">Wildfire Apex</option><option value="66977">Witchy Apex</option><option value="69270">X Games Apex</option><option value="69192">Xanthippe Apex</option><option value="69931">Xian Apex</option><option value="69190">Xyris Apex</option><option value="73039">Yvette Apex</option><option value="37564">Z Two Times Four</option><option value="75756">Zanjero Apex</option></select>
+                                        </div>
+                                        <div class="col-4 m-0 p-0">
+                                            <button class="btn btn-sm btn-secondary" type="submit" id="breedingStableGo">View Horse <i class="fas fa-arrow-right"></i></button>
+                                        </div>
+                                    </div>
+                                </form>
+                                                    </div>
+                    </div>
+                    <!-- End Main and Breeding Stable Lists -->
+
+                        <!-- End displaying horse -->
+            </section>
+        </div>
+    </main>
+
+
+<!-- Footer -->
+<footer class="page-footer font-small pt-4 mt-5">
+
+    <!-- Footer Elements -->
+    <div class="container">
+
+        <!-- Social buttons -->
+        <ul class="list-unstyled list-inline text-center">
+            <li class="list-inline-item">
+                <a class="btn-floating btn-fb mx-1" href="https://www.facebook.com/HarnessNation" target="_blank">
+                    <i class="fab fa-facebook-f"> </i>
+                </a>
+            </li>
+            <li class="list-inline-item">
+                <a class="btn-floating btn-tw mx-1" href="https://www.twitter.com/HarnessNation" target="_blank">
+                    <i class="fab fa-twitter"> </i>
+                </a>
+            </li>
+            <li class="list-inline-item">
+                <a class="btn-floating btn-ins mx-1" href="https://www.instagram.com/HarnessNation" target="_blank">
+                    <i class="fab fa-instagram"> </i>
+                </a>
+            </li>
+            <li class="list-inline-item">
+                <a class="btn-floating btn-yt mx-1" href="https://www.youtube.com/channel/UC71GBFebJaLHTvqcqJ1KePA" target="_blank">
+                    <i class="fab fa-youtube"> </i>
+                </a>
+            </li>
+        </ul>
+        <!-- Social buttons -->
+
+    </div>
+    <!-- Footer Elements -->
+
+    <!-- Copyright -->
+    <div class="footer-copyright text-center py-3">
+        &copy; 2024 Copyright: <a href="https://www.harnessnation.com"> HarnessNation</a>
+                                    </div>
+    <!-- Copyright -->
+
+</footer>
+<!-- Footer -->
+
+<!--  SCRIPTS  -->
+<!-- Bootstrap tooltips -->
+<script type="text/javascript" src="/v2/js/popper.min.js"></script>
+<!-- Bootstrap core JavaScript -->
+<script type="text/javascript" src="/v2/js/bootstrap.min.js"></script>
+<!-- MDB core JavaScript -->
+<script type="text/javascript" src="/v2/js/modules/sidenav.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/accordion-extended.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/animations-extended.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/buttons.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/cards.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/character-counter.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/chips.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/collapsible.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/file-input.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/forms-free.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/lightbox.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/mdb-autocomplete.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/megamenu.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/parallax.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/preloading.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/range-input.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/scrolling-navbar.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/smooth-scroll.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/sticky.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/treeview.min.js"></script>
+<script type="text/javascript" src="/v2/js/modules/wow.min.js"></script>
+<script type="text/javascript" src="/v2/js/mdb.min.js"></script>
+
+<!-- DataTables -->
+<link rel="stylesheet" type="text/css" href="/v2/DataTables/datatables.min.css"/>
+
+<script type="text/javascript" src="/v2/DataTables/datatables.min.js"></script>
+
+<!-- Temporary support for old layout -->
+<script src="/assets/js/jBox.min.js"></script>
+
+<script type="text/javascript">
+
+    $(document).ready(function() {
+        // SideNav Button Initialization
+        $(".button-collapse").sideNav();
+        // SideNav Scrollbar Initialization
+        let sideNavScrollbar = document.querySelector('.custom-scrollbar');
+        var ps = new PerfectScrollbar(sideNavScrollbar);
+
+        
+                
+                
+                
+            toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": false,
+            "positionClass": "md-toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": 600,
+            "hideDuration": 1000,
+            "timeOut": 5000,
+            "extendedTimeOut": 1000,
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+    });
+
+    function bindHorseInfoPopovers() {
+        $('[data-toggle="horse-info-popover"]').popover({
+            html:true,
+            trigger:'hover',
+            placement:'auto',
+            content: function() {
+                let divId = "popover-"+$(this).attr('data-horse-id');
+                return getHorsePopoverData($(this).attr('data-horse-id'), divId);
+            },
+            offset:'0 -150',
+        });
+        $('.popover-dismiss').popover({
+            trigger: 'focus'
+        });
+    }
+
+    function getHorsePopoverData (horseId, divId) {
+        $.ajax({
+            url:'/horse/quickview/'+horseId,
+            type: 'GET',
+            data: '',
+            cache:'false',
+            timeout:'5000',
+            async:'true',
+            dataType:'html',
+            error: function() {
+                $("#"+divId).html("Error loading horse data");
+            },
+            success: function(data) {
+                $("#"+divId).html(data);
+                $('[data-horse-id="'+horseId+'"]').popover('update');
+            }
+        });
+        return '<div id="'+ divId +'">Loading...</div>';
+    }
+
+    function bindTooltips() {
+        $("body").tooltip({
+            selector: '[data-toggle="tooltip"]'
+        });
+        $('[data-toggle="tooltip"]').tooltip({
+            template: '<div class="tooltip md-tooltip-main"><div class="tooltip-arrow md-arrow"></div><div class="tooltip-inner md-inner-main"></div></div>',
+            html: true
+        });
+    }
+
+    function updateHorseLinks() {
+        let horseLinkUpdate = "0";
+        if (horseLinkUpdate === "1") {
+            // Open all horse links in a new tab/window
+            $(".horseLinkOpen").each(function() {
+                $(this).attr("target","_blank");
+            })
+        }
+    }
+
+    $(document).ajaxSuccess(function() {
+        updateHorseLinks();
+    });
+
+    $(document).ready(function() {
+        bindHorseInfoPopovers();
+        bindTooltips();
+        updateHorseLinks();
+
+        $(".goldHorseTrophy").each(function () {
+            new jBox('Tooltip', {
+                attach: $(this),
+                content: 'Loading awards',
+                position: {
+                    x: 'center',
+                    y: 'bottom'
+                },
+                adjustPosition: {
+                    flip: true,
+                    move: true
+                },
+                preventDefault: 'false',
+                repositionOnContent: true,
+                ajax: {
+                    url: '/horse/gold-awards/' + $(this).attr('data-horse-id'),
+                    data: '',
+                    reload: false,
+                    getData: 'data-ajax',
+                    setContent: true,
+                    spinner: true,
+                    error: function () {
+                        return "Could not be found.";
+                    }
+                }
+            });
+        });
+        $(".silverHorseTrophy").each(function () {
+            new jBox('Tooltip', {
+                attach: $(this),
+                content: 'Loading awards',
+                position: {
+                    x: 'center',
+                    y: 'bottom'
+                },
+                adjustPosition: {
+                    flip: true,
+                    move: true
+                },
+                preventDefault: 'false',
+                repositionOnContent: true,
+                ajax: {
+                    url: '/horse/silver-awards/' + $(this).attr('data-horse-id'),
+                    data: '',
+                    reload: false,
+                    getData: 'data-ajax',
+                    setContent: true,
+                    spinner: true,
+                    error: function () {
+                        return "Could not be found.";
+                    }
+                }
+            });
+        });
+        $(".trophyGold").each(function () {
+            new jBox('Tooltip', {
+                attach: $(this),
+                content: 'Loading graded wins',
+                position: {
+                    x: 'center',
+                    y: 'bottom'
+                },
+                adjustPosition: {
+                    flip: true,
+                    move: true
+                },
+                preventDefault: 'false',
+                repositionOnContent: true,
+                ajax: {
+                    url: '/horse/graded-wins/' + $(this).attr('data-horse-id'),
+                    data: '',
+                    reload: false,
+                    getData: 'data-ajax',
+                    setContent: true,
+                    spinner: true,
+                    error: function () {
+                        return "Could not be found.";
+                    }
+                }
+            });
+        });
+        $(".trophySilver").each(function () {
+            new jBox('Tooltip', {
+                attach: $(this),
+                content: 'Loading graded places',
+                position: {
+                    x: 'center',
+                    y: 'bottom'
+                },
+                adjustPosition: {
+                    flip: true,
+                    move: true
+                },
+                preventDefault: 'false',
+                repositionOnContent: true,
+                ajax: {
+                    url: '/horse/graded-places/' + $(this).attr('data-horse-id'),
+                    data: '',
+                    reload: false,
+                    getData: 'data-ajax',
+                    setContent: true,
+                    spinner: true,
+                    error: function () {
+                        return "Could not be found.";
+                    }
+                }
+            });
+        });
+        $(".trophyBronze").each(function () {
+            new jBox('Tooltip', {
+                attach: $(this),
+                content: 'Loading graded shows',
+                position: {
+                    x: 'center',
+                    y: 'bottom'
+                },
+                adjustPosition: {
+                    flip: true,
+                    move: true
+                },
+                preventDefault: 'false',
+                repositionOnContent: true,
+                ajax: {
+                    url: '/horse/graded-shows/' + $(this).attr('data-horse-id'),
+                    data: '',
+                    reload: false,
+                    getData: 'data-ajax',
+                    setContent: true,
+                    spinner: true,
+                    error: function () {
+                        return "Could not be found.";
+                    }
+                }
+            });
+        });
+
+
+    });
+
+</script>
+
+<script type="text/javascript">
+    (function() {
+        window.addEventListener('load', function() {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            let forms = document.getElementsByClassName('needs-validation');
+            // Loop over them and prevent submission
+            let validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+
+    <script type="text/javascript">
+        $("#mainStableForm").submit(function(e) {
+            var horseId = $("#inputMainHorse").val();
+            window.location="/horse/" + horseId;
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        $("#breedingStableForm").submit(function(e) {
+            var horseId = $("#inputBreedingHorse").val();
+            window.location="/horse/" + horseId;
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        $("#horsePgForSale").on('click',function() {
+            $("html, body").animate({
+                scrollTop: $("#salePanel").offset().top}, 1000);
+        });
+        $("#horsePgForStud").on('click',function() {
+            $("html, body").animate({
+                scrollTop: $("#breedingPanel").offset().top}, 1000);
+        });
+        $("#horsePgInjured").on('click',function() {
+            $("html, body").animate({
+                scrollTop: $("#currentInjury").offset().top}, 1000);
+        });
+        $("#horsePgSuspended").on('click',function() {
+            $("html, body").animate({
+                scrollTop: $("#suspendedPanel").offset().top}, 1000);
+        });
+        $(".horseNominated").each(function () {
+            new jBox('Tooltip', {
+                attach: $(this),
+                content: 'Loading nominations',
+                position: {
+                    x: 'center',
+                    y: 'bottom'
+                },
+                adjustPosition: {
+                    flip: true,
+                    move: true
+                },
+                preventDefault: 'false',
+                repositionOnContent: true,
+                closeOnClick: true,
+                closeOnMouseleave: true,
+                ajax: {
+                    url: '/horse/nominations/' + $(this).attr('data-horse-id'),
+                    data: '',
+                    reload: false,
+                    getData: 'data-ajax',
+                    setContent: true,
+                    spinner: true,
+                    error: function () {
+                        return "Could not be found.";
+                    }
+                }
+            });
+        });
+        $(".horseGradedEntry").each(function () {
+            new jBox('Tooltip', {
+                attach: $(this),
+                content: 'Loading stake entries',
+                position: {
+                    x: 'center',
+                    y: 'bottom'
+                },
+                adjustPosition: {
+                    flip: true,
+                    move: true
+                },
+                preventDefault: 'false',
+                repositionOnContent: true,
+                closeOnClick: true,
+                closeOnMouseleave: true,
+                ajax: {
+                    url: '/horse/graded-entry/' + $(this).attr('data-horse-id'),
+                    data: '',
+                    reload: false,
+                    getData: 'data-ajax',
+                    setContent: true,
+                    spinner: true,
+                    error: function () {
+                        return "Could not be found.";
+                    }
+                }
+            });
+        });
+        $(document).ready(function() {
+            $(".viewHorseSelect").materialSelect();
+            let curHorse = "14";
+            $.ajax({
+                type: 'POST',
+                url: 'https://www.harnessnation.com/horse/api/horse-race-history',
+                data: {'horseId':curHorse},
+                cache: 'false',
+                timeout: 50000,
+                async: true,
+                beforeSend: function (request) {
+                    request.setRequestHeader('X-CSRF-TOKEN', 'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                },
+                error: function () {
+                    $("#viewHorseRaceHistoryContainer").remove();
+                },
+                success: function (data) {
+                    if (!data.error) {
+                        // Success action
+                        $("#viewAllHorseRaceHistoryContainer").show();
+                        $("#viewHorseRaceHistoryContainer").replaceWith(data);
+                    } else {
+                        $("#viewHorseRaceHistoryContainer").remove();
+                    }
+                }
+            });
+            $.ajax({
+                type: 'POST',
+                url: 'https://www.harnessnation.com/horse/api/horse-training-history',
+                data: {'horseId':curHorse},
+                cache: 'false',
+                timeout: 50000,
+                async: true,
+                beforeSend: function (request) {
+                    request.setRequestHeader('X-CSRF-TOKEN', 'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                },
+                error: function () {
+                    $("#viewHorseTrainingHistoryContainer").remove();
+                },
+                success: function (data) {
+                    if (!data.error) {
+                        // Success action
+                        $("#viewAllTrainingHistory").show();
+                        $("#viewHorseTrainingHistoryContainer").replaceWith(data);
+                    } else {
+                        $("#viewHorseTrainingHistoryContainer").remove();
+                    }
+                }
+            });
+        });
+    </script>
+            <script type="text/javascript">
+            $(document).ready(function() {
+                $.ajax({
+                    type: 'GET',
+                    url: '/api/watchlist/status/14',
+                    cache: 'false',
+                    timeout: 10000,
+                    async: true,
+                    beforeSend: function (request) {
+                        request.setRequestHeader('X-CSRF-TOKEN', 'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                        request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                    },
+                    success: function (data) {
+                        if (!data.error) {
+                            if (data.exists == false) {
+                                $("#watchListButton").html('<button class="btn btn-sm green darken-1 text-white ml-0 p-1 btn-flat text-white watchlistAdd" data-toggle="modal" data-target="#watchlistAddModal" id="watchlistActionBtn" data-horse-id="' + data.horseId + '"><i class="fas fa-plus"></i> Add to Watch List</button><br/>');
+                                $("#watchListButton").show();
+                                $(".watchlistAdd").on('click',function() {
+                                    let curHorse = $(this).attr('data-horse-id');
+                                    $.ajax({
+                                        type: 'POST',
+                                        url:'/api/watchlist/add/start',
+                                        data: {'_token':'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak','horseId':curHorse},
+                                        cache: 'false',
+                                        timeout: 10000,
+                                        async: true,
+                                        beforeSend: function(request) {
+                                            request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                                            request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                                            $("#watchlistAddContainer").hide();
+                                            $("#watchlistAddLoadingContainer").show();
+                                        },
+                                        error: function() {
+                                            $("#watchlistAddContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error processing your request.</div>');
+                                            $("#watchlistAddContainer").show();
+                                            $("#watchlistAddLoadingContainer").hide();
+                                        },
+                                        success: function(data) {
+                                            if (!data.error) {
+                                                $("#watchlistAddContainer").html(data);
+                                            }  else {
+                                                if (data.error.length > 1) {
+                                                    $("#watchlistAddContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error processing your request.</div>');
+                                                }
+                                            }
+                                            $("#watchlistAddContainer").show();
+                                            $("#watchlistAddLoadingContainer").hide();
+                                        }
+                                    });
+                                });
+                            } else {
+                                $("#watchListButton").html('<button class="btn btn-sm red darken-1 text-white ml-0 p-1 btn-flat text-white watchlistRemove" data-toggle="modal" data-target="#watchlistModal" id="watchlistActionBtn" data-horse-id="' + data.horseId + '"><i class="fas fa-times"></i> Remove from Watch List</button><br/>');
+                                $("#watchListButton").show();
+                                $(".watchlistRemove").on('click',function() {
+                                    let curHorse = $(this).attr('data-horse-id');
+                                    $.ajax({
+                                        type: 'POST',
+                                        url:'/api/watchlist/remove',
+                                        data: {'_token':'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak','horseId':curHorse},
+                                        cache: 'false',
+                                        timeout: 10000,
+                                        async: true,
+                                        beforeSend: function(request) {
+                                            request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                                            request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                                            $("#watchlistModalContainer").hide();
+                                            $("#watchlistModalLoadingContainer").show();
+                                        },
+                                        error: function() {
+                                            $("#watchlistModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error processing your request.</div>');
+                                            $("#watchlistModalContainer").show();
+                                            $("#watchlistModalLoadingContainer").hide();
+                                        },
+                                        success: function(data) {
+                                            if (!data.error) {
+                                                $("#watchlistModalContainer").html(data.successMessage);
+                                            }  else {
+                                                if (data.error.length > 1) {
+                                                    $("#watchlistModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error processing your request.</div>');
+                                                }
+                                            }
+                                            $('#watchlistModal').on('hidden.bs.modal', function () {
+                                                let curLocation = $(location).attr('href');
+                                                window.location.replace(curLocation);
+                                            });
+                                            $("#watchlistModalContainer").show();
+                                            $("#watchlistModalLoadingContainer").hide();
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+    
+    <!-- Page Includes -->
+    <div class="modal fade" id="pedigreeModal" tabindex="-1" role="dialog" aria-labelledby="pedigreeModal">
+    <div class="modal-dialog modal-lg modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Pedigree</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalPedigreeLoadingContainer">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body modalPedigreeContainer" id="modalPedigreeContainer" style="display:none;">
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $("#viewPedigreeBtn").unbind();
+    $("#viewPedigreeBtn").on('click', function (e) {
+        let horseId = $(this).attr("data-horse-id");
+        $.ajax({
+            type: 'POST',
+            url: 'https://www.harnessnation.com/horse/pedigree',
+            data: {horseId: horseId},
+            cache: 'false',
+            timeout: 10000,
+            async: true,
+            beforeSend: function(request) {
+                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                $(".modalPedigreeContainer").hide();
+                $("#modalPedigreeLoadingContainer").show();
+            },
+            error: function() {
+                $(".modalPedigreeContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error while attempting to fetch horse data.</div>');
+                $(".modalPedigreeContainer").show();
+                $("#modalPedigreeLoadingContainer").hide();
+            },
+            success: function(data) {
+                if (!data.error) {
+                    // Success action
+                    $(".modalPedigreeContainer").html(data);
+                    $(".pedigreeContainer").find('h2').hide();
+                } else {
+                    $(".modalPedigreeContainer").html('<div class="alert alert-danger"><b>Error:</b> '+data.error+'</div>');
+                }
+                $(".modalPedigreeContainer").show();
+                $("#modalPedigreeLoadingContainer").hide();
+            }
+        });
+    });
+</script>    <div class="modal fade" id="siblingsModal" tabindex="-1" role="dialog" aria-labelledby="siblingsModal">
+    <div class="modal-dialog modal-lg modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Siblings</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="siblingsModalLoadingContainer">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="siblingsModalContainer" style="display:none;">
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $("#siblingsBtn").on('click', function (e) {
+        let horseId = $(this).attr("data-horse-id");
+        $.ajax({
+            type: 'POST',
+            url: 'https://www.harnessnation.com/horse/api/siblings',
+            data: {horseId: horseId},
+            cache: 'false',
+            timeout: 30000,
+            async: true,
+            beforeSend: function(request) {
+                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                $("#siblingsModalLoadingContainer").show();
+                $("#siblingsModalContainer").hide();
+            },
+            error: function() {
+                $("#siblingsModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error while attempting to fetch data.</div>');
+                $("#siblingsModalContainer").show();
+                $("#siblingsModalLoadingContainer").hide();
+            },
+            success: function(data) {
+                if (!data.error) {
+                    // Success action
+                    $("#siblingsModalContainer").html(data);
+                } else {
+                    $("#siblingsModalContainer").html('<div class="alert alert-danger"><b>Error:</b> '+data.error+'</div>');
+                }
+                $("#siblingsModalContainer").show();
+                $("#siblingsModalLoadingContainer").hide();
+            }
+        });
+    });
+</script>    <div class="modal fade" id="raceHistoryModal" tabindex="-1" role="dialog" aria-labelledby="raceHistoryModal">
+    <div class="modal-dialog modal-lg modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Lifetime Race History</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="raceHistoryModalLoadingContainer">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="raceHistoryModalContainer" style="display:none;">
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#viewAllRacesBtn").on('click',function() {
+            let curHorse = $(this).attr("data-horse-id");
+            let loadAttempts = 0;
+            $.ajax({
+                type: 'POST',
+                url:'https://www.harnessnation.com/horse/api/race-history',
+                data: {'_token':'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak','horseId':curHorse},
+                cache: 'false',
+                timeout: 50000,
+                async: true,
+                beforeSend: function(request) {
+                    request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                    $("#raceHistoryModalLoadingContainer").show();
+                    $("#raceHistoryModalContainer").hide();
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    if (textStatus === 'timeout') {
+                        loadAttempts++;
+                        if (loadAttempts <= 4) {
+                            // try again
+                            $.ajax(this);
+                        }
+                    } else {
+                        $("#raceHistoryModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error processing your request.</div>');
+                        $("#raceHistoryModalLoadingContainer").hide();
+                        $("#raceHistoryModalContainer").show();
+                    }
+                },
+                success: function(data) {
+                    if (!data.error) {
+                        $("#raceHistoryModalContainer").html(data);
+                    }  else {
+                        $("#raceHistoryModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error loading race history.</div>');
+                    }
+                    $("#raceHistoryModalLoadingContainer").hide();
+                    $("#raceHistoryModalContainer").show();
+                }
+            });
+        });
+    });
+</script>    <div class="modal fade" id="trainingHistoryModal" tabindex="-1" role="dialog" aria-labelledby="trainingHistoryModal">
+    <div class="modal-dialog modal-lg modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Training History</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="trainingHistoryModalLoadingContainer">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="trainingHistoryModalContainer" style="display:none;">
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#viewAllTrainingBtn").on('click',function() {
+            let curHorse = $(this).attr("data-horse-id");
+            $.ajax({
+                type: 'POST',
+                url:'https://www.harnessnation.com/horse/api/training-history',
+                data: {'_token':'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak','horseId':curHorse},
+                cache: 'false',
+                timeout: 50000,
+                async: true,
+                beforeSend: function(request) {
+                    request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                    $("#trainingHistoryModalLoadingContainer").show();
+                    $("#trainingHistoryModalContainer").hide();
+                },
+                error: function() {
+                    $("#trainingHistoryModalContainer").html('<div class="alert alert-danger"><b>Error:</b>There was an error processing your request.</div>');
+                    $("#trainingHistoryModalLoadingContainer").hide();
+                    $("#trainingHistoryModalContainer").show();
+                },
+                success: function(data) {
+                    if (!data.error) {
+                        $("#trainingHistoryModalContainer").html(data);
+                    }  else {
+                        $("#trainingHistoryModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error loading training history.</div>');
+                    }
+                    $("#trainingHistoryModalLoadingContainer").hide();
+                    $("#trainingHistoryModalContainer").show();
+                }
+            });
+        });
+    });
+</script>    <div class="modal fade" id="raceInformationModal" tabindex="-1" role="dialog" aria-labelledby="raceInformationModal">
+    <div class="modal-dialog modal-lg modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100" id="raceInformationTitle">Race Information</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body raceInformationBody" id="raceInformationBody">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-footer footer-open-option">
+                <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function() {
+        // This also exists in mainStableView
+        $(".raceInformationBtn").on('click', function (e) {
+            e.preventDefault();
+            let curRaceId = $(this).attr("data-attr-race-id");
+            let selectedHorse = $(this).attr('data-selected-horse');
+            $.ajax({
+                url: '/racing-office/api/race-information/' + curRaceId + '?selectedHorse=' + selectedHorse,
+                async: true,
+                beforeSend: function () {
+                    $(".raceInformationBody").html('<div class="row"><div class="col-12"><div class="progress md-progress primary-color-dark"><div class="indeterminate"></div></div></div></div>')
+                },
+                success: function (data) {
+                    if (data.error) {
+                        $(".raceInformationBody").html(data.error);
+                    } else {
+                        // Display the race list back button
+                        if ($("#raceListBackBtn").length > 0) {
+                            $("#raceListBackBtn").show();
+                        }
+                        $(".raceInformationBody").html(data);
+                    }
+                }
+            })
+        });
+    });
+</script>    <div class="modal fade" id="watchlistModal" tabindex="-1" role="dialog" aria-labelledby="watchlistModal">
+    <div class="modal-dialog modal-notify modal-danger" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Watch List Removal</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="watchlistModalLoadingContainer" style="display:none;">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="watchlistModalContainer">
+
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>    <div class="modal fade" id="watchlistAddModal" tabindex="-1" role="dialog" aria-labelledby="watchlistAddModal">
+    <div class="modal-dialog modal-notify modal-success" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Watch List Add</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="watchlistAddLoadingContainer" style="display:none;">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="watchlistAddContainer">
+
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-success" id="watchListAddModalBtn"><i class="fas fa-plus"></i> Add Horse</button>
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>    <div class="modal fade" id="progenyModal" tabindex="-1" role="dialog" aria-labelledby="progenyModal">
+    <div class="modal-dialog modal-lg modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Progeny List</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="progenyModalLoadingContainer">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="progenyModalContainer" style="display:none;">
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    function format(stableValue, preferenceValue, ownerValue, breederValue) {
+        let finalFormat = "<b>Stable:</b> "+stableValue+"<br/>";
+        finalFormat = finalFormat+"<b>Preferences:</b> "+preferenceValue+"<br/>";
+        finalFormat = finalFormat+"<b>Owner:</b> "+ownerValue+"<br/>";
+        finalFormat = finalFormat+"<b>Breeder:</b> "+breederValue;
+        return '<div>' + finalFormat + '</div>';
+    }
+
+    function updateProgenyTableData(filterGait,filterAgeGroup,filterGender,filterStable, horseId) {
+
+        $.ajax({
+            type: 'POST',
+            url: '/api/progeny/list',
+            data: {horseId: horseId, filterGait: filterGait, filterAgeGroup: filterAgeGroup, filterGender: filterGender, filterStable: filterStable},
+            cache: 'false',
+            timeout: 30000,
+            async: true,
+            beforeSend: function(request) {
+                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                $("#progenyModalContainer").hide();
+                $("#progenyModalLoadingContainer").show();
+            },
+            error: function() {
+                $("#progenyModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error while attempting to fetch horse data.</div>');
+                $("#progenyModalContainer").show();
+                $("#progenyModalLoadingContainer").hide();
+            },
+            success: function(data) {
+                if (!data.error) {
+                    // Success action
+                    $("#progenyModalContainer").html(data);
+                } else {
+                    $("#progenyModalContainer").html('<div class="alert alert-danger"><b>Error:</b> '+data.error+'</div>');
+                }
+                $("#progenyModalContainer").show();
+                $("#progenyModalLoadingContainer").hide();
+
+                let table = $('#progenyListTable').DataTable({
+                    "paging":   true,
+                    "ordering": true,
+                    "info":     false,
+                    "searching": true,
+                    stateSave: true,
+                    "lengthChange": false,
+                    stateSaveCallback: function(settings,data) {
+                        localStorage.setItem( 'DataTables_' + settings.sInstance, JSON.stringify(data) )
+                    },
+                    stateLoadCallback: function(settings) {
+                        return JSON.parse( localStorage.getItem( 'DataTables_' + settings.sInstance ) )
+                    }
+                });
+
+                // Add event listener for opening and closing details
+                $('#progenyListTable').on('click', 'td.details-control', function () {
+                    let tr = $(this).closest('tr');
+                    let row = table.row(tr);
+
+                    if (row.child.isShown()) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                    } else {
+                        // Open this row
+                        row.child(format(tr.data('stable-value'), tr.data('preference-value'), tr.data('owner-value'), tr.data('breeder-value'))).show();
+                        tr.addClass('shown');
+                    }
+                });
+
+                bindHorseInfoPopovers();
+
+                $(".progenyListSelect").on('click',function(e) {
+                    let curVal = $(this).val();
+                    $("#"+$(this).data('input-control')).val(curVal);
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+
+                $(".updateProgenyList").on('click',function(e) {
+                    // Add event listener for updating filters
+                    let filterGait = $("#filterGait").val();
+                    let filterAgeGroup = $("#filterAgeGroup").val();
+                    let filterGender = $("#filterGender").val();
+                    let filterStable = $("#filterStable").val();
+                    let horseId = $("#horseId").val();
+                    updateProgenyTableData(filterGait,filterAgeGroup,filterGender,filterStable, horseId);
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+
+
+            }
+        });
+
+    }
+
+
+    $(".progenyListBtn").on('click', function (e) {
+        updateProgenyTableData(null,null,null,null, $(this).attr("data-horse-id"));
+    });
+
+</script>    <div class="modal fade" id="progenyReportModal" tabindex="-1" role="dialog" aria-labelledby="progenyReportModal">
+    <div class="modal-dialog modal-lg modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Progeny Report</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="row m-0 p-0">
+                        <div class="col-sm-4">
+                            <label for="inputProgenyReportAge">Age Group</label>
+                            <select name="inputProgenyReportAge" id="inputProgenyReportAge" class="browser-default custom-select progenyReportSelect">
+                                <option value="0">All Progeny</option>
+                                <option value="1">Three-Year-Olds &amp; Up</option>
+                                <option value="2">Two-Year-Olds</option>
+                                <option value="3">Three-Year-Olds</option>
+                                <option value="4">Four &amp; Five-Year-Olds</option>
+                                <option value="5">Six-Year-Olds & Up</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4">
+                            <label for="inputProgenyReportGender">Gender</label>
+                            <select name="inputProgenyReportGender" id="inputProgenyReportGender" class="browser-default custom-select progenyReportSelect">
+                                <option value="all">All Genders</option>
+                                <option value="malesnogeldings">Colts &amp; Stallions Only</option>
+                                <option value="females">Females Only</option>
+                                <option value="geldings">Geldings Only</option>
+                                <option value="males">Males Only</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4">
+                            <button class="btn btn-block btn-sm btn-secondary mt-3 updateReportBtn" type="button" data-horse-id=""><i class="far fa-chart-area"></i> Update Report</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-body" id="progenyReportLoadingContainer" style="display:none;">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="progenyReportModalContainer" style="display:none;">
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(".progenyReportBtn").on('click', function (e) {
+        let horseId = null;
+        horseId = $(this).attr("data-horse-id");
+        $(".updateReportBtn").attr("data-horse-id",horseId);
+        $.ajax({
+            type: 'POST',
+            url: '/api/progeny/report',
+            data: {horseId: horseId},
+            cache: 'false',
+            timeout: 30000,
+            async: true,
+            beforeSend: function(request) {
+                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                $("#progenyReportModalContainer").hide();
+                $("#progenyReportLoadingContainer").show();
+            },
+            error: function() {
+                $("#progenyReportModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error while attempting to fetch horse data.</div>');
+                $("#progenyReportModalContainer").show();
+                $("#progenyReportLoadingContainer").hide();
+            },
+            success: function(data) {
+                if (!data.error) {
+                    // Success action
+                    $("#progenyReportModalContainer").html(data);
+                } else {
+                    $("#progenyReportModalContainer").html('<div class="alert alert-danger"><b>Error:</b> '+data.error+'</div>');
+                }
+                $("#progenyReportModalContainer").show();
+                $("#progenyReportLoadingContainer").hide();
+            }
+        });
+    });
+    $(".updateReportBtn").on('click', function (e) {
+        let curHorseId = null;
+        let horseId = null;
+        horseId = $(this).attr("data-horse-id");
+        curHorseId = horseId;
+        $.ajax({
+            type: 'POST',
+            url: '/api/progeny/report',
+            data: {horseId: curHorseId,'age':$("#inputProgenyReportAge").val(),'agender':$("#inputProgenyReportGender").val()},
+            cache: 'false',
+            timeout: 30000,
+            async: true,
+            beforeSend: function(request) {
+                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                $("#progenyReportModalContainer").hide();
+                $("#progenyReportLoadingContainer").show();
+            },
+            error: function() {
+                $("#progenyReportModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error while attempting to fetch horse data.</div>');
+                $("#progenyReportModalContainer").show();
+                $("#progenyReportLoadingContainer").hide();
+            },
+            success: function(data) {
+                if (!data.error) {
+                    // Success action
+                    $("#progenyReportModalContainer").html(data);
+                } else {
+                    $("#progenyReportModalContainer").html('<div class="alert alert-danger"><b>Error:</b> '+data.error+'</div>');
+                }
+                $("#progenyReportModalContainer").show();
+                $("#progenyReportLoadingContainer").hide();
+            }
+        });
+    });
+    $(document).ready(function() {
+        $(".progenyReportSelect").materialSelect();
+    });
+</script>
+<!-- Start of harnessnation Zendesk Widget script -->
+<script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=3f9f01db-eac8-4102-a2ce-72da5ebb2c0b"> </script>
+<!-- End of harnessnation Zendesk Widget script -->
+
+<div class="modal fade" id="_switchStableModal" tabindex="-1" role="dialog" aria-labelledby="_switchStableModal">
+    <div class="modal-dialog modal-lg modal-notify modal-primary" role="document">
+        <div class="modal-content">
+            <div class="modal-header white-text">
+                <h4 class="modal-title w-100">Switch Stable</h4>
+                <button type="button" class="close white-text" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="_switchStableModalLoadingContainer">
+                <div class="progress md-progress primary-color-dark mt-3">
+                    <div class="indeterminate"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="_switchStableModalContainer" style="display:none;">
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-light" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+       $("._switchStableModalButton").on('click',function(e) {
+           $.ajax({
+               type: 'GET',
+               url:'/api/stable/switch',
+               cache: 'false',
+               timeout: 20000,
+               async: true,
+               beforeSend: function(request) {
+                   request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                   request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                   $("#_switchStableModalLoadingContainer").show();
+                   $("#_switchStableModalContainer").hide();
+               },
+               error: function() {
+                   $("#_switchStableModalContainer").html('<div class="alert alert-danger"><b>Error:</b> There was an error processing your request.</div>');
+               },
+               success: function(data) {
+                   if (!data.error) {
+                       $("#_switchStableModalContainer").html(data);
+                       $("#_switchStableCardHeader").hide();
+                       $("#_switchStableCardFooter").hide();
+                   } else {
+                       $("_switchStableModalContainer").html('<div class="alert alert-danger"><b>Error:</b> '+data.error);
+                   }
+                   $("#_switchStableModalLoadingContainer").hide();
+                   $("#_switchStableModalContainer").show();
+               }
+           });
+           e.preventDefault();
+       });
+    });
+</script>
+</body>
+</html>

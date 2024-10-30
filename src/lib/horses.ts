@@ -43,7 +43,12 @@ export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<nu
         return Promise.resolve(null);
 
     const filteredHorses = horses.filter(h => (h.stallionScore?.breeding != null) && (h.id === horse.sireId || h.sireId === horse.sireId));
-    return Promise.resolve(filteredHorses.length < 1 ? 0 : filteredHorses.reduce((score, horse) => score + horse.stallionScore!.breeding!, 0) / filteredHorses.length);
+
+    return Promise.resolve(parseFloat(Number(
+        filteredHorses.length < 1
+            ? 0
+            : filteredHorses.reduce((score, horse) => score + horse.stallionScore!.breeding!, 0) / filteredHorses.length
+    ).toFixed(6)));
 }
 
 /**
@@ -61,12 +66,17 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
         ?? [0, 0, 0, 0]).reduce(([starts, places], value, index) => [starts + +(index === 0) * value, places + +(index !== 0) * value], [0, 0]);
 
     return {
-        score: totalStarters < 1 ? null :
-            1250 * stakeWinners / totalStarters
-            + (stakeStarts < 1 ? 0 : 100 * stakePlaces / stakeStarts)
-            + 50 * stakeStarters / totalStarters
-            + totalEarnings / totalStarters / 20000,
-        confidence: Math.max(0, Math.min(1, totalStarters / 140))
+        score: totalStarters < 1
+            ? null
+            : parseFloat(Number(
+                1250 * stakeWinners / totalStarters
+                + (stakeStarts < 1 ? 0 : 100 * stakePlaces / stakeStarts)
+                + 50 * stakeStarters / totalStarters
+                + totalEarnings / totalStarters / 20000
+            ).toFixed(6)),
+        confidence: parseFloat(Number(
+            Math.max(0, Math.min(1, totalStarters / 140))
+        ).toFixed(6)),
     };
 }
 
@@ -80,17 +90,20 @@ export async function calculateRacingScore(id: number): Promise<number | null> {
     const [starts, wins, places, shows, earnings] = profile.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
     const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings] = profile.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0, 0];
 
-    return starts < 1 ? null :
-        0.3 * (
-            (starts < 1 ? 0 : 100 * (wins - stakeWins) / (starts - stakeStarts))
-            + Math.max(0, Math.log(earnings - stakeEarnings) || 0)
-            + Math.max(0, Math.log((earnings - stakeEarnings) / (starts - stakeStarts)) || 0)
-        ) + 0.85 * (
-            Math.max(0, Math.sqrt(stakeStarts) || 0)
-            + (stakeStarts < 1 ? 0 : 100 * (stakeWins + stakePlaces + stakeShows) / stakeStarts)
-            + Math.max(0, Math.log(stakeEarnings) || 0)
-            + Math.max(0, Math.log(stakeEarnings / stakeStarts) || 0)
-        );
+    return starts < 1
+        ? null
+        : parseFloat(Number(
+            0.3 * (
+                (starts < 1 ? 0 : 100 * (wins - stakeWins) / (starts - stakeStarts))
+                + Math.max(0, Math.log(earnings - stakeEarnings) || 0)
+                + Math.max(0, Math.log((earnings - stakeEarnings) / (starts - stakeStarts)) || 0)
+            ) + 0.85 * (
+                Math.max(0, Math.sqrt(stakeStarts) || 0)
+                + (stakeStarts < 1 ? 0 : 100 * (stakeWins + stakePlaces + stakeShows) / stakeStarts)
+                + Math.max(0, Math.log(stakeEarnings) || 0)
+                + Math.max(0, Math.log(stakeEarnings / stakeStarts) || 0)
+            )
+        ).toFixed(6));
 }
 
 /**
@@ -102,10 +115,10 @@ export function calculateStallionScore({ confidence, racing: racingScore, breedi
     if (confidence == null || (breedingScore == null && racingScore == null && bloodlineScore == null))
         return Promise.resolve(null);
 
-    return Promise.resolve(
+    return Promise.resolve(parseFloat(Number(
         ((1 - +confidence) * (+racingScore! + +bloodlineScore!) / Math.max(1, +(racingScore != null) + +(bloodlineScore != null)))
         + (+confidence! * +breedingScore!)
-    );
+    ).toFixed(6)));
 }
 
 /**
@@ -247,7 +260,7 @@ export async function generateBreedingReport({ ids, headers }: BreedingReportDat
         if (_ids.length > 0) {
             await sleep(30000);
 
-            if (report.length % 50 === 0)
+            if ((report.length - 1) % 50 === 0)
                 await sleep(15000);
         }
     }
