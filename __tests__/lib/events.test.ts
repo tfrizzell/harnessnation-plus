@@ -6,39 +6,39 @@ afterAll(() => {
 });
 
 describe(`EventType`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(EventType).not.toBeUndefined();
     });
 });
 
 describe(`onInstalled`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(onInstalled).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof onInstalled).toEqual('function');
     });
 
-    test(`returns nothing`, () => {
+    it(`returns nothing`, () => {
         expect(onInstalled(() => { })).toBeUndefined();
     });
 });
 
 describe(`onLoad`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(onLoad).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof onLoad).toEqual('function');
     });
 
-    test(`returns nothing`, () => {
+    it(`returns nothing`, () => {
         expect(onLoad(() => { })).toBeUndefined();
     });
 
-    test(`waits for DOMContentLoaded if document.readyState is loading`, () => {
+    it(`waits for DOMContentLoaded if document.readyState is loading`, () => {
         Object.defineProperty(global.document, 'readyState', {
             configurable: true,
             value: 'loading',
@@ -84,7 +84,7 @@ describe(`onLoad`, () => {
         expect(target).toBe(global.document);
     });
 
-    test(`runs immediately if document.readyState is interactive`, () => {
+    it(`runs immediately if document.readyState is interactive`, () => {
         Object.defineProperty(global.document, 'readyState', {
             configurable: true,
             value: 'interactive',
@@ -105,7 +105,7 @@ describe(`onLoad`, () => {
         expect(target).toBe(document);
     });
 
-    test(`runs immediately if document.readyState is complete`, () => {
+    it(`runs immediately if document.readyState is complete`, () => {
         Object.defineProperty(global.document, 'readyState', {
             configurable: true,
             value: 'complete',

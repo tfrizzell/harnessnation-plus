@@ -406,7 +406,7 @@ export async function updateStallionScores(): Promise<void> {
         if (Date.now() - lastModified.valueOf() < 2419200000)
             continue;
 
-        if (!horse.retired) {
+        if (!horse.retired || (!!horse.sireId !== !!horse.damId)) {
             const info = await getHorse(horse.id!);
             horse.name = info.name;
             horse.sireId = info.sireId;

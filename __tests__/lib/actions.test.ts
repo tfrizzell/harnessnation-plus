@@ -6,7 +6,7 @@ afterAll(() => {
 });
 
 describe(`ActionType`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(ActionType).not.toBeUndefined();
     });
 });
@@ -18,25 +18,25 @@ describe(Action.name, () => {
     const actionJson = JSON.stringify(action);
     const actionObj = JSON.parse(actionJson);
 
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(Action).not.toBeUndefined();
     });
 
-    test(`is a class`, () => {
+    it(`is a class`, () => {
         expect(typeof Action).toBe('function');
         expect(typeof Action.constructor).toBe('function');
     });
 
-    test(`correctly constructs new instances`, () => {
+    it(`correctly constructs new instances`, () => {
         expect(new Action<HorseSearchData>(type, data)).toEqual(action);
     });
 
-    test(`correctly identifies instances`, () => {
+    it(`correctly identifies instances`, () => {
         expect(action instanceof Action).toBe(true);
         expect({ __type: Action.name } instanceof Action).toBe(true);
     });
 
-    test(`has the properties 'type' and 'data'`, () => {
+    it(`has the properties 'type' and 'data'`, () => {
         expect(action).toHaveProperty('type');
         expect(action.type).toBe(type);
 
@@ -44,7 +44,7 @@ describe(Action.name, () => {
         expect(action.data).toEqual(data);
     });
 
-    test(`toJSON generates a typed JSON object`, () => {
+    test(`toJSON() generates a typed JSON object`, () => {
         expect(actionObj).toHaveProperty('__type');
         expect(actionObj.__type).toBe(Action.name);
 
@@ -55,7 +55,7 @@ describe(Action.name, () => {
         expect(actionObj.data).toEqual(action.data);
     });
 
-    test(`fromJSON recreates the ${Action.name} instance`, () => {
+    test(`fromJSON(json) recreates the ${Action.name} instance`, () => {
         const value = Action.fromJSON<HorseSearchData>(actionJson);
         expect(value).toBeInstanceOf(Action);
 
@@ -66,7 +66,7 @@ describe(Action.name, () => {
         expect(value!.data).toEqual(action.data);
     });
 
-    test(`fromObject recreates the ${Action.name} instance`, () => {
+    test(`fromObject(object) recreates the ${Action.name} instance`, () => {
         const value = Action.fromObject<HorseSearchData>(actionObj);
         expect(value).toBeInstanceOf(Action);
 
@@ -77,7 +77,7 @@ describe(Action.name, () => {
         expect(value!.data).toEqual(action.data);
     });
 
-    test(`fromObject returns null if it doesn't get an ${Action.name} object`, () => {
+    test(`fromObject(object) returns null if it doesn't get an ${Action.name} object`, () => {
         const value = Action.fromObject<HorseSearchData>({});
         expect(value).toBeNull();
     });
@@ -123,26 +123,26 @@ describe(ActionError.name, () => {
     const errorJson = JSON.stringify(error);
     const errorObj = JSON.parse(errorJson);
 
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(ActionError).not.toBeUndefined();
     });
 
-    test(`is a class`, () => {
+    it(`is a class`, () => {
         expect(typeof ActionError).toBe('function');
         expect(typeof ActionError.constructor).toBe('function');
     });
 
-    test(`correctly constructs new instances`, () => {
+    it(`correctly constructs new instances`, () => {
         expect(new ActionError(action, message)).toEqual(error);
         expect(new ActionError(action, new Error(message))).toEqual(error);
     });
 
-    test(`correctly identifies instances`, () => {
+    it(`correctly identifies instances`, () => {
         expect(error instanceof ActionError).toBe(true);
         expect({ __type: ActionError.name } instanceof ActionError).toBe(true);
     });
 
-    test(`has the properties 'action', 'message', and 'stack'`, () => {
+    it(`has the properties 'action', 'message', and 'stack'`, () => {
         expect(error).toBeInstanceOf(ActionError);
 
         expect(error).toHaveProperty('action');
@@ -155,7 +155,7 @@ describe(ActionError.name, () => {
         expect(error.stack).toBeDefined();
     });
 
-    test(`toJSON generates a typed JSON object`, () => {
+    test(`toJSON() generates a typed JSON object`, () => {
         expect(errorObj).toHaveProperty('__type');
         expect(errorObj.__type).toBe(ActionError.name);
 
@@ -169,7 +169,7 @@ describe(ActionError.name, () => {
         expect(errorObj.stack).toBe(error.stack);
     });
 
-    test(`fromJSON recreates the ${ActionError.name} instance`, () => {
+    test(`fromJSON(json) recreates the ${ActionError.name} instance`, () => {
         const value = ActionError.fromJSON(errorJson);
         expect(value).toBeInstanceOf(ActionError);
 
@@ -183,7 +183,7 @@ describe(ActionError.name, () => {
         expect(value!.stack).toBeDefined();
     });
 
-    test(`fromObject recreates the ${ActionError.name} instance`, () => {
+    test(`fromObject(object) recreates the ${ActionError.name} instance`, () => {
         const value = ActionError.fromObject(errorObj);
         expect(value).toBeInstanceOf(ActionError);
 
@@ -197,7 +197,7 @@ describe(ActionError.name, () => {
         expect(value!.stack).toBeDefined();
     });
 
-    test(`fromObject returns null if it doesn't get an ${ActionError.name} object`, () => {
+    test(`fromObject(object) returns null if it doesn't get an ${ActionError.name} object`, () => {
         const value = ActionError.fromObject({});
         expect(value).toBeNull();
     });
@@ -252,25 +252,25 @@ describe(ActionResponse.name, () => {
     const responseJson = JSON.stringify(response);
     const responseObj: any = JSON.parse(responseJson);
 
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(ActionResponse).not.toBeUndefined();
     });
 
-    test(`is a class`, () => {
+    it(`is a class`, () => {
         expect(typeof ActionResponse).toBe('function');
         expect(typeof ActionResponse.constructor).toBe('function');
     });
 
-    test(`correctly constructs new instances`, () => {
+    it(`correctly constructs new instances`, () => {
         expect(new ActionResponse<RegExp | string>(action, data)).toEqual(response);
     });
 
-    test(`correctly identifies instances`, () => {
+    it(`correctly identifies instances`, () => {
         expect(response instanceof ActionResponse).toBe(true);
         expect({ __type: ActionResponse.name } instanceof ActionResponse).toBe(true);
     });
 
-    test(`has the properties 'action' and 'data'`, () => {
+    it(`has the properties 'action' and 'data'`, () => {
         expect(response).toBeInstanceOf(ActionResponse);
 
         expect(response).toHaveProperty('action');
@@ -280,7 +280,7 @@ describe(ActionResponse.name, () => {
         expect(response.data).toEqual(data);
     });
 
-    test(`toJSON generates a typed JSON object`, () => {
+    test(`toJSON() generates a typed JSON object`, () => {
         expect(responseObj).toHaveProperty('__type');
         expect(responseObj.__type).toBe(ActionResponse.name);
 
@@ -291,7 +291,7 @@ describe(ActionResponse.name, () => {
         expect(responseObj.data).toEqual(response.data);
     });
 
-    test(`fromJSON recreates the ${ActionResponse.name} instance`, () => {
+    test(`fromJSON(json) recreates the ${ActionResponse.name} instance`, () => {
         const value = ActionResponse.fromJSON<RegExp | string>(responseJson);
         expect(value).toBeInstanceOf(ActionResponse);
 
@@ -302,7 +302,7 @@ describe(ActionResponse.name, () => {
         expect(value!.data).toEqual(response.data);
     });
 
-    test(`fromObject recreates the ${ActionResponse.name} instance`, () => {
+    test(`fromObject(object) recreates the ${ActionResponse.name} instance`, () => {
         const value = ActionResponse.fromObject<RegExp | string>(responseObj);
         expect(value).toBeInstanceOf(ActionResponse);
 
@@ -313,7 +313,7 @@ describe(ActionResponse.name, () => {
         expect(value!.data).toEqual(response.data);
     });
 
-    test(`fromObject returns null if it doesn't get an ${ActionResponse.name} object`, () => {
+    test(`fromObject(object) returns null if it doesn't get an ${ActionResponse.name} object`, () => {
         const value = ActionResponse.fromObject<RegExp | string>({});
         expect(value).toBeNull();
     });
@@ -353,19 +353,19 @@ describe(ActionResponse.name, () => {
 });
 
 describe(sendAction.name, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(sendAction).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof sendAction).toBe('function');
     });
 
-    test(`returns a promise`, () => {
+    it(`returns a promise`, () => {
         expect(sendAction(ActionType.SearchHorses)).toBeInstanceOf(Promise);
     });
 
-    test(`resolves with an ${ActionResponse.name}`, async () => {
+    it(`resolves with an ${ActionResponse.name}`, async () => {
         global.chrome.runtime.sendMessage = jest.fn((action: any): Promise<ActionResponse<RegExp | string>> => {
             return Promise.resolve(new ActionResponse<RegExp | string>(Action.of<HorseSearchData>(action)!, 'Astronomical'))
         });
@@ -373,11 +373,11 @@ describe(sendAction.name, () => {
         try {
             await expect(sendAction(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 })).resolves.toBeInstanceOf(ActionResponse);
         } finally {
-            (<jest.Mock>global.chrome.runtime.sendMessage).mockClear();
+            (<jest.Mock>global.chrome.runtime.sendMessage).mockRestore();
         }
     });
 
-    test(`rejects with an ${ActionError.name}`, async () => {
+    it(`rejects with an ${ActionError.name}`, async () => {
         global.chrome.runtime.sendMessage = jest.fn((action: any): Promise<ActionError> => {
             return Promise.resolve(new ActionError(Action.of<HorseSearchData>(action)!, 'Invalid action'));
         });
@@ -385,7 +385,7 @@ describe(sendAction.name, () => {
         try {
             await expect(sendAction(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 })).rejects.toBeInstanceOf(ActionError);
         } finally {
-            (<jest.Mock>global.chrome.runtime.sendMessage).mockClear();
+            (<jest.Mock>global.chrome.runtime.sendMessage).mockRestore();
         }
     });
 });

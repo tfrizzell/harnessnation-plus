@@ -1,10 +1,6 @@
 import { Timestamp } from '@firebase/firestore';
 import { downloadFile, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, sleep, toDate, toPercentage, toTimestamp } from '../../src/lib/utils';
 
-type NumberTestData = [string | number, number];
-type PercentageTestData = [number, number, string];
-type TimestampTestData = [Date | string | number, string];
-
 afterAll(() => {
     jest.clearAllTimers();
     jest.clearAllMocks();
@@ -26,22 +22,22 @@ describe(`downloadFile`, () => {
     });
 
     afterAll(() => {
-        (<jest.Mock>global.chrome.downloads.download).mockClear();
+        (<jest.Mock>global.chrome.downloads.download).mockRestore();
     });
 
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(downloadFile).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof downloadFile).toEqual('function');
     });
 
-    test(`returns a promise`, () => {
+    it(`returns a promise`, () => {
         expect(downloadFile(textContent, 'test-return-promise.txt')).toBeInstanceOf(Promise);
     });
 
-    for (const [ext, contentType] of [
+    [
         ['csv', 'text/csv'],
         ['html', 'text/html'],
         ['json', 'application/json'],
@@ -49,8 +45,8 @@ describe(`downloadFile`, () => {
         ['xls', 'application/vnd.ms-excel'],
         ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
         ['readme', 'text/plain'],
-    ]) {
-        test(`infers the correct content type for ${ext}`, async () => {
+    ].forEach(([ext, contentType]) => {
+        it(`infers the content type ${contentType} for the extension ${ext}`, async () => {
             const filename = `test-content-type.${ext}`;
 
             await expect(downloadFile(textContent, filename)).resolves;
@@ -62,9 +58,9 @@ describe(`downloadFile`, () => {
                 saveAs: false,
             });
         });
-    }
+    });
 
-    test(`accepts the contentType and saveAs options`, async () => {
+    it(`accepts the contentType and saveAs options`, async () => {
         const filename = `test-options.txt`;
 
         await expect(downloadFile(textContent, filename, { contentType: 'text/html', saveAs: true })).resolves;
@@ -77,42 +73,20 @@ describe(`downloadFile`, () => {
         });
     });
 
-    test(`downloads an unencoded string`, async () => {
-        const filename = 'test-unencoded-string.txt';
+    [
+        ['test-unencoded-string.txt', textContent, 'unencoded string'],
+        ['test-unencoded-data-uri.txt', `data:text/plain;${textContent}`, 'unencoded data uri'],
+        ['test-encoded-data-uri.txt', `data:text/plain;base64,${base64Content}`, 'encoded data uri'],
+    ].forEach(([filename, content, descriptor]) => {
+        it(`downloads an ${descriptor}`, async () => {
+            await expect(downloadFile(content, filename)).resolves;
+            await new Promise(process.nextTick);
 
-        await expect(downloadFile(textContent, filename)).resolves;
-        await new Promise(process.nextTick);
-
-        expect(downloadedFiles.get(filename)).toEqual({
-            url: `data:text/plain;base64,${base64Content}`,
-            filename: filename,
-            saveAs: false,
-        });
-    });
-
-    test(`downloads an unencoded data uri`, async () => {
-        const filename = 'test-unencoded-data-uri.txt';
-
-        await expect(downloadFile(`data:text/plain;${textContent}`, filename)).resolves;
-        await new Promise(process.nextTick);
-
-        expect(downloadedFiles.get(filename)).toEqual({
-            url: `data:text/plain;base64,${base64Content}`,
-            filename: filename,
-            saveAs: false,
-        });
-    });
-
-    test(`downloads an encoded data uri`, async () => {
-        const filename = 'test-encoded-data-uri.txt';
-
-        await expect(downloadFile(`data:text/plain;base64,${base64Content}`, filename)).resolves;
-        await new Promise(process.nextTick);
-
-        expect(downloadedFiles.get(filename)).toEqual({
-            url: `data:text/plain;base64,${base64Content}`,
-            filename: filename,
-            saveAs: false,
+            expect(downloadedFiles.get(filename)).toEqual({
+                url: `data:text/plain;base64,${base64Content}`,
+                filename: filename,
+                saveAs: false,
+            });
         });
     });
 
@@ -144,14 +118,17 @@ describe(`downloadFile`, () => {
                 saveAs: false,
             });
         } finally {
-            mockFileReader.mockReset();
+            mockFileReader.mockRestore();
         }
     });
 
-    for (const content of [textContent, blobContent]) {
+    [
+        textContent,
+        blobContent,
+    ].forEach(content => {
         const type = typeof content === 'object' ? content.constructor.name : typeof content;
 
-        test(`downloads a ${type} using window.URL.createObjectURL`, async () => {
+        it(`downloads a ${type} using window.URL.createObjectURL`, async () => {
             const createdUrls: string[] = [];
             let createdUrlCount: number = 0;
 
@@ -184,91 +161,89 @@ describe(`downloadFile`, () => {
                 expect(createdUrlCount).toBe(1);
                 expect(createdUrls.length).toBe(0);
             } finally {
-                (<jest.Mock>global.window.URL.revokeObjectURL).mockReset();
-                (<jest.Mock>global.window.URL.createObjectURL).mockReset();
+                (<jest.Mock>global.window.URL.revokeObjectURL).mockRestore();
+                (<jest.Mock>global.window.URL.createObjectURL).mockRestore();
             }
         });
-    }
+    });
 });
 
 describe(`parseCurrency`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(parseCurrency).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof parseCurrency).toEqual('function');
     });
 
-    test(`returns null when given null`, () => {
+    it(`returns null when given null`, () => {
         expect(parseCurrency(<any>null)).toBeNull();
     });
 
-    test(`properly converts strings to numbers`, () => {
-        const values: NumberTestData[] = [
-            ['1000000', 1000000],
-            ['1000000.00', 1000000.00],
-            ['$1000000', 1000000],
-            ['$1000000.00', 1000000.00],
-            ['1,000,000', 1000000],
-            ['1,000,000.00', 1000000.00],
-            ['$1,000,000', 1000000],
-            ['$1,000,000.00', 1000000.00],
-            [1000000, 1000000],
-            [1000000.00, 1000000.00],
-            [1_000_000, 1000000],
-            [1_000_000.00, 1000000.00],
-        ];
-
-        for (const [value, expected] of values)
+    [
+        ['1000000', 1000000],
+        ['1000000.00', 1000000.00],
+        ['$1000000', 1000000],
+        ['$1000000.00', 1000000.00],
+        ['1,000,000', 1000000],
+        ['1,000,000.00', 1000000.00],
+        ['$1,000,000', 1000000],
+        ['$1,000,000.00', 1000000.00],
+        [1000000, 1000000],
+        [1000000.00, 1000000.00],
+        [1_000_000, 1000000],
+        [1_000_000.00, 1000000.00],
+    ].forEach(([value, expected]) => {
+        it(`returns ${expected} when given ${typeof value} ${value}`, () => {
             expect(parseCurrency(value)).toEqual(expected);
+        });
     });
 });
 
 describe(`parseInt`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(parseInt).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof parseInt).toEqual('function');
     });
 
-    test(`returns null when given null`, () => {
+    it(`returns null when given null`, () => {
         expect(parseInt(<any>null)).toBeNull();
     });
 
-    test(`properly converts strings to numbers`, () => {
-        const values: NumberTestData[] = [
-            ['1000000', 1000000],
-            ['1000000.00', 1000000],
-            ['$1000000', 1000000],
-            ['$1000000.00', 1000000],
-            ['1,000,000', 1000000],
-            ['1,000,000.00', 1000000],
-            ['$1,000,000', 1000000],
-            ['$1,000,000.00', 1000000],
-            [1000000, 1000000],
-            [1000000.00, 1000000],
-            [1_000_000, 1000000],
-            [1_000_000.00, 1000000],
-        ];
-
-        for (const [value, expected] of values)
+    [
+        ['1000000', 1000000],
+        ['1000000.00', 1000000],
+        ['$1000000', 1000000],
+        ['$1000000.00', 1000000],
+        ['1,000,000', 1000000],
+        ['1,000,000.00', 1000000],
+        ['$1,000,000', 1000000],
+        ['$1,000,000.00', 1000000],
+        [1000000, 1000000],
+        [1000000.00, 1000000],
+        [1_000_000, 1000000],
+        [1_000_000.00, 1000000],
+    ].forEach(([value, expected]) => {
+        it(`returns ${expected} when given ${typeof value} ${value}`, () => {
             expect(parseInt(value)).toEqual(expected);
+        });
     });
 });
 
 describe(`reduceChanges`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(reduceChanges).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof reduceChanges).toEqual('function');
     });
 
-    test(`reduces changes as expected`, () => {
+    it(`reduces changes as expected`, () => {
         expect({
             a: 'a',
             b: 'b',
@@ -285,7 +260,7 @@ describe(`reduceChanges`, () => {
         }).toEqual({ a: 'b', b: 'a' });
     });
 
-    test(`ignores change entries with no new value`, () => {
+    it(`ignores change entries with no new value`, () => {
         expect({
             a: 'a',
             b: 'b',
@@ -320,38 +295,43 @@ describe(`regexEscape`, () => {
         '\\',
     ];
 
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(regexEscape).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof regexEscape).toEqual('function');
     });
 
-    for (const value of specialCharacters) {
-        test(`'regexEscape' properly escapes the special character '${value}'`, () => {
+    specialCharacters.forEach(value => {
+        it(`escape the special character: ${value}`, () => {
             expect(regexEscape(value)).toEqual(`\\${value}`);
         });
-    }
+    });
 
     // Using extended ASCII instead of UTF-8 or Unicode due to the amount of time
     // it takes to iterate over 2-billion possible characters.
-    test(`'regexEscape' does not escape non-special ASCII characters`, () => {
-        for (const value of Array(256).fill(0).map((_, i) => String.fromCharCode(i)).filter(c => !specialCharacters.includes(c)))
-            expect(regexEscape(value)).toEqual(value);
-    });
+    Array(256)
+        .fill(0)
+        .map((_, i) => String.fromCharCode(i))
+        .filter(c => !specialCharacters.includes(c))
+        .forEach(value => {
+            it(`does not escape the non-special character: ${value}`, () => {
+                expect(regexEscape(value)).toEqual(value);
+            });
+        });
 });
 
 describe(`removeAll`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(removeAll).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof removeAll).toEqual('function');
     });
 
-    test(`removes matching elements from the DOM`, () => {
+    it(`removes matching elements from the DOM`, () => {
         global.document.body.innerHTML = '<div class="one">1</div><div class="two">2</div><div class="one">1</div><div class="three">3</div>';
         expect(global.document.querySelectorAll('.one').length).toBe(2)
         expect(global.document.querySelectorAll('.two').length).toBe(1)
@@ -365,15 +345,15 @@ describe(`removeAll`, () => {
 });
 
 describe(`sleep`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(sleep).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof sleep).toEqual('function');
     });
 
-    test(`sleeps for 100ms then returns`, async () => {
+    it(`sleeps for 100ms then returns`, async () => {
         const start = performance.now();
         await sleep(100);
         const time = Math.round(performance.now() - start);
@@ -381,7 +361,7 @@ describe(`sleep`, () => {
         expect(time).toBeLessThanOrEqual(199);
     });
 
-    test(`can be aborted`, async () => {
+    it(`can be aborted`, async () => {
         try {
             const controller = new AbortController();
             setTimeout(() => controller.abort(), 50);
@@ -394,61 +374,60 @@ describe(`sleep`, () => {
 });
 
 describe(`toDate`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(toDate).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof toDate).toEqual('function');
     });
 
-    test(`returns a default value of new Date(0)`, () => {
+    it(`returns a default value of new Date(0)`, () => {
         expect(toDate(undefined)).toEqual(new Date(0));
     });
 
-    test(`converts a Timestamp object`, () => {
+    it(`converts a Timestamp object`, () => {
         expect(toDate(<Timestamp>{ seconds: 1730165342, nanoseconds: 322 })).toEqual(new Date(1730165342322));
     });
 });
 
 describe(`toPercentage`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(toPercentage).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof toPercentage).toEqual('function');
     });
 
-    test(`properly computes a percentage`, () => {
-        const values: PercentageTestData[] = [
-            [25, 100, '25.00%'],
-            [50, 25, '200.00%'],
-            [256, 287, '89.20%'],
-            [239, 256, '93.36%'],
-            [48, 256, '18.75%'],
-            [5, 256, '1.95%'],
-        ];
-
-        for (const [nom, den, expected] of values)
+    (<[[number, number], string][]>[
+        [[25, 100], '25.00%'],
+        [[50, 25], '200.00%'],
+        [[256, 287], '89.20%'],
+        [[239, 256], '93.36%'],
+        [[48, 256], '18.75%'],
+        [[5, 256], '1.95%'],
+    ]).forEach(([[nom, den], expected]) => {
+        it(`returns ${expected} when given ${nom} / ${den}`, () => {
             expect(toPercentage(nom, den)).toEqual(expected);
+        });
     });
 
-    test(`returns 0.00% when given 0 as a denominator`, () => {
+    it(`returns 0.00% when given 0 as a denominator`, () => {
         expect(toPercentage(25, 0)).toEqual('0.00%');
     });
 });
 
 describe(`toTimestamp`, () => {
-    test(`exists`, () => {
+    it(`exists`, () => {
         expect(toTimestamp).not.toBeUndefined();
     });
 
-    test(`is a function`, () => {
+    it(`is a function`, () => {
         expect(typeof toTimestamp).toEqual('function');
     });
 
-    test(`returns the current timestamp if no value is given`, () => {
+    it(`returns the current timestamp if no value is given`, () => {
         jest.useFakeTimers('modern').setSystemTime(new Date(1_640_995_200_000))
         try {
             expect(toTimestamp()).toEqual('2022-01-01T00:00:00');
@@ -457,14 +436,13 @@ describe(`toTimestamp`, () => {
         }
     });
 
-    test(`properly converts values to timestamps`, () => {
-        const values: TimestampTestData[] = [
-            [new Date('2022-01-01 00:00:00 +00:00'), '2022-01-01T00:00:00'],
-            ['2022-01-01 00:00:00 +00:00', '2022-01-01T00:00:00'],
-            [1_640_995_200_000, '2022-01-01T00:00:00'],
-        ];
-
-        for (const [value, expected] of values)
+    [
+        [new Date('2022-01-01 00:00:00 +00:00'), '2022-01-01T00:00:00'],
+        ['2022-01-01 00:00:00 +00:00', '2022-01-01T00:00:00'],
+        [1_640_995_200_000, '2022-01-01T00:00:00'],
+    ].forEach(([value, expected]) => {
+        it(`returns ${expected} when given ${typeof value} ${value}`, () => {
             expect(toTimestamp(value)).toEqual(expected);
+        });
     });
 });
