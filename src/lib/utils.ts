@@ -1,8 +1,36 @@
 import { Timestamp } from 'firebase/firestore';
+import { Horse, Race, RaceList } from './horses';
 
 export type DownloadOptions = {
     contentType?: string;
     saveAs?: boolean
+}
+
+export function ageToText(age: number): string {
+    return [
+        'Zero',
+        'One',
+        'Two',
+        'Three',
+        'Four',
+        'Five',
+        'Six',
+        'Seven',
+        'Eight',
+        'Nine',
+        'Ten',
+        'Eleven',
+        'Twelve',
+        'Thirteen',
+        'Fourteen',
+        'Fifteen',
+        'Sixteen',
+        'Seventeen',
+        'Eighteen',
+        'Nineteen',
+        'Twenty',
+        'Twenty-One',
+    ][age] ?? age.toString();
 }
 
 export async function downloadFile(file: string | Blob, filename: string, options: DownloadOptions = {}): Promise<void> {
@@ -25,6 +53,10 @@ export async function downloadFile(file: string | Blob, filename: string, option
 
             case 'json':
                 options.contentType = 'application/json';
+                break;
+
+            case 'pdf':
+                options.contentType = 'application/pdf';
                 break;
 
             case 'xls':
@@ -74,6 +106,42 @@ export async function downloadFile(file: string | Blob, filename: string, option
     }
 }
 
+export function formatMark(race: Race | undefined, age?: number): string {
+    return !race ? '' : [
+        race.gait?.charAt(0)?.toLocaleLowerCase(),
+        age,
+        secondsToTime(race.time!),
+    ].filter(m => m).join(',');
+}
+
+export function formatOrdinal(value: number): string {
+    const englishOrdinalRules = new Intl.PluralRules('en', { type: 'ordinal' })
+    const category = englishOrdinalRules.select(value)
+
+    switch (category) {
+        case 'one': {
+            return `${value}st`
+        }
+
+        case 'two': {
+            return `${value}nd`
+        }
+
+        case 'few': {
+            return `${value}rd`
+        }
+
+        default: {
+            return `${value}th`
+        }
+    }
+}
+
+export function getLifetimeMark(races: RaceList): string {
+    const race = races.findFastestWin();
+    return !race ? '' : formatMark(race, races.findAge(race));
+}
+
 export function parseCurrency(value: string | number): number {
     return value == null ? value : globalThis.parseFloat(value.toString().replace(/[^\d.]/g, ''));
 }
@@ -92,6 +160,22 @@ export function regexEscape(value: string): string {
 
 export function removeAll(...selectors: string[]): void {
     document.querySelectorAll(selectors.join(', ')).forEach((el: Element) => el.remove());
+}
+
+export function seasonsBetween(from: Date, to: Date): number {
+    const start = new Date(from);
+    start.setDate(1);
+    start.setMonth(from.getMonth() - (from.getMonth() % 3));
+
+    const end = new Date(to);
+    end.setDate(1);
+    end.setMonth(to.getMonth() - (to.getMonth() % 3));
+
+    return 4 * (end.getFullYear() - start.getFullYear()) + (end.getMonth() - start.getMonth()) / 3;
+}
+
+export function secondsToTime(seconds: number): string {
+    return `${Math.floor(seconds / 60)}:${Number(seconds % 60).toFixed(2).padStart(5, '0')}`;
 }
 
 export function sleep(value: number, abortSignal: AbortSignal | null = null): Promise<void> {

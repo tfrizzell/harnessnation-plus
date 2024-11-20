@@ -13,11 +13,11 @@ declare type ContentScript = {
 }
 
 chrome.runtime.onStartup.addListener(async () => {
-    await chrome.storage.local.clear();
+    // await chrome.storage.local.clear();
 });
 
 chrome.runtime.onInstalled.addListener(async details => {
-    await chrome.storage.local.clear();
+    // await chrome.storage.local.clear();
 
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL || await chrome.storage.sync.getBytesInUse() < 1)
         await chrome.storage.sync.set(settings);

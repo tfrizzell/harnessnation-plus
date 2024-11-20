@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { BreedingScore, calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStallionScore, calculateStudFee, createStallionScoreBadge, generateBreedingReport, getHorse, getInfo, getProgenyReport, Horse, StallionScore } from '../../src/lib/horses.js';
+import { BreedingScore, calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStallionScore, calculateStudFee, createStallionScoreBadge, generateBreedingReport, getHorse, Horse, StallionScore } from '../../src/lib/horses.js';
 import { StudFeeFormula } from '../../src/lib/settings.js';
 import * as utils from '../../src/lib/utils.js';
 
@@ -11,7 +11,7 @@ beforeAll(() => {
         let file: fs.PathLike | undefined;
 
         if (url === 'https://www.harnessnation.com/api/progeny/report' && init?.method === 'POST') {
-            const { horseId } = JSON.parse(init.body as string);
+            const { horseId } = Object.fromEntries(new URLSearchParams(init!.body as string));
             file = path.join(__dirname, '../__files__', `api_progeny_report-${horseId}.html`);
         } else if (url.startsWith('https://www.harnessnation.com/horse/')) {
             const horseId = url.split('/').pop()!;
