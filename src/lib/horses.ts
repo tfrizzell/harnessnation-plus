@@ -1,8 +1,7 @@
-import { BreedingReportData, CalculateStudFeeData } from './actions.js';
+import { CalculateStudFeeData } from './actions.js';
+import { api } from './harnessnation.js'
 import { StudFeeFormula } from './settings.js';
-import { parseCurrency, parseInt, sleep, toPercentage } from './utils.js';
-
-type BreedingReportRow = (string | number | undefined)[];
+import { parseCurrency, parseInt, seasonsBetween } from './utils.js';
 
 export type BreedingScore = {
     score: number | null;
@@ -16,6 +15,99 @@ export type Horse = {
     damId?: number | null;
     retired?: boolean;
     stallionScore?: StallionScore | null;
+}
+
+export type Race = {
+    id?: number;
+    name?: string;
+    stake?: boolean;
+    elim?: boolean;
+    age?: '2yo' | '3yo' | '2-4yo' | '4-5yo' | '5yo+' | '6yo+';
+    condition?: string;
+    gait?: 'trot' | 'pace';
+    trackCondition?: string;
+    trackSize?: 'full' | 'half';
+    purse?: number;
+    finish?: number;
+    time?: number;
+    date?: Date;
+}
+
+export class RaceList extends Array<Race> {
+    #getEarnings(purse: number, finish: number): number {
+        switch (finish) {
+            case 1: return purse * 0.5;
+            case 2: return purse * 0.25;
+            case 3: return purse * 0.12;
+            case 4: return purse * 0.08;
+            case 5: return purse * 0.05;
+            default: return 0;
+        }
+    }
+
+    filter(predicate: (value: Race, index: number, array: Array<Race>) => unknown, thisArg?: any): RaceList {
+        return new RaceList(...super.filter(predicate, thisArg));
+    }
+
+    slice(start?: number, end?: number): RaceList {
+        return new RaceList(...super.slice(start, end));
+    }
+
+    splice(start: number, deleteCount?: number, ...items: Race[]): RaceList {
+        return new RaceList(...super.splice(start, deleteCount!, ...items));
+    }
+
+    findAge(race: Race, ageRef?: Race): number | undefined {
+        if (/^[23]yo$/i.test(race?.age ?? ''))
+            return parseInt(race.age!.charAt(0));
+
+        ageRef ??= this.findAgeRef();
+        return !ageRef || !race?.date ? undefined : parseInt(ageRef.age!.charAt(0)) + seasonsBetween(ageRef.date!, race.date!);
+    }
+
+    findAgeRef(): Race | undefined {
+        return this.find((race, index, races) =>
+            /^[23]yo$/i.test(race.age ?? '')
+            || (index < races.length - 1 && race.stake !== true && /^5yo\+$/i.test(race.age ?? '') && /^2-4yo$/i.test(races[index + 1].age ?? '')));
+    }
+
+    findFastestRace(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): Race | undefined {
+        return (predicate == null ? this.slice() : this.filter(predicate))
+            .sort((a, b) => b.time! - a.time!)
+            .pop();
+    }
+
+    findFastestWin(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): Race | undefined {
+        return this.filter((value: Race, index: number, array: Array<Race>) =>
+            value.finish === 1 && predicate?.(value, index, array) !== false)
+            .sort((a, b) => b.time! - a.time!)
+            .pop();
+    }
+
+    getEarnings(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): number {
+        return (predicate == null ? this.slice() : this.filter(predicate))
+            .reduce((earnings, race) => earnings + this.#getEarnings(race.purse ?? 0, race.finish ?? 0), 0);
+    }
+
+    getStarts(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): number {
+        return (predicate == null ? this.slice() : this.filter(predicate)).length;
+    }
+
+    getSummary(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): [number, number, number, number, number] {
+        return (predicate == null ? this.slice() : this.filter(predicate))
+            .reduce(([starts, firsts, seconds, thirds, earnings], race) => [
+                starts + 1,
+                firsts + (race.finish === 1 ? 1 : 0),
+                seconds + (race.finish === 2 ? 1 : 0),
+                thirds + (race.finish === 3 ? 1 : 0),
+                earnings + this.#getEarnings(race.purse ?? 0, race.finish ?? 0),
+            ], [0, 0, 0, 0, 0]);
+    }
+
+    getWins(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): number {
+        return this.filter((value: Race, index: number, array: Array<Race>) =>
+            value.finish === 1 && predicate?.(value, index, array) !== false).length;
+    }
 }
 
 export type StallionScore = {
@@ -57,7 +149,7 @@ export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<nu
  * @returns {Promise<BreedingScore>} A `Promise` resolving with the breeding score and its confidence level.
  */
 export async function calculateBreedingScore(id: number): Promise<BreedingScore> {
-    const report = await getProgenyReport(id);
+    const report = await api.getProgenyReport(id);
     const totalStarters = parseInt(report.match(/<b[^>]*>\s*Total\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
     const totalEarnings = parseCurrency(report.match(/<b[^>]*>\s*Total\s+Earnings\s*:\s*<\/b[^>]*>\s*([$\d,]+(?:\.\d+)?)/is)?.[1] ?? '$0');
     const stakeStarters = parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
@@ -86,9 +178,9 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
  * @returns {Promise<number>} A `Promise` resolving with the racing score.
  */
 export async function calculateRacingScore(id: number): Promise<number | null> {
-    const profile = await getInfo(id);
-    const [starts, wins, places, shows, earnings] = profile.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
-    const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings] = profile.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0, 0];
+    const info = await api.getHorse(id);
+    const [starts, wins, places, shows, earnings] = info.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
+    const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings] = info.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0, 0];
 
     return starts < 1
         ? null
@@ -127,7 +219,7 @@ export function calculateStallionScore({ confidence, racing: racingScore, breedi
  * @returns {Promise<number>} A `Promise` resolving with the suggested stud fee.
  */
 export async function calculateStudFee({ id, formula }: CalculateStudFeeData): Promise<number> {
-    const report = await getProgenyReport(id);
+    const report = await api.getProgenyReport(id);
     const starters = parseInt(report?.match(/<b[^>]*>\s*Total\s*Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/i)?.pop() ?? '0');
     let fee = 2500;
 
@@ -145,7 +237,7 @@ export async function calculateStudFee({ id, formula }: CalculateStudFeeData): P
                 break;
         }
     } else {
-        const info = await getInfo(id);
+        const info = await api.getHorse(id);
         const [starts, earnings] = info?.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)(?:\s*-\s*[\d,]+){3}\s*\(([$\d,\.]+(?:\.\d+)?)\)/i)?.slice(1)?.map(parseCurrency) ?? [0, 0];
 
         switch (formula) {
@@ -213,145 +305,68 @@ export function createStallionScoreBadge(data: StallionScore | null | undefined)
 }
 
 /**
- * Generates a breeding report for the provided list of horses.
- * @param {BreedingReportData} data - an object containing the ids of the horses and any header override.
- * @returns {Promise<string>} A `Promise` that resolves with the report as a base64-encoded data URI.
- */
-export async function generateBreedingReport({ ids, headers }: BreedingReportData): Promise<string> {
-    const report: BreedingReportRow[] = [
-        [
-            'ID',
-            'Name',
-            'Age',
-            'Gait',
-            'Track Size',
-            'Grade',
-            'Sire',
-            'Dam',
-            'Dam-Sire',
-            'Race Record',
-            'Stake Record',
-            'Total Foals',
-            'Total Starters',
-            'Total Starters (%)',
-            'Total Winners',
-            'Total Winners (%)',
-            'Total Earnings',
-            'Avg Earnings Per Starter',
-            'Stake Starters',
-            'Stake Starters (%)',
-            'Stake Winners',
-            'Stake Winners (%)',
-            'Stake Starts',
-            'Stake Wins',
-            'Stake Place',
-            'Stake Show',
-            'Stake Earnings',
-        ].filter(v => !!v).map((v, i) => headers?.[i] ?? v),
-    ];
-
-    const _ids = Array.from(ids);
-    let batch: number[] | null;
-
-    while ((batch = _ids.splice(0, 10)) && batch.length > 0) {
-        const rows = await Promise.all(batch.map(id => getBreedingReportRow(id)));
-        report.push(...rows.map(row => row.slice(0, report[0].length)));
-
-        if (_ids.length > 0) {
-            await sleep(30000);
-
-            if ((report.length - 1) % 50 === 0)
-                await sleep(15000);
-        }
-    }
-
-    return `data:text/csv;base64,${window.btoa(
-        report.filter(row => Array.isArray(row))
-            .map(row => row.map(col => `"${(col?.toString() ?? '')
-                .replace('"', '\\"')}"`)
-                .join(','))
-            .join('\n').replace(/&#039;/g, '\''))}`;
-}
-
-/**
- * Generates a breeding report row for the given horse.
- * @param {number} id - the id of the horse.
- * @returns {Promise<BreedingReportRow>} A `Promise` that resolves with an array of row data values.
- */
-async function getBreedingReportRow(id: number): Promise<BreedingReportRow> {
-    const [profile, report] = await Promise.all([
-        getInfo(id),
-        getProgenyReport(id),
-    ]);
-
-    const totalFoals = parseInt(profile.match(/<b[^>]*>\s*Total\s+Foals\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const totalStarters = parseInt(report.match(/<b[^>]*>\s*Total\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const totalWinners = parseInt(report.match(/<b[^>]*>\s*Total\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const stakeStarters = parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const stakeWinners = parseInt(report.match(/<b[^>]*>\s*Stake\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-
-    return [
-        +id,
-        profile.match(/<h1[^>]*>(.*?)<\/h1[^>]*>/is)?.[1],
-        profile.match(/<b[^>]*>\s*Age\s*:\s*<\/b[^>]*>\s*(\d+)/is)?.[1]?.trim(),
-        profile.match(/<small[^>]*>\s*Trotting\s+on\s+/is) ? 'Trot' : 'Pace',
-        profile.match(/on\s+\S+\s+half-mile\s+tracks/is) ? 'Half Mile' : 'Full Mile',
-        profile.match(/<span[^>]*grade-horse-page[^>]*>(.*?)<\/span[^>]*>/is)?.[1]?.trim(),
-        profile.match(/<b[^>]*>\s*Sire\s*:\s*<\/b[^>]*>\s*<a[^>]*>(.*?)<\/a[^>]*>/is)?.[1]?.trim() ?? 'Unknown',
-        profile.match(/<b[^>]*>\s*Dam\s*:\s*<\/b[^>]*>\s*<a[^>]*>(.*?)<\/a[^>]*>/is)?.[1]?.trim() ?? 'Unknown',
-        profile.match(/<b[^>]*>\s*Dam-Sire\s*:\s*<\/b[^>]*>\s*<a[^>]*>(.*?)<\/a[^>]*>/is)?.[1]?.trim() ?? 'Unknown',
-        profile.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*(.*?)<br[^>]*>/is)?.[1]?.trim(),
-        profile.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*(.*?)<br[^>]*>/is)?.[1]?.trim(),
-        totalFoals,
-        totalStarters,
-        toPercentage(totalStarters, totalFoals),
-        totalWinners,
-        toPercentage(totalWinners, totalStarters),
-        report.match(/<b[^>]*>\s*Total\s+Earnings\s*:\s*<\/b[^>]*>\s*([$\d,]+(?:\.\d+)?)/is)?.[1] ?? '$0',
-        report.match(/<b[^>]*>\s*Average\s+Earnings\s+per\s+Starter\s*:\s*<\/b[^>]*>\s*([$\d,]+(?:\.\d+)?)/is)?.[1] ?? '$0',
-        stakeStarters,
-        toPercentage(stakeStarters, totalStarters),
-        stakeWinners,
-        toPercentage(stakeWinners, totalStarters),
-        ...(report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1) ?? ['0', '0', '0', '0', '$0']),
-    ];
-}
-
-/**
- * Creates a `Horse` object for the given horse.
+ * Gets the `Horse` object for the given horse.
  * @param {number} id - the id of the horse.
  * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
  */
 export async function getHorse(id: number): Promise<Horse> {
-    const info = await getInfo(id);
+    const html = await api.getHorse(id);
 
     return {
-        id,
-        name: info?.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1]?.trim(),
-        sireId: info?.match(/<b[^>]*>\s*Sire:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
-        damId: info?.match(/<b[^>]*>\s*Dam:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
-        retired: !!info?.match(/<br[^>]*>\s*<br[^>]*>\s*Retired\s*<br[^>]*>/is)?.[0],
+        id: parseInt(html?.match(/<b[^>]*>\s*ID:\s*<\/b[^>]*>\s*(\d+)/is)?.[1]!),
+        name: html?.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1]?.trim(),
+        sireId: html?.match(/<b[^>]*>\s*Sire:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
+        damId: html?.match(/<b[^>]*>\s*Dam:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
+        retired: !!html?.match(/<br[^>]*>\s*<br[^>]*>\s*Retired\s*<br[^>]*>/is)?.[0],
     };
 }
 
 /**
- * Fetches a horse's info page.
+ * Gets the array of `Race` objects for the given horse.
  * @param {number} id - the id of the horse.
- * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the info page.
+ * @param {string} token - the CSRF token to sign the request with.
+ * @returns {Promise<Race[]>} A `Promise` that resulves with the array of `Race` objects.
  */
-export async function getInfo(id: number): Promise<string> {
-    return await fetch(`https://www.harnessnation.com/horse/${id}`).then(res => res.text());
-}
+export async function getRaces(id: number, token?: string): Promise<RaceList> {
+    token ??= await api.getCSRFToken();
+    const html = await api.getRaceHistory(id, token);
+    const races: RaceList = new RaceList();
+    const raceIds: number[] = [];
 
-/**
- * Fetches a horse's progeny report.
- * @param {number} id - the id of the horse.
- * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the progeny report.
- */
-export async function getProgenyReport(id: number): Promise<string> {
-    return await fetch('https://www.harnessnation.com/api/progeny/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ horseId: id })
-    }).then(res => res.text());
+    for (const data of html.matchAll(/<tr[^>]*>\s*<td[^>]*>\s*<a[^>]*data-attr-race-id="(\d+)"[^>]*>\s*<b[^>]*>(.*?)<\/b[^>]*>\s*<\/a[^>]*>\s*(<i[^>]*fa-star[^>]*>\s*<\/i[^>]*>)?.*?\s*<br[^>]*>\s*(\w+-Year-Old(?:\s*&(?:amp;)?\s*.*?)?)\s+(.*?)\s*<br[^>]*>\s*(Trotting|Pacing)\s+on\s+(\S+)\s+(Full|Half)\s+Mile\s*<\/td>\s*<td[^>]*>\s*<span[^>]*raceHistPurse[^>]*>\s*<\/span[^>]*>\s*(\$[\d,]+).*?<\/td[^>]*>\s*<td[^>]*>\s*<span[^>]*raceHistFinish[^>]*>\s*<\/span[^>]*>\s*(\d+)<sup[^>]*>\w+<\/sup[^>]*>.*?<br[^>]*>\s*(\d+:\d+(?:\.\d+)?).*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*<span[^>]*raceHistDate[^>]*>\s*<\/span[^>]*>\s*\w+\s+(\w+\s+\d+\w{2},\s+\d+).*?<\/td[^>]*>\s*<\/tr>/gis)) {
+        const raceId = parseInt(data[1]);
+
+        if (raceIds.includes(raceId))
+            continue;
+
+        const isStake = !!data[3] && !/^(Maiden )?(Open|Preferred|Claiming \$[\d,]+)$/i.test(data[2].trim());
+
+        races.push({
+            id: raceIds.push(raceId),
+            name: data[2].replace('Elim', '').trim(),
+            stake: isStake,
+            elim: isStake && / Elim$/i.test(data[2].trim()),
+            age: /^Two-Year-Old$/i.test(data[4].trim())
+                ? '2yo'
+                : /^Three-Year-Old$/i.test(data[4].trim())
+                    ? '3yo'
+                    : /^Four-Year-Old &amp; Younger$/i.test(data[4].trim())
+                        ? '2-4yo'
+                        : /^Five-Year-Old &amp; Older$/i.test(data[4].trim())
+                            ? '5yo+'
+                            : /^Six-Year-Old &amp; Older$/i.test(data[4].trim())
+                                ? '6yo+'
+                                : undefined,
+            condition: data[5].replace(/\s+/, ' ')?.trim(),
+            gait: /^trot/i.test(data[6]) ? 'trot' : 'pace',
+            trackCondition: data[7]?.trim()?.toLowerCase(),
+            trackSize: /^half/i.test(data[8]) ? 'half' : 'full',
+            purse: parseCurrency(data[9]),
+            finish: parseInt(data[10]),
+            time: data[11].split(':').map(parseFloat).reduce((seconds: number, time: number, index: number): number => seconds + (index === 0 ? time * 60 : time), 0),
+            date: new Date(data[12].replace(/(\d+)[A-Z]{2}/i, '$1')),
+        });
+    }
+
+    return races;
 }

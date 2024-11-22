@@ -3,7 +3,8 @@ import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, g
 
 import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, BreedingReportExportData, HorseSearchData } from '../../lib/actions.js';
 import { AlarmType } from '../../lib/alarms.js';
-import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, generateBreedingReport as generateBreedingReportAsync, getHorse, Horse, StallionScore, calculateStallionScore } from '../../lib/horses.js';
+import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, getHorse, Horse, StallionScore, calculateStallionScore } from '../../lib/horses.js';
+import { generateBreedingReport as generateBreedingReportAsync } from '../../lib/reporting.js';
 import { downloadFile, regexEscape, sleep, toTimestamp } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
