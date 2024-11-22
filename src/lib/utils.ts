@@ -1,10 +1,10 @@
 import { Timestamp } from 'firebase/firestore';
-import { Horse, Race, RaceList } from './horses';
+import { Race, RaceList } from './horses';
 
 export type DownloadOptions = {
     contentType?: string;
     saveAs?: boolean
-}
+};
 
 export function ageToText(age: number): string {
     return [

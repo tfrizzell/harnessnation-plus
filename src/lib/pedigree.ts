@@ -390,9 +390,9 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
  * @param {number[]} ids - the ids of the horses.
  * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
  */
-export async function generateSaleCatalog(ids: number[]): Promise<void> {
+export async function generatePedigreeCatalog(ids: number[]): Promise<void> {
     if (ids.length === 1)
-        return await generateSalePedigree(ids[0]);
+        return await generatePedigreePage(ids[0]);
 
     const horses: Horse[] = [];
     let csrfToken: string | undefined;
@@ -413,7 +413,7 @@ export async function generateSaleCatalog(ids: number[]): Promise<void> {
     while (horses.length > 0)
         await Promise.all(horses.splice(0, 2).map(horse => addPedigreePage(pdfDoc, horse, csrfToken, fonts)));
 
-    await downloadFile(await pdfDoc.saveAsBase64({ dataUri: true }), `hnplus-sale-catalog-${toTimestamp().replace(/\D/g, '')}.pdf`);
+    await downloadFile(await pdfDoc.saveAsBase64({ dataUri: true }), `hnplus-pedigree-catalog-${toTimestamp().replace(/\D/g, '')}.pdf`);
 }
 
 /**
@@ -421,7 +421,7 @@ export async function generateSaleCatalog(ids: number[]): Promise<void> {
  * @param {number} id - the id of the horse.
  * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
  */
-export async function generateSalePedigree(id: number): Promise<void> {
+export async function generatePedigreePage(id: number): Promise<void> {
     const horse = await getHorse(id);
     const csrfToken = await api.getCSRFToken();
 

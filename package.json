@@ -29,6 +29,7 @@
     "@types/node": "ts4.7",
     "blob-polyfill": "^9.0.20240710",
     "del": "^6.1.1",
+    "fake-indexeddb": "^6.0.0",
     "firebase": "9.6.1",
     "fs": "^0.0.1-security",
     "gulp": "^4.0.2",
