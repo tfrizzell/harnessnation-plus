@@ -1,3 +1,5 @@
+import { isMobileOS } from './utils.js';
+
 type CacheEntry = {
     response: string;
     expiresAt: number;
@@ -14,32 +16,40 @@ export class HarnessNationAPI {
     #cacheTTL: number = 3_600_600;
 
     constructor() {
-        const req = indexedDB.open('cache:api', 1);
+        isMobileOS().then(isMobile => {
+            if (isMobile) {
+                console.debug(`%cbackground.ts%c     Mobile OS Detected: disabling api cache`, 'color:#406e8e;font-weight:bold;', '');
+                this.#cacheTTL = 0;
+                return;
+            }
 
-        req.addEventListener('error', e => {
-            const error = <Error>(e.target as any).error;
-            console.error(`%charnessnation.ts%c     Failed to open api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
-            console.error(error);
-        });
+            const req = indexedDB.open('cache:api', 1);
 
-        req.addEventListener('success', () => {
-            console.debug(`%charnessnation.ts%c     Successfully opened api cache`, 'color:#406e8e;font-weight:bold;', '');
-            this.#cache = req.result;
-        });
-
-        req.addEventListener('upgradeneeded', e => {
-            console.debug(`%charnessnation.ts%c     Updating api cache`, 'color:#406e8e;font-weight:bold;', '');
-            const db: IDBDatabase = (e.target as any).result;
-
-            db.addEventListener('error', e => {
+            req.addEventListener('error', e => {
                 const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to update api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%charnessnation.ts%c     Failed to open api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(error);
             });
 
-            const store = db.createObjectStore('responses', { keyPath: 'key' });
-            store.createIndex('response', 'response', { unique: false });
-            store.createIndex('expiresAt', 'expiresAt', { unique: false });
+            req.addEventListener('success', () => {
+                console.debug(`%charnessnation.ts%c     Successfully opened api cache`, 'color:#406e8e;font-weight:bold;', '');
+                this.#cache = req.result;
+            });
+
+            req.addEventListener('upgradeneeded', e => {
+                console.debug(`%charnessnation.ts%c     Updating api cache`, 'color:#406e8e;font-weight:bold;', '');
+                const db: IDBDatabase = (e.target as any).result;
+
+                db.addEventListener('error', e => {
+                    const error = <Error>(e.target as any).error;
+                    console.error(`%charnessnation.ts%c     Failed to update api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                    console.error(error);
+                });
+
+                const store = db.createObjectStore('responses', { keyPath: 'key' });
+                store.createIndex('response', 'response', { unique: false });
+                store.createIndex('expiresAt', 'expiresAt', { unique: false });
+            });
         });
     }
 
@@ -57,7 +67,7 @@ export class HarnessNationAPI {
 
         transaction?.addEventListener('error', e => {
             const error = <Error>(e.target as any).error;
-            console.error(`%charnessnation.ts%c     Failed to open api cache transaction: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+            console.error(`%charnessnation.ts%c     Failed to open api response cache transaction: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
             console.error(error);
         });
 
@@ -71,7 +81,7 @@ export class HarnessNationAPI {
 
             req.addEventListener('error', e => {
                 const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to read from api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%charnessnation.ts%c     Failed to read from api response cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(error);
                 resolve(undefined);
             });
@@ -105,7 +115,7 @@ export class HarnessNationAPI {
 
             transaction?.addEventListener('error', e => {
                 const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to write to api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%charnessnation.ts%c     Failed to write to api response cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(error);
             });
 
@@ -132,7 +142,7 @@ export class HarnessNationAPI {
 
             transaction.addEventListener('error', e => {
                 const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to open api cache transaction: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%charnessnation.ts%c     Failed to open api response cache transaction: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(error);
                 resolve();
             });
@@ -141,7 +151,7 @@ export class HarnessNationAPI {
 
             req.addEventListener('error', e => {
                 const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to clear api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%charnessnation.ts%c     Failed to clear api response cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(error);
                 resolve();
             });
@@ -165,7 +175,7 @@ export class HarnessNationAPI {
 
             transaction.addEventListener('error', e => {
                 const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to open api cache transaction: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%charnessnation.ts%c     Failed to open api response cache transaction: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(error);
                 resolve(undefined);
             });
@@ -175,7 +185,7 @@ export class HarnessNationAPI {
 
             req.addEventListener('error', e => {
                 const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to open api cache cursor: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%charnessnation.ts%c     Failed to open api response cache cursor: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(error);
                 resolve(undefined);
             });
@@ -319,7 +329,7 @@ export class HarnessNationAPI {
 
             transaction.addEventListener('error', e => {
                 const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to open api cache transaction: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%charnessnation.ts%c     Failed to open api response cache transaction: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(error);
                 resolve(undefined);
             });
@@ -329,7 +339,7 @@ export class HarnessNationAPI {
 
             req.addEventListener('error', e => {
                 const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to open api cache cursor: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(`%charnessnation.ts%c     Failed to open api response cache cursor: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(error);
                 resolve();
             });
