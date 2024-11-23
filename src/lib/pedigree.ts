@@ -332,7 +332,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
             if (progeny.gender === 'M')
                 paragraph.add(` (${progeny.gender})`);
 
-            paragraph.add(` ${getMarkString(progeny.races!, ageRef)} (${progeny.sireName})`.replace(/^\s+(\(.*?\))$/, '$1'));
+            paragraph.add(` ${getMarkString(progeny.races!, ageRef)} (${progeny.sireName}).`.replace(/^\s+(\(.*?\))$/, '$1'));
 
             if (!damIds.includes(progeny.id)) {
                 if (wins > 0) {
