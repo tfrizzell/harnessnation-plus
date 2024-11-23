@@ -1,5 +1,6 @@
 import { AlarmType } from './lib/alarms.js';
 import api from './lib/harnessnation.js';
+import { isMobileOS } from './lib/utils.js';
 
 import './scripts/background/settings.js';
 import './scripts/background/runtime.js';
@@ -23,7 +24,7 @@ chrome.alarms.onAlarm.addListener(async alarm => {
     }
 });
 
-function getNext__updateStallionScores(from: Date) {
+function getNext__updateStallionScores(from: Date): Date {
     const next = new Date(from.valueOf());
     next.setMonth(next.getMonth() + 1);
     next.setDate(1);
@@ -38,21 +39,33 @@ function getNext__updateStallionScores(from: Date) {
     return next;
 }
 
-async function register__pruneAPICache(from: Date | number = new Date()) {
+async function register__pruneAPICache(from: Date | number = new Date()): Promise<void> {
     await chrome.alarms.clear(AlarmType.PruneAPICache);
 
-    if (api.cacheTTL > 0)
+    if (await isMobileOS()) {
+        console.debug(`%cbackground.ts%c     Mobile OS Detected: skipping response cache prune task`, 'color:#406e8e;font-weight:bold;', '');
+        return;
+    }
+
+    if (api.cacheTTL > 0) {
         await chrome.alarms.create(AlarmType.PruneAPICache, {
             when: Date.now(),
             periodInMinutes: api.cacheTTL / 60_000,
         });
+    }
 }
 
-async function register__updateStallionScores(from: Date | number = new Date()) {
-    (await chrome.alarms.get(AlarmType.UpdateStallionScores))
-        || (await chrome.alarms.create(AlarmType.UpdateStallionScores, {
-            when: getNext__updateStallionScores(new Date(from?.valueOf?.() ?? from)).valueOf(),
-        }));
+async function register__updateStallionScores(from: Date | number = new Date()): Promise<void> {
+    await chrome.alarms.clear(AlarmType.UpdateStallionScores);
+
+    if (await isMobileOS()) {
+        console.debug(`%cbackground.ts%c     Mobile OS Detected: skipping stallion score update task`, 'color:#406e8e;font-weight:bold;', '');
+        return;
+    }
+
+    await chrome.alarms.create(AlarmType.UpdateStallionScores, {
+        when: getNext__updateStallionScores(new Date(from?.valueOf?.() ?? from)).valueOf(),
+    });
 }
 
 register__pruneAPICache();
