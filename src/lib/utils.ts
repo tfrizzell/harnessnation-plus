@@ -142,6 +142,11 @@ export function getLifetimeMark(races: RaceList): string {
     return !race ? '' : formatMark(race, races.findAge(race));
 }
 
+export async function isMobileOS(): Promise<boolean> {
+    const platform = await chrome.runtime.getPlatformInfo();
+    return platform.os === 'android';
+}
+
 export function parseCurrency(value: string | number): number {
     return value == null ? value : globalThis.parseFloat(value.toString().replace(/[^\d.]/g, ''));
 }
