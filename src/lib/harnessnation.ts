@@ -18,7 +18,7 @@ export class HarnessNationAPI {
     constructor() {
         isMobileOS().then(isMobile => {
             if (isMobile) {
-                console.debug(`%cbackground.ts%c     Mobile OS Detected: disabling api cache`, 'color:#406e8e;font-weight:bold;', '');
+                console.debug(`%charnessnation.ts%c     Mobile OS Detected: disabling api cache`, 'color:#406e8e;font-weight:bold;', '');
                 this.#cacheTTL = 0;
                 return;
             }

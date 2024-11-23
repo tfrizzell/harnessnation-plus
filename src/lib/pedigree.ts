@@ -392,7 +392,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
  */
 export async function generatePedigreeCatalog(ids: number[]): Promise<void> {
     if (await isMobileOS()) {
-        console.debug(`%cbackground.ts%c     Mobile OS Detected: skipping pedigree catalog generation`, 'color:#406e8e;font-weight:bold;', '');
+        console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree catalog generation`, 'color:#406e8e;font-weight:bold;', '');
         return;
     }
 
@@ -428,7 +428,7 @@ export async function generatePedigreeCatalog(ids: number[]): Promise<void> {
  */
 export async function generatePedigreePage(id: number): Promise<void> {
     if (await isMobileOS()) {
-        console.debug(`%cbackground.ts%c     Mobile OS Detected: skipping pedigree page generation`, 'color:#406e8e;font-weight:bold;', '');
+        console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree page generation`, 'color:#406e8e;font-weight:bold;', '');
         return;
     }
 
