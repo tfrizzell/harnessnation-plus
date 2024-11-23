@@ -5,7 +5,7 @@ import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, Br
 import { AlarmType } from '../../lib/alarms.js';
 import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, getHorse, Horse, StallionScore, calculateStallionScore } from '../../lib/horses.js';
 import { generateBreedingReport as generateBreedingReportAsync } from '../../lib/reporting.js';
-import { downloadFile, regexEscape, sleep, toTimestamp } from '../../lib/utils.js';
+import { downloadFile, isMobileOS, regexEscape, sleep, toTimestamp } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
 let db = firestore.singleton();
@@ -395,6 +395,11 @@ async function saveHorses(horses: Horse[]): Promise<void> {
 }
 
 export async function updateStallionScores(): Promise<void> {
+    if (await isMobileOS()) {
+        console.debug(`%chorses.ts%c     Mobile OS Detected: skipping stallion score update`, 'color:#406e8e;font-weight:bold;', '');
+        return;
+    }
+
     console.debug(`%chorses.ts%c     Updating stallion scores`, 'color:#406e8e;font-weight:bold;', '');
 
     const horses = await getHorsesWithLastModified();
