@@ -202,7 +202,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
         const rowSpan = 2 ** generations / rows;
         const offsetRow = Math.round(((rows - 1) / 2) - row);
         const offsetY = (2 * offsetRow - 1) * rowSpan * rowHeight / 2 + (offsetRow > 0 ? 1 : -1) * (centreRowHeight / 2 + 3.5);
-        const columnWidth = 118 - (column === 0 ? 14.5 : 0);
+        const columnWidth = (maxWidth / 3) - (column === 0 ? 14.5 : 0);
 
         let text = `${ancestor.name ?? ''} ${ancestor.lifetimeMark ?? ''}`?.trim() || 'Unknown';
 
