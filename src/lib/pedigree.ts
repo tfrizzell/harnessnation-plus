@@ -202,7 +202,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
         const rowSpan = 2 ** generations / rows;
         const offsetRow = Math.round(((rows - 1) / 2) - row);
         const offsetY = (2 * offsetRow - 1) * rowSpan * rowHeight / 2 + (offsetRow > 0 ? 1 : -1) * (centreRowHeight / 2 + 3.5);
-        const columnWidth = 118 - (column === 0 ? 14.5 : 0);
+        const columnWidth = (maxWidth / 3) - (column === 0 ? 14.5 : 0);
 
         let text = `${ancestor.name ?? ''} ${ancestor.lifetimeMark ?? ''}`?.trim() || 'Unknown';
 
@@ -449,7 +449,7 @@ async function getDamProgeny(id: number, csrfToken?: string): Promise<Progeny[]>
             .matchAll(/<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+&nbsp;-&nbsp;(\d+)&nbsp;-&nbsp;\d+&nbsp;-&nbsp;\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
     ).map(([match, id, name, sireId, sireName, age, gender, wins, earnings]): Progeny => ({
         id: parseInt(id),
-        name: name.trim(),
+        name: name.trim().replace(/&#039;/g, "'"),
         sireId: parseInt(sireId),
         sireName: sireName.trim(),
         age: parseInt(age),
@@ -547,7 +547,7 @@ async function getPedigree(id: number, csrfToken?: string): Promise<Ancestor[]> 
             .matchAll(/<a[^>]*horse\/(\d+)[^>]*>\s*(.*?)\s*<\/a[^>]*>|\b(Unknown)\b/gis)
     ).map((match: RegExpMatchArray): Ancestor => ({
         id: match[1] ? parseInt(match[1]!) : undefined,
-        name: match[2] ?? match[3],
+        name: (match[2] ?? match[3])?.replace(/&#039;/g, "'"),
     }));
 }
 

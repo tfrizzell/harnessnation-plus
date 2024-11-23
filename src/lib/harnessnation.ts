@@ -14,43 +14,57 @@ type CacheEntry = {
 export class HarnessNationAPI {
     #cache?: IDBDatabase;
     #cacheTTL: number = 3_600_600;
+    #startUp?: Promise<void>;
 
     constructor() {
-        isMobileOS().then(isMobile => {
+        this.#startUp = isMobileOS().then(isMobile => {
             if (isMobile) {
                 console.debug(`%charnessnation.ts%c     Mobile OS Detected: disabling api cache`, 'color:#406e8e;font-weight:bold;', '');
                 this.#cacheTTL = 0;
                 return;
             }
 
-            const req = indexedDB.open('cache:api', 1);
+            return new Promise<void>(resolve => {
+                const timeout = setTimeout(() => resolve(), 5000);
+                const req = indexedDB.open('cache:api', 1);
 
-            req.addEventListener('error', e => {
-                const error = <Error>(e.target as any).error;
-                console.error(`%charnessnation.ts%c     Failed to open api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
-                console.error(error);
-            });
-
-            req.addEventListener('success', () => {
-                console.debug(`%charnessnation.ts%c     Successfully opened api cache`, 'color:#406e8e;font-weight:bold;', '');
-                this.#cache = req.result;
-            });
-
-            req.addEventListener('upgradeneeded', e => {
-                console.debug(`%charnessnation.ts%c     Updating api cache`, 'color:#406e8e;font-weight:bold;', '');
-                const db: IDBDatabase = (e.target as any).result;
-
-                db.addEventListener('error', e => {
+                req.addEventListener('error', e => {
                     const error = <Error>(e.target as any).error;
-                    console.error(`%charnessnation.ts%c     Failed to update api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                    console.error(`%charnessnation.ts%c     Failed to open api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
                     console.error(error);
+
+                    clearTimeout(timeout);
+                    resolve();
                 });
 
-                const store = db.createObjectStore('responses', { keyPath: 'key' });
-                store.createIndex('response', 'response', { unique: false });
-                store.createIndex('expiresAt', 'expiresAt', { unique: false });
+                req.addEventListener('success', () => {
+                    console.debug(`%charnessnation.ts%c     Successfully opened api cache`, 'color:#406e8e;font-weight:bold;', '');
+                    this.#cache = req.result;
+
+                    clearTimeout(timeout);
+                    resolve();
+                });
+
+                req.addEventListener('upgradeneeded', e => {
+                    console.debug(`%charnessnation.ts%c     Updating api cache`, 'color:#406e8e;font-weight:bold;', '');
+                    const db: IDBDatabase = (e.target as any).result;
+
+                    db.addEventListener('error', e => {
+                        const error = <Error>(e.target as any).error;
+                        console.error(`%charnessnation.ts%c     Failed to update api cache: ${error.message}`, 'color:#406e8e;font-weight:bold;', '');
+                        console.error(error);
+                        resolve();
+                    });
+
+                    const store = db.createObjectStore('responses', { keyPath: 'key' });
+                    store.createIndex('response', 'response', { unique: false });
+                    store.createIndex('expiresAt', 'expiresAt', { unique: false });
+
+                    clearTimeout(timeout);
+                    resolve();
+                });
             });
-        });
+        }).then(() => this.#startUp = undefined);
     }
 
     get cacheTTL(): number {
@@ -58,7 +72,7 @@ export class HarnessNationAPI {
     }
 
     async #getFromCache(key: string): Promise<string | undefined> {
-        this.pruneCache();
+        await this.#startUp;
 
         if (this.#cacheTTL === 0)
             return undefined;
