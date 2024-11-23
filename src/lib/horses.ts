@@ -314,7 +314,7 @@ export async function getHorse(id: number): Promise<Horse> {
 
     return {
         id: parseInt(html?.match(/<b[^>]*>\s*ID:\s*<\/b[^>]*>\s*(\d+)/is)?.[1]!),
-        name: html?.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1]?.trim(),
+        name: html?.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1]?.trim()?.replace(/&#039;/g, "'"),
         sireId: html?.match(/<b[^>]*>\s*Sire:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
         damId: html?.match(/<b[^>]*>\s*Dam:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
         retired: !!html?.match(/<br[^>]*>\s*<br[^>]*>\s*Retired\s*<br[^>]*>/is)?.[0],
