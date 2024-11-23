@@ -7,7 +7,7 @@ import { drawTextCentered } from './pdf-lib/utils.js';
 
 import { api } from './harnessnation.js'
 import { getHorse, getRaces, Horse, Race, RaceList } from './horses.js';
-import { ageToText, downloadFile, formatMark, formatOrdinal, getLifetimeMark, parseCurrency, parseInt, secondsToTime, toTimestamp } from './utils.js';
+import { ageToText, downloadFile, formatMark, formatOrdinal, getLifetimeMark, isMobileOS, parseCurrency, parseInt, secondsToTime, toTimestamp } from './utils.js';
 
 type Ancestor = {
     id?: number;
@@ -391,6 +391,11 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
  * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
  */
 export async function generatePedigreeCatalog(ids: number[]): Promise<void> {
+    if (await isMobileOS()) {
+        console.debug(`%cbackground.ts%c     Mobile OS Detected: skipping pedigree catalog generation`, 'color:#406e8e;font-weight:bold;', '');
+        return;
+    }
+
     if (ids.length === 1)
         return await generatePedigreePage(ids[0]);
 
@@ -422,6 +427,11 @@ export async function generatePedigreeCatalog(ids: number[]): Promise<void> {
  * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
  */
 export async function generatePedigreePage(id: number): Promise<void> {
+    if (await isMobileOS()) {
+        console.debug(`%cbackground.ts%c     Mobile OS Detected: skipping pedigree page generation`, 'color:#406e8e;font-weight:bold;', '');
+        return;
+    }
+
     const horse = await getHorse(id);
     const csrfToken = await api.getCSRFToken();
 
