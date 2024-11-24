@@ -313,9 +313,12 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
             else if (age === 1 && /^Filly$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && p.gender === 'female'))
                 paragraph.add(' First filly.', fonts.Bold);
 
-            if (dam.progeny.length > 0)
-                paragraph.add(` From ${dam.progeny.length}${generation == 1 && age === 1 ? ' previous' : ''} foals, dam of ${winningProgeny} winners including:`
-                    .replace(/, dam of [01] winners including/, ''));
+            if (dam.progeny.length > 0) {
+                const foalCount = dam.progeny.length - (generation == 1 && age === 1 ? 1 : 0);
+
+                paragraph.add(` From ${foalCount}${generation == 1 && age === 1 ? ' previous' : ''} ${foalCount === 1 ? 'foal' : 'foals'}, dam of ${winningProgeny} winners including:`
+                    .replace(/ [01] winners including/, ''));
+            }
         }
 
         for (let j = 0; j < dam.progeny.length; j++) {
@@ -333,7 +336,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
                 : 0;
 
             damInfo.push(paragraph = new ParagraphBuilder(
-                progeny.id === horse.id
+                progeny.id === horse.id || dam.progeny.length === 1
                     ? ParagraphPriority.Required
                     : progeny.races!.some(race => race.stake && race.finish === 1)
                         ? ParagraphPriority.VeryHigh
@@ -507,30 +510,37 @@ export async function generatePedigreePage(id: number): Promise<void> {
 }
 
 async function getDamProgeny(id: number, csrfToken?: string): Promise<Progeny[]> {
+    const progenyIds: number[] = [];
+
     return Array.from(
         (await api.getProgenyList(id, csrfToken))
             .matchAll(/<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>().*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+\s*-\s*(\d+)\s*-\s*\d+\s*-\s*\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
-    ).map(([match, id, name, sireId, sireName, age, gender, stable, wins, earnings]): Progeny => ({
-        id: parseInt(id),
-        name: name.trim(),
-        sireId: parseInt(sireId),
-        sireName: sireName.trim(),
-        age: parseInt(age),
-        gender: gender.toLowerCase() === 'mars'
-            ? 'male'
-            : gender.toLowerCase() === 'venus'
-                ? 'female'
-                : 'gelding',
-        stable: stable.toLowerCase() === 'm'
-            ? 'main'
-            : stable.toLowerCase() === 'b'
-                ? 'breeding'
-                : 'retired',
-        wins: parseInt(wins),
-        earnings: parseCurrency(earnings),
-        overallAwardWinner: /trophyhorse\.png/i.test(match),
-        conferenceAwardWinner: /trophyhorse_silver\.png/i.test(match),
-    })).sort(sortProgeny);
+    ).map(([match, id, name, sireId, sireName, age, gender, stable, wins, earnings]): Progeny => {
+        const progenyId = parseInt(id);
+        progenyIds.push(progenyId)
+
+        return {
+            id: progenyId,
+            name: name.trim(),
+            sireId: parseInt(sireId),
+            sireName: sireName.trim(),
+            age: parseInt(age),
+            gender: gender.toLowerCase() === 'mars'
+                ? 'male'
+                : gender.toLowerCase() === 'venus'
+                    ? 'female'
+                    : 'gelding',
+            stable: stable.toLowerCase() === 'm'
+                ? 'main'
+                : stable.toLowerCase() === 'b'
+                    ? 'breeding'
+                    : 'retired',
+            wins: parseInt(wins),
+            earnings: parseCurrency(earnings),
+            overallAwardWinner: /trophyhorse\.png/i.test(match),
+            conferenceAwardWinner: /trophyhorse_silver\.png/i.test(match),
+        };
+    }).filter((progeny, index) => progenyIds.indexOf(progeny.id) === index).sort(sortProgeny);
 }
 
 function getKeyRaces(races: RaceList, ageRef?: Race): RaceList {
