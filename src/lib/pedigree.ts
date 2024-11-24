@@ -331,24 +331,9 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
             const ageStart = progeny.races!.findAge(progeny.races!.slice(-1)[0], ageRef);
             const ageEnd = progeny.races!.findAge(progeny.races![0], ageRef);
             const wins = progeny.races!.getWins();
-            const earningsPerStart = progeny.races?.length ?? 0 > 0
-                ? progeny.earnings / progeny.races!.length
-                : 0;
 
             damInfo.push(paragraph = new ParagraphBuilder(
-                progeny.id === horse.id || dam.progeny.length === 1
-                    ? ParagraphPriority.Required
-                    : progeny.races!.some(race => race.stake && race.finish === 1)
-                        ? ParagraphPriority.VeryHigh
-                        : progeny.races!.some(race => isKeyRace(race))
-                            ? ParagraphPriority.High
-                            : progeny.overallAwardWinner || progeny.earnings >= 500_000 || earningsPerStart >= 20_000
-                                ? ParagraphPriority.Medium
-                                : (progeny.age > 1 && progeny.age < 4) || progeny.conferenceAwardWinner || progeny.earnings >= 250_000 || earningsPerStart >= 15_000 || progeny.races!.some(race => race.finish === 1)
-                                    ? ParagraphPriority.Low
-                                    : progeny.age > 1
-                                        ? ParagraphPriority.VeryLow
-                                        : ParagraphPriority.OnlyIfNeeded,
+                getParagraphPriority(horse, dam, progeny),
                 fonts.Normal,
                 8.5,
                 maxWidth,
@@ -627,6 +612,32 @@ async function getPedigree(id: number, csrfToken?: string): Promise<Ancestor[]> 
         id: match[1] ? parseInt(match[1]!) : undefined,
         name: match[2] ?? match[3],
     }));
+}
+
+function getParagraphPriority(horse: Horse, dam: DamLineAncestor, progeny: Progeny): ParagraphPriority {
+    if (progeny.id === horse.id || dam.progeny.length === 1)
+        return ParagraphPriority.Required;
+
+    if (progeny.races!.some(race => race.stake && race.finish === 1))
+        return ParagraphPriority.VeryHigh;
+
+    if (progeny.overallAwardWinner || progeny.races!.some(race => isKeyRace(race)))
+        return ParagraphPriority.High;
+
+    const earningsPerStart = progeny.races?.length ?? 0 > 0
+        ? progeny.earnings / progeny.races!.length
+        : 0;
+
+    if (progeny.conferenceAwardWinner || progeny.earnings >= 500_000 || earningsPerStart >= 20_000)
+        return ParagraphPriority.Medium;
+
+    if ((progeny.age > 1 && progeny.age < 4) || progeny.earnings >= 250_000 || earningsPerStart >= 15_000 || progeny.races!.some(race => race.finish === 1))
+        return ParagraphPriority.Low;
+
+    if (progeny.age > 1)
+        return ParagraphPriority.VeryLow;
+
+    return ParagraphPriority.OnlyIfNeeded;
 }
 
 function isKeyRace(race: Race, includeOpen: boolean = false, includePreferred: boolean = false): boolean {
