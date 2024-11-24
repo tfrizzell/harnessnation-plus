@@ -238,6 +238,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 
         // Dam Info
         const dam = ancestor as DamLineAncestor;
+        const info = await api.getHorse(dam.id);
         const ageRef = dam.races.findAgeRef();
         const ageStart = dam.races.findAge(dam.races.slice(-1)[0], ageRef);
         const ageEnd = dam.races.findAge(dam.races[0], ageRef);
