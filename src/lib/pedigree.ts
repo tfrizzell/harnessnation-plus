@@ -62,7 +62,8 @@ type Progeny = {
     sireId: number;
     sireName: string;
     age: number;
-    gender: 'H' | 'M' | 'G';
+    gender: 'male' | 'female' | 'gelding';
+    stable: 'main' | 'breeding' | 'retired';
     wins: number;
     earnings: number;
     overallAwardWinner: boolean;
@@ -108,21 +109,23 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
         getPedigree(horse.id!, csrfToken),
     ]);
 
-    const nameLookup = new Map(pedigree.filter(({ id }) => id).map(({ id, name }) => [id, name]));
+    const ancestors = new Map(pedigree.filter(({ id }) => id).map(horse => [horse.id, horse]));
     const damIds: (number | undefined)[] = [];
 
     for (let i = 0; i < 2 ** (PEDIGREE_GENERATIONS + 1) - 2; i += 2) {
         await Promise.all(Array(2).fill(0).map(async (_, j) => {
-            const ancestor = (pedigree[i + j] ??= { name: 'Undefined' });
+            const ancestor = ancestors.get((pedigree[i + j] ??= { name: 'Undefined' }).id);
+            const saveInfo = showDamInfo(i + j);
 
-            if (ancestor?.id == null)
+            if (ancestor?.id == null || (ancestor?.lifetimeMark != null && !saveInfo))
                 return;
 
             const races = await getRaces(ancestor.id, csrfToken);
+            ancestor.sireId = pedigree[2 * (i + j + 1)]?.id;
+            ancestor.sireId = pedigree[2 * (i + j + 1) + 1]?.id;
             ancestor.lifetimeMark = getLifetimeMark(races);
 
-            if (showDamInfo(i + j)) {
-                ancestor.sireId = pedigree[2 * (i + j + 1)]?.id;
+            if (saveInfo) {
                 ancestor.progeny = await getDamProgeny(ancestor.id, csrfToken);
                 ancestor.races = races;
                 damIds.push(ancestor.id);
@@ -159,7 +162,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
         page.moveDown(fonts.Normal.heightAtSize(10) + 1);
 
         drawTextCentered(page,
-            `${lifetimeMark}${fastestWin ? `-'${fastestWin.date!.getFullYear() % 100}` : ''} ${age > 0 ? `(${ageToText(age)} Year Old)` : ''}`.trim(),
+            `${lifetimeMark}${fastestWin ? `-'${fastestWin.date!.getFullYear() % 100}` : ''} ${age === 1 ? '(Yearling)' : age > 0 ? `(${ageToText(age)} Year Old)` : ''}`.trim(),
             { font: fonts.Normal, size: 10 }
         );
     }
@@ -226,18 +229,21 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
             size: 7,
         });
 
-        if (showDamInfo(i)) {
-            column++;
-            row = 0;
-            page.moveRight(columnWidth + 6);
-        } else
+        if (!showDamInfo(i)) {
             row++;
+            continue;
+        }
+
+        column++;
+        row = 0;
+        page.moveRight(columnWidth + 6);
 
         if (!damIds.includes(ancestor.id))
             continue;
 
         // Dam Info
         const dam = ancestor as DamLineAncestor;
+        const generation = damIds.indexOf(ancestor.id) + 1;
         const info = await api.getHorse(dam.id);
         const ageRef = dam.races.findAgeRef();
         const ageStart = dam.races.findAge(dam.races.slice(-1)[0], ageRef);
@@ -255,7 +261,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
                 progeny.races = await getRaces(progeny.id, csrfToken);
                 progeny.earnings = progeny.races.getEarnings();
 
-                if (races.some(race => race.finish === 1))
+                if (progeny.races.some(race => race.finish === 1))
                     winningProgeny++;
             }));
         }
@@ -263,7 +269,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
         dam.progeny.sort(sortProgeny);
 
         damInfo.push(paragraph = new ParagraphBuilder(ParagraphPriority.Required, fonts.Bold, 8.5, maxWidth, indent));
-        paragraph.add(`${formatOrdinal(damIds.indexOf(dam.id) + 1)} Dam`)
+        paragraph.add(`${formatOrdinal(generation)} Dam`)
 
         damInfo.push(paragraph = new ParagraphBuilder(ParagraphPriority.Required, fonts.Normal, 8.5, maxWidth, indent));
 
@@ -274,8 +280,8 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 
         paragraph.add(` ${getMarkString(dam.races, ageRef)}`.replace(/^\s+$/, ''));
 
-        if (nameLookup.has(dam.sireId))
-            paragraph.add(` by ${nameLookup.get(dam.sireId)}.`);
+        if (ancestors.has(dam.sireId))
+            paragraph.add(` by ${ancestors.get(dam.sireId)!.name}.`);
         else
             paragraph.add('.');
 
@@ -299,9 +305,18 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 
         paragraph.add(` ${getKeyRaceString(dam.races, ageRef)}`.replace(/^\s+$/, ''));
 
-        if (dam.progeny.length > 0)
-            paragraph.add(` From ${dam.progeny.length} foals, dam of ${winningProgeny} winners including:`
-                .replace(/From (\d+) foals, dam of 0 winners /, 'Dam of $1 foals, '));
+        if (age === 1 && dam.progeny.length === 1 && dam.progeny[0].id === horse.id)
+            paragraph.add(' This is her first foal.');
+        else {
+            if (age === 1 && /^(Colt|Gelding)$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && (p.gender === 'male' || p.gender === 'gelding')))
+                paragraph.add(' First colt.', fonts.Bold);
+            else if (age === 1 && /^Filly$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && p.gender === 'female'))
+                paragraph.add(' First filly.', fonts.Bold);
+
+            if (dam.progeny.length > 0)
+                paragraph.add(` From ${dam.progeny.length}${generation == 1 && age === 1 ? ' previous' : ''} foals, dam of ${winningProgeny} winners including:`
+                    .replace(/, dam of [01] winners including/, ''));
+        }
 
         for (let j = 0; j < dam.progeny.length; j++) {
             const progeny = dam.progeny[j];
@@ -343,14 +358,14 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
                 (progeny.races!.some(r => r.stake && r.finish! <= 3) ? fonts.Bold : fonts.Normal)
             );
 
-            if (progeny.gender === 'M')
-                paragraph.add(` (${progeny.gender})`);
+            if (progeny.gender === 'female')
+                paragraph.add(' (M)');
 
             paragraph.add(` ${getMarkString(progeny.races!, ageRef)} (${progeny.sireName}).`.replace(/^\s+(\(.*?\))$/, '$1'));
 
             if (!damIds.includes(progeny.id)) {
                 if (wins > 0) {
-                    let text = `${wins} wins`;
+                    let text = `${wins} ${wins === 1 ? 'win' : 'wins'}`;
 
                     if (ageStart && ageEnd) {
                         if (ageStart !== ageEnd)
@@ -494,18 +509,23 @@ export async function generatePedigreePage(id: number): Promise<void> {
 async function getDamProgeny(id: number, csrfToken?: string): Promise<Progeny[]> {
     return Array.from(
         (await api.getProgenyList(id, csrfToken))
-            .matchAll(/<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+&nbsp;-&nbsp;(\d+)&nbsp;-&nbsp;\d+&nbsp;-&nbsp;\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
-    ).map(([match, id, name, sireId, sireName, age, gender, wins, earnings]): Progeny => ({
+            .matchAll(/<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>().*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+\s*-\s*(\d+)\s*-\s*\d+\s*-\s*\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
+    ).map(([match, id, name, sireId, sireName, age, gender, stable, wins, earnings]): Progeny => ({
         id: parseInt(id),
-        name: name.trim().replace(/&#039;/g, "'"),
+        name: name.trim(),
         sireId: parseInt(sireId),
         sireName: sireName.trim(),
         age: parseInt(age),
         gender: gender.toLowerCase() === 'mars'
-            ? 'H'
+            ? 'male'
             : gender.toLowerCase() === 'venus'
-                ? 'M'
-                : 'G',
+                ? 'female'
+                : 'gelding',
+        stable: stable.toLowerCase() === 'm'
+            ? 'main'
+            : stable.toLowerCase() === 'b'
+                ? 'breeding'
+                : 'retired',
         wins: parseInt(wins),
         earnings: parseCurrency(earnings),
         overallAwardWinner: /trophyhorse\.png/i.test(match),
@@ -595,7 +615,7 @@ async function getPedigree(id: number, csrfToken?: string): Promise<Ancestor[]> 
             .matchAll(/<a[^>]*horse\/(\d+)[^>]*>\s*(.*?)\s*<\/a[^>]*>|\b(Unknown)\b/gis)
     ).map((match: RegExpMatchArray): Ancestor => ({
         id: match[1] ? parseInt(match[1]!) : undefined,
-        name: (match[2] ?? match[3])?.replace(/&#039;/g, "'"),
+        name: match[2] ?? match[3],
     }));
 }
 
