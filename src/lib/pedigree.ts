@@ -76,16 +76,17 @@ const earningsFormatter = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0,
 });
 
+const PEDIGREE_GENERATIONS = 3;
+
 /**
  * Adds a sale catalog style pedigree page to the pdf document.
  * @param {PDFDocument} pdfDoc - the pdf document to add the page to.
  * @param {Horse} horse - the horse the page is being generated for.
  * @param {token} csrfToken - the CSRF token to sign requests.
  * @param {FontMap} fonts - the map of fonts to use in the pdf page.
- * @param {number} generations - the number of generations to go to in the pedigree.
  * @returns {Promise<void>} A `Promise` that resolves when the page has been added.
  */
-async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: string, fonts?: FontMap, generations: number = 3): Promise<void> {
+async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: string, fonts?: FontMap): Promise<void> {
     function showDamInfo(index: number): boolean {
         return (Math.log2(index + 3) - 1) % 1 === 0;
     }
@@ -94,6 +95,8 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 
     const page = pdfDoc.addPage(window.PDFLib.PageSizes.Letter);
     const margin = { top: 32.5, right: 96.5, bottom: 27.1, left: 96.5 };
+
+    page.setBleedBox(margin.left, margin.bottom, page.getWidth() - margin.left - margin.right, page.getHeight() - margin.top - margin.bottom);
     page.moveTo(margin.left, page.getHeight() - margin.top);
 
     const info = await api.getHorse(horse.id!);
@@ -107,7 +110,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
     const nameLookup = new Map(pedigree.filter(({ id }) => id).map(({ id, name }) => [id, name]));
     const damIds: (number | undefined)[] = [];
 
-    for (let i = 0; i < 2 ** (generations + 1) - 2; i += 2) {
+    for (let i = 0; i < 2 ** (PEDIGREE_GENERATIONS + 1) - 2; i += 2) {
         await Promise.all(Array(2).fill(0).map(async (_, j) => {
             const ancestor = (pedigree[i + j] ??= { name: 'Undefined' });
 
@@ -196,17 +199,20 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
     const maxWidth = page.getWidth() - margin.right - margin.left;
     const indent = 28.4;
 
-    for (let i = 0; i < 2 ** (generations + 1) - 2; i++) {
+    for (let i = 0; i < 2 ** (PEDIGREE_GENERATIONS + 1) - 2; i++) {
         const ancestor = pedigree[i];
         const rows = 2 ** (column + 1);
-        const rowSpan = 2 ** generations / rows;
+        const rowSpan = 2 ** PEDIGREE_GENERATIONS / rows;
         const offsetRow = Math.round(((rows - 1) / 2) - row);
         const offsetY = (2 * offsetRow - 1) * rowSpan * rowHeight / 2 + (offsetRow > 0 ? 1 : -1) * (centreRowHeight / 2 + 3.5);
-        const columnWidth = (maxWidth / 3) - (column === 0 ? 14.5 : 0);
+        const columnWidth = (maxWidth / PEDIGREE_GENERATIONS) - (column === 0 ? 14.5 : 0);
 
         let text = `${ancestor.name ?? ''} ${ancestor.lifetimeMark ?? ''}`?.trim() || 'Unknown';
 
-        while (column < 2 && fonts.Normal.widthOfTextAtSize(text, 7) < columnWidth) {
+        while (fonts.Normal.widthOfTextAtSize(text, 7) > columnWidth)
+            text = text.replace(/.{4}$/, '...');
+
+        while (column < PEDIGREE_GENERATIONS - 1 && fonts.Normal.widthOfTextAtSize(text, 7) < columnWidth) {
             if (text.endsWith('-') || text.endsWith('  '))
                 text += '-';
             else
@@ -386,6 +392,38 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 }
 
 /**
+ * Adds a watermark to every page in the pdf document.
+ * @param {PDFDocument} pdfDoc - the pdf document to add the watermark to.
+ * @returns {Promise<void>} A `Promise` that resolves when the watermark has been added.
+ */
+async function addWatermark(pdfDoc: PDFDocument): Promise<void> {
+    const logo = await fetch(chrome.runtime.getURL('/icons/pdf-watermark.png'))
+        .then(res => res.arrayBuffer())
+        .then(png => pdfDoc.embedPng(png));
+
+    for (const page of pdfDoc.getPages()) {
+        let x: number, y: number;
+
+        try {
+            const box = page.getBleedBox();
+            x = box.x + box.width;
+            y = box.y + box.height;
+        } catch (e: any) {
+            x = page.getWidth() - 96.5;
+            y = page.getHeight() - 32.5;
+        }
+
+        page.drawImage(logo, {
+            x: x - 32,
+            y: y - 32,
+            width: 32,
+            height: 32,
+            opacity: 0.25,
+        });
+    }
+}
+
+/**
  * Generates a sale catalog for the given horses.
  * @param {number[]} ids - the ids of the horses.
  * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
@@ -418,6 +456,7 @@ export async function generatePedigreeCatalog(ids: number[]): Promise<void> {
     while (horses.length > 0)
         await Promise.all(horses.splice(0, 2).map(horse => addPedigreePage(pdfDoc, horse, csrfToken, fonts)));
 
+    await addWatermark(pdfDoc);
     await downloadFile(await pdfDoc.saveAsBase64({ dataUri: true }), `hnplus-pedigree-catalog-${toTimestamp().replace(/\D/g, '')}.pdf`);
 }
 
@@ -440,6 +479,7 @@ export async function generatePedigreePage(id: number): Promise<void> {
 
     const pdfDoc = await window.PDFLib.PDFDocument.create();
     await addPedigreePage(pdfDoc, horse, csrfToken);
+    await addWatermark(pdfDoc);
     await downloadFile(await pdfDoc.saveAsBase64({ dataUri: true }), `${horse.name}.pdf`);
 }
 
