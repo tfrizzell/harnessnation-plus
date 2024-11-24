@@ -604,16 +604,6 @@ function getMarkString(races: RaceList, ageRef?: Race): string {
     ].filter(part => part?.trim()).join(' ');
 }
 
-async function getPedigree(id: number, csrfToken?: string): Promise<Ancestor[]> {
-    return Array.from(
-        (await api.getPedigree(id, csrfToken))
-            .matchAll(/<a[^>]*horse\/(\d+)[^>]*>\s*(.*?)\s*<\/a[^>]*>|\b(Unknown)\b/gis)
-    ).map((match: RegExpMatchArray): Ancestor => ({
-        id: match[1] ? parseInt(match[1]!) : undefined,
-        name: match[2] ?? match[3],
-    }));
-}
-
 function getParagraphPriority(horse: Horse, dam: DamLineAncestor, progeny: Progeny): ParagraphPriority {
     if (progeny.id === horse.id || dam.progeny.length === 1)
         return ParagraphPriority.Required;
@@ -638,6 +628,16 @@ function getParagraphPriority(horse: Horse, dam: DamLineAncestor, progeny: Proge
         return ParagraphPriority.VeryLow;
 
     return ParagraphPriority.OnlyIfNeeded;
+}
+
+async function getPedigree(id: number, csrfToken?: string): Promise<Ancestor[]> {
+    return Array.from(
+        (await api.getPedigree(id, csrfToken))
+            .matchAll(/<a[^>]*horse\/(\d+)[^>]*>\s*(.*?)\s*<\/a[^>]*>|\b(Unknown)\b/gis)
+    ).map((match: RegExpMatchArray): Ancestor => ({
+        id: match[1] ? parseInt(match[1]!) : undefined,
+        name: match[2] ?? match[3],
+    }));
 }
 
 function isKeyRace(race: Race, includeOpen: boolean = false, includePreferred: boolean = false): boolean {
