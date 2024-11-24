@@ -426,7 +426,7 @@ async function addWatermark(pdfDoc: PDFDocument): Promise<void> {
             y: y - 32,
             width: 32,
             height: 32,
-            opacity: 0.25,
+            opacity: 0.125,
         });
     }
 }
