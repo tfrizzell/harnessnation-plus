@@ -24,7 +24,7 @@ function cacheError(message: string, error?: Error): void {
  */
 export class HarnessNationAPI {
     #cache?: IDBDatabase;
-    #cacheTTL: number = 3_600_600; // TODO: REVERT THIS AFTER TESTING
+    #cacheTTL: number = 3_600_600;
     #startUp?: Promise<void>;
 
     constructor() {
@@ -156,8 +156,10 @@ export class HarnessNationAPI {
      * Clears the response cache.
      * @returns {Promise<void>} A `Promise` that resolves once the cache has been cleared.
      */
-    clearCache(): Promise<void> {
-        return new Promise<void>(resolve => {
+    async clearCache(): Promise<void> {
+        await this.#startUp;
+
+        await new Promise<void>(resolve => {
             const transaction = this.#cache?.transaction(['responses'], 'readwrite');
 
             if (!transaction)
@@ -342,8 +344,10 @@ export class HarnessNationAPI {
      * Prunes expired entries from the response cache.
      * @returns {Promise<void>} A `Promise` that resolves once the cache has been pruned.
      */
-    pruneCache(): Promise<void> {
-        return new Promise<void>(resolve => {
+    async pruneCache(): Promise<void> {
+        await this.#startUp;
+
+        await new Promise<void>(resolve => {
             const transaction = this.#cache?.transaction(['responses'], 'readwrite');
 
             if (!transaction)
