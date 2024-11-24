@@ -47,6 +47,7 @@ class ParagraphBuilder extends PDFParagraphBuilder {
 }
 
 enum ParagraphPriority {
+    OnlyIfNeeded,
     VeryLow,
     Low,
     Medium,
@@ -303,6 +304,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 
         for (let j = 0; j < dam.progeny.length; j++) {
             const progeny = dam.progeny[j];
+
+            if (age < 2 && progeny.id === horse.id)
+                continue;
+
             const ageRef = progeny.races!.findAgeRef();
             const ageStart = progeny.races!.findAge(progeny.races!.slice(-1)[0], ageRef);
             const ageEnd = progeny.races!.findAge(progeny.races![0], ageRef);
@@ -312,7 +317,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
                 : 0;
 
             damInfo.push(paragraph = new ParagraphBuilder(
-                j === 0 || (age > 1 && progeny.id === horse.id)
+                progeny.id === horse.id
                     ? ParagraphPriority.Required
                     : progeny.races!.some(race => race.stake && race.finish === 1)
                         ? ParagraphPriority.VeryHigh
@@ -320,9 +325,11 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
                             ? ParagraphPriority.High
                             : progeny.earnings >= 500_000 || earningsPerStart >= 20_000
                                 ? ParagraphPriority.Medium
-                                : progeny.age < 4 || progeny.earnings >= 250_000 || earningsPerStart >= 15_000
+                                : (progeny.age > 1 && progeny.age < 4) || progeny.earnings >= 250_000 || earningsPerStart >= 15_000
                                     ? ParagraphPriority.Low
-                                    : ParagraphPriority.VeryLow,
+                                    : progeny.age > 1
+                                        ? ParagraphPriority.VeryLow
+                                        : ParagraphPriority.OnlyIfNeeded,
                 fonts.Normal,
                 8.5,
                 maxWidth,
