@@ -122,7 +122,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 
             const races = await getRaces(ancestor.id, csrfToken);
             ancestor.sireId = pedigree[2 * (i + j + 1)]?.id;
-            ancestor.sireId = pedigree[2 * (i + j + 1) + 1]?.id;
+            ancestor.damId = pedigree[2 * (i + j + 1) + 1]?.id;
             ancestor.lifetimeMark = getLifetimeMark(races);
 
             if (saveInfo) {
@@ -339,9 +339,9 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
                         ? ParagraphPriority.VeryHigh
                         : progeny.races!.some(race => isKeyRace(race))
                             ? ParagraphPriority.High
-                            : progeny.earnings >= 500_000 || earningsPerStart >= 20_000
+                            : progeny.overallAwardWinner || progeny.earnings >= 500_000 || earningsPerStart >= 20_000
                                 ? ParagraphPriority.Medium
-                                : (progeny.age > 1 && progeny.age < 4) || progeny.earnings >= 250_000 || earningsPerStart >= 15_000
+                                : (progeny.age > 1 && progeny.age < 4) || progeny.conferenceAwardWinner || progeny.earnings >= 250_000 || earningsPerStart >= 15_000 || progeny.races!.some(race => race.finish === 1)
                                     ? ParagraphPriority.Low
                                     : progeny.age > 1
                                         ? ParagraphPriority.VeryLow
