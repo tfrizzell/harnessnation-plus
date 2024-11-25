@@ -62,7 +62,7 @@ export async function generateBreedingReport({ ids, headers }: BreedingReportDat
             .map(row => row.map(col => `"${(col?.toString() ?? '')
                 .replace('"', '\\"')}"`)
                 .join(','))
-            .join('\n').replace(/&#039;/g, "'"))}`;
+            .join('\n'))}`;
 }
 
 
