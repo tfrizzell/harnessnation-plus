@@ -317,13 +317,14 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
             paragraph.add(' Conference Award Winner.', fonts.Bold);
 
         paragraph.add(` ${getKeyRaceString(dam.races, ageRef)}`.replace(/^\s+$/, ''));
+        const firstGenYearling = (age === 1 && generation === 1);
 
-        if (age === 1 && dam.progeny.length === 1 && dam.progeny[0].id === horse.id)
+        if (firstGenYearling && !dam.progeny.some(p => p.id !== horse.id))
             paragraph.add(' This is her first foal.');
         else {
-            if (age === 1 && /^(Colt|Gelding)$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && (p.gender === 'male' || p.gender === 'gelding')))
+            if (firstGenYearling && /^(Colt|Gelding)$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && (p.gender === 'male' || p.gender === 'gelding')))
                 paragraph.add(' First colt.', fonts.Bold);
-            else if (age === 1 && /^Filly$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && p.gender === 'female'))
+            else if (firstGenYearling && /^Filly$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && p.gender === 'female'))
                 paragraph.add(' First filly.', fonts.Bold);
 
             if (dam.progeny.length > 0) {
