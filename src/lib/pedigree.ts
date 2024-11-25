@@ -56,6 +56,8 @@ enum ParagraphPriority {
     Required
 }
 
+type PedigreeIdType = number | [number, string | number | undefined];
+
 type Progeny = {
     id: number;
     name: string;
@@ -84,11 +86,12 @@ const PEDIGREE_GENERATIONS = 3;
  * Adds a sale catalog style pedigree page to the pdf document.
  * @param {PDFDocument} pdfDoc - the pdf document to add the page to.
  * @param {Horse} horse - the horse the page is being generated for.
+ * @param {number} hipNumber - the hip number of the horse, if desired.
  * @param {token} csrfToken - the CSRF token to sign requests.
  * @param {FontMap} fonts - the map of fonts to use in the pdf page.
  * @returns {Promise<void>} A `Promise` that resolves when the page has been added.
  */
-async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: string, fonts?: FontMap): Promise<void> {
+async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: string | number, csrfToken?: string, fonts?: FontMap): Promise<void> {
     function showDamInfo(index: number): boolean {
         return (Math.log2(index + 3) - 1) % 1 === 0;
     }
@@ -96,7 +99,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
     fonts ??= await loadFonts(pdfDoc);
 
     const page = pdfDoc.addPage(window.PDFLib.PageSizes.Letter);
-    const margin = { top: 32.5, right: 96.5, bottom: 27.1, left: 96.5 };
+    const margin = { top: 34.87, right: 99, bottom: 34.87, left: 99 };
 
     page.setBleedBox(margin.left, margin.bottom, page.getWidth() - margin.left - margin.right, page.getHeight() - margin.top - margin.bottom);
     page.moveTo(margin.left, page.getHeight() - margin.top);
@@ -143,14 +146,24 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
     page.setFontSize(DEFAULT_FONT_SIZE);
 
     // Consignor Name
-    page.moveDown(fonts.Normal.heightAtSize(8.5));
+    page.moveDown(fonts.Normal.heightAtSize(8.5) - 1.7);
     const owner = info.match(/<b[^>]*>\s*Owner:\s*<\/b[^>]*>\s*<a[^>]*>(.*?)<\/a>/i)?.[1]?.trim();
 
     if (owner)
         drawTextCentered(page, `Consigned by ${owner.toUpperCase()}`, { font: fonts.Normal, size: 8.5 });
 
+    // Hip Number
+    if (/^(\d+)$/.test(hipNumber?.toString() ?? '')) {
+        page.drawText(hipNumber!.toString(), {
+            x: margin.left,
+            y: page.getY() - 1.95 * fonts.Bold.heightAtSize(16),
+            font: fonts.Bold,
+            size: 24,
+        });
+    }
+
     // Horse Name
-    page.moveDown(fonts.Bold.heightAtSize(16) + 2);
+    page.moveDown(fonts.Bold.heightAtSize(16) - 1.75);
     drawTextCentered(page, horse.name!.toUpperCase(), { font: fonts.Bold, size: 16 });
 
     // Racing Statistics
@@ -159,7 +172,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
     const age = parseInt(info.match(/<b[^>]*>\s*Age:\s*<\/b[^>]*>\s*(\d+)/i)?.[1] ?? 0);
 
     if (lifetimeMark || age) {
-        page.moveDown(fonts.Normal.heightAtSize(10) + 1);
+        page.moveDown(fonts.Normal.heightAtSize(10) + 2);
 
         drawTextCentered(page,
             `${lifetimeMark}${fastestWin ? `-'${fastestWin.date!.getFullYear() % 100}` : ''} ${age === 1 ? '(Yearling)' : age > 0 ? `(${ageToText(age)} Year Old)` : ''}`.trim(),
@@ -176,24 +189,24 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 
     drawTextCentered(page,
         `${color ?? ''} ${gender ?? ''} ${foaledDate ? `Foaled ${foaledDate}` : ''}`.trim().replace(/ +/g, ' '),
-        { font: fonts.Bold, size: 8.5 })
-        ;
+        { font: fonts.Bold, size: 8.5 }
+    );
 
     // Horse ID
-    page.moveDown(fonts.Bold.heightAtSize(8.5) + 0.5);
+    page.moveDown(fonts.Bold.heightAtSize(8.5));
     drawTextCentered(page, `Horse ID. ${horse.id}`, { font: fonts.Bold, size: 8.5 });
 
     // Pedigree
-    page.moveTo(margin.left + 2.4, 603);
+    page.moveRight(1);
+    page.moveDown(8.3 * fonts.Bold.heightAtSize(7));
 
     page.drawText(`${horse.name!.toUpperCase()} ${lifetimeMark}`.trim(), {
         font: fonts.Bold,
         size: 7,
     });
 
-    page.moveRight(14.5);
+    page.moveRight(18);
 
-    const centreRowHeight = fonts.Bold.heightAtSize(7) * 1.703297;
     const rowHeight = fonts.Normal.heightAtSize(7) * 1.703297;
     let column = 0, row = 0;
 
@@ -201,14 +214,14 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
     let paragraph: ParagraphBuilder;
 
     const maxWidth = page.getWidth() - margin.right - margin.left;
-    const indent = 28.4;
+    const indent = 18;
 
     for (let i = 0; i < 2 ** (PEDIGREE_GENERATIONS + 1) - 2; i++) {
         const ancestor = pedigree[i];
         const rows = 2 ** (column + 1);
         const rowSpan = 2 ** PEDIGREE_GENERATIONS / rows;
         const offsetRow = Math.round(((rows - 1) / 2) - row);
-        const offsetY = (2 * offsetRow - 1) * rowSpan * rowHeight / 2 + (offsetRow > 0 ? 1 : -1) * (centreRowHeight / 2 + 3.5);
+        const offsetY = (2 * offsetRow - 1) * rowSpan * rowHeight / 2 - (column === 0 ? 0 : 1);
         const columnWidth = (maxWidth / PEDIGREE_GENERATIONS) - (column === 0 ? 14.5 : 0);
 
         let text = `${ancestor.name ?? ''} ${ancestor.lifetimeMark ?? ''}`?.trim() || 'Unknown';
@@ -338,7 +351,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
                 8.5,
                 maxWidth,
                 indent,
-                14
+                indent / 2
             ));
 
             paragraph.add(
@@ -379,8 +392,9 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
         }
     }
 
-    page.moveTo(margin.left, 510);
-    let totalHeight = damInfo.reduce((total, paragraph) => total + paragraph.getHeight(), 0);
+    page.moveLeft(page.getX() - margin.left);
+    page.moveDown(8.9 * fonts.Bold.heightAtSize(7))
+    let totalHeight = damInfo.reduce((total, paragraph) => total + paragraph.getHeight(), 0) + 0.5 * Math.max(0, damInfo.length - 1);
 
     while (page.getY() - totalHeight < margin.bottom) {
         const lowestPriority = Math.min(...damInfo.map(paragraph => paragraph.priority));
@@ -390,7 +404,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 
             if (damInfo[i].priority === lowestPriority) {
                 damInfo.splice(i, 1);
-                totalHeight -= paragraph.getHeight();
+                totalHeight -= paragraph.getHeight() + 0.5;
                 break;
             }
         }
@@ -398,7 +412,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, csrfToken?: st
 
     for (const paragraph of damInfo) {
         paragraph.write(page);
-        page.moveDown(paragraph.getHeight());
+        page.moveDown(paragraph.getHeight() - 0.5);
     }
 }
 
@@ -420,13 +434,13 @@ async function addWatermark(pdfDoc: PDFDocument): Promise<void> {
             x = box.x + box.width;
             y = box.y + box.height;
         } catch (e: any) {
-            x = page.getWidth() - 96.5;
-            y = page.getHeight() - 32.5;
+            x = page.getWidth() - 99;
+            y = page.getHeight() - 34.87;
         }
 
         page.drawImage(logo, {
             x: x - 32,
-            y: y - 32,
+            y: y - 54.2,
             width: 32,
             height: 32,
             opacity: 0.125,
@@ -436,36 +450,42 @@ async function addWatermark(pdfDoc: PDFDocument): Promise<void> {
 
 /**
  * Generates a sale catalog for the given horses.
- * @param {number[]} ids - the ids of the horses.
+ * @param {number[]} ids - the ids of the horses. Accepted formats:  
+ *                          `[id1, id2, ...]`  
+ *                          `[[id1, hip1], [id2, hip2], ...]`
+ * @param {boolean} showHipNumbers - if true, hip numbers will be displayed on each page.
  * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
  */
-export async function generatePedigreeCatalog(ids: number[]): Promise<void> {
+export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumbers: boolean = false): Promise<void> {
     if (await isMobileOS()) {
         console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree catalog generation`, 'color:#406e8e;font-weight:bold;', '');
         return;
     }
 
-    if (ids.length === 1)
-        return await generatePedigreePage(ids[0]);
+    if (ids.length === 1) {
+        const [id, hipNumber] = Array.isArray(ids[0]) ? ids[0] : [ids[0], 1];
+        return await generatePedigreePage(id, showHipNumbers ? Math.max(1, parseInt(hipNumber ?? 0) || 0) : false);
+    }
 
-    const horses: Horse[] = [];
+    const horses: [Horse, string | number][] = [];
     let csrfToken: string | undefined;
 
-    for (const id of ids) {
+    for (let i = 0; i < ids.length; i++) {
+        const [id, hipNumber] = <[number, string | number | undefined]>(Array.isArray(ids[i]) ? ids[i] : [ids[i], i + 1]);
         const horse = await getHorse(id);
         csrfToken ??= await api.getCSRFToken();
 
         if (horse.id !== id || csrfToken == null)
             throw new ReferenceError(`Failed to generate sale catalog: could not parse info for horse ${id}`);
 
-        horses.push(horse);
+        horses.push([horse, Math.max(1, parseInt(hipNumber ?? 0) || i + 1)]);
     }
 
     const pdfDoc = await window.PDFLib.PDFDocument.create();
     const fonts = await loadFonts(pdfDoc);
 
     while (horses.length > 0)
-        await Promise.all(horses.splice(0, 2).map(horse => addPedigreePage(pdfDoc, horse, csrfToken, fonts)));
+        await Promise.all(horses.splice(0, 2).map(([horse, hipNumber]) => addPedigreePage(pdfDoc, horse, showHipNumbers ? hipNumber : undefined, csrfToken, fonts)));
 
     await addWatermark(pdfDoc);
     await downloadFile(await pdfDoc.saveAsBase64({ dataUri: true }), `hnplus-pedigree-catalog-${toTimestamp().replace(/\D/g, '')}.pdf`);
@@ -474,9 +494,10 @@ export async function generatePedigreeCatalog(ids: number[]): Promise<void> {
 /**
  * Generates a sale catalog style pedigree page for the given horse.
  * @param {number} id - the id of the horse.
+ * @param {string | number | boolean} hipNumber - if set, the hip number will be displayed on the pedigree page.
  * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
  */
-export async function generatePedigreePage(id: number): Promise<void> {
+export async function generatePedigreePage(id: number, hipNumber?: string | number | boolean): Promise<void> {
     if (await isMobileOS()) {
         console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree page generation`, 'color:#406e8e;font-weight:bold;', '');
         return;
@@ -488,8 +509,13 @@ export async function generatePedigreePage(id: number): Promise<void> {
     if (horse.id !== id || csrfToken == null)
         throw new ReferenceError(`Failed to generate sale catalog: could not parse info for horse ${id}`);
 
+    if (hipNumber === true)
+        hipNumber = 1;
+    else if (hipNumber === false)
+        hipNumber = undefined;
+
     const pdfDoc = await window.PDFLib.PDFDocument.create();
-    await addPedigreePage(pdfDoc, horse, csrfToken);
+    await addPedigreePage(pdfDoc, horse, hipNumber == null ? undefined : Math.max(1, parseInt(hipNumber ?? 0)), csrfToken);
     await addWatermark(pdfDoc);
     await downloadFile(await pdfDoc.saveAsBase64({ dataUri: true }), `${horse.name}.pdf`);
 }
