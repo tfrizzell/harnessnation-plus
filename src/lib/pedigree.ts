@@ -317,21 +317,20 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
             paragraph.add(' Conference Award Winner.', fonts.Bold);
 
         paragraph.add(` ${getKeyRaceString(dam.races, ageRef)}`.replace(/^\s+$/, ''));
+        const isYearling = (age === 1 && generation === 1);
 
-        if (age === 1 && dam.progeny.length === 1 && dam.progeny[0].id === horse.id)
+        if (isYearling && !dam.progeny.some(p => p.id !== horse.id))
             paragraph.add(' This is her first foal.');
-        else {
-            if (age === 1 && /^(Colt|Gelding)$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && (p.gender === 'male' || p.gender === 'gelding')))
-                paragraph.add(' First colt.', fonts.Bold);
-            else if (age === 1 && /^Filly$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && p.gender === 'female'))
-                paragraph.add(' First filly.', fonts.Bold);
+        else if (isYearling && /^(Colt|Gelding)$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && (p.gender === 'male' || p.gender === 'gelding')))
+            paragraph.add(' First colt.', fonts.Bold);
+        else if (isYearling && /^Filly$/i.test(gender ?? '') && !dam.progeny.some(p => p.id !== horse.id && p.gender === 'female'))
+            paragraph.add(' First filly.', fonts.Bold);
 
-            if (dam.progeny.length > 0) {
-                const foalCount = dam.progeny.length - (generation == 1 && age === 1 ? 1 : 0);
+        if (dam.progeny.length > (generation === 1 ? 1 : 0)) {
+            const foalCount = dam.progeny.length - (isYearling ? 1 : 0);
 
-                paragraph.add(` From ${foalCount}${generation == 1 && age === 1 ? ' previous' : ''} ${foalCount === 1 ? 'foal' : 'foals'}, dam of ${winningProgeny} winners including:`
-                    .replace(/ [01] winners including/, ''));
-            }
+            paragraph.add(` From ${foalCount}${isYearling ? ' previous' : ''} ${foalCount === 1 ? 'foal' : 'foals'}, dam of ${winningProgeny} winners including:`
+                .replace(/ [01] winners including/, ''));
         }
 
         for (let j = 0; j < dam.progeny.length; j++) {
