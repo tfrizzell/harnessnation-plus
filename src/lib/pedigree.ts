@@ -172,7 +172,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     const age = parseInt(info.match(/<b[^>]*>\s*Age:\s*<\/b[^>]*>\s*(\d+)/i)?.[1] ?? 0);
 
     if (lifetimeMark || age) {
-        page.moveDown(fonts.Normal.heightAtSize(10) + 2);
+        page.moveDown(fonts.Normal.heightAtSize(10));
 
         drawTextCentered(page,
             `${lifetimeMark}${fastestWin ? `-'${fastestWin.date!.getFullYear() % 100}` : ''} ${age === 1 ? '(Yearling)' : age > 0 ? `(${ageToText(age)} Year Old)` : ''}`.trim(),
@@ -181,7 +181,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     }
 
     // Horse Info
-    page.moveDown(fonts.Bold.heightAtSize(8.5) + 1);
+    page.moveDown(fonts.Bold.heightAtSize(8.5) + 2.5);
 
     const color = info.match(/<b[^>]*>\s*Coat Color:\s*<\/b[^>]*>\s*(.*?)\s*<br[^>]*>/i)?.[1]?.trim()?.toUpperCase();
     const gender = info.match(/<b[^>]*>\s*Gender:\s*<\/b[^>]*>\s*(\S+)/i)?.[1]?.trim()?.toUpperCase();
@@ -439,7 +439,7 @@ async function addWatermark(pdfDoc: PDFDocument): Promise<void> {
 
         page.drawImage(logo, {
             x: x - 32,
-            y: y - 54.2,
+            y: y - 49.8,
             width: 32,
             height: 32,
             opacity: 0.125,
