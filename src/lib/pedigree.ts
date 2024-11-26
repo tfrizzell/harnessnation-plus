@@ -112,27 +112,31 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         getPedigree(horse.id!, csrfToken),
     ]);
 
-    const ancestors = new Map(pedigree.filter(({ id }) => id).map(horse => [horse.id, horse]));
+    const ancestors = new Map<number | undefined, Ancestor>();
     const damIds: (number | undefined)[] = [];
 
-    for (let i = 0; i < 2 ** (PEDIGREE_GENERATIONS + 1) - 2; i += 2) {
-        await Promise.all(Array(2).fill(0).map(async (_, j) => {
-            const ancestor = ancestors.get((pedigree[i + j] ??= { name: 'Undefined' }).id);
-            const saveInfo = showDamInfo(i + j);
+    for (let i = 0; i < 2 ** (PEDIGREE_GENERATIONS + 1) - 2; i += 3) {
+        await Promise.all(Array(3).fill(0).map(async (_, j) => {
+            const ancestor = ancestors.get(pedigree[i + j]?.id) ?? pedigree[i + j] ?? { name: 'Undefined' };
 
-            if (ancestor?.id == null || (ancestor?.lifetimeMark != null && !saveInfo))
-                return;
+            if (ancestor.id != null) {
+                const races = ancestors.get(ancestor.id)?.races ?? await getRaces(ancestor.id, csrfToken);
 
-            const races = await getRaces(ancestor.id, csrfToken);
-            ancestor.sireId = pedigree[2 * (i + j + 1)]?.id;
-            ancestor.damId = pedigree[2 * (i + j + 1) + 1]?.id;
-            ancestor.lifetimeMark = getLifetimeMark(races);
+                if (!ancestors.has(ancestor.id)) {
+                    ancestor.sireId = pedigree[2 * (i + j + 1)]?.id;
+                    ancestor.damId = pedigree[2 * (i + j + 1) + 1]?.id;
+                    ancestor.lifetimeMark = getLifetimeMark(races);
+                }
 
-            if (saveInfo) {
-                ancestor.progeny = await getDamProgeny(ancestor.id, csrfToken);
-                ancestor.races = races;
-                damIds.push(ancestor.id);
+                if (showDamInfo(i + j) && (ancestor.progeny == null || ancestor.races == null)) {
+                    ancestor.progeny = await getDamProgeny(ancestor.id, csrfToken);
+                    ancestor.races = races;
+                    damIds.push(ancestor.id);
+                }
             }
+
+            if (ancestor.id != null && !ancestors.has(ancestor.id))
+                ancestors.set(ancestor.id, ancestor);
         }));
     }
 
@@ -217,7 +221,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     const indent = 18;
 
     for (let i = 0; i < 2 ** (PEDIGREE_GENERATIONS + 1) - 2; i++) {
-        const ancestor = pedigree[i];
+        const ancestor = ancestors.get(pedigree[i].id) ?? pedigree[i];
         const rows = 2 ** (column + 1);
         const rowSpan = 2 ** PEDIGREE_GENERATIONS / rows;
         const offsetRow = Math.round(((rows - 1) / 2) - row);
@@ -264,8 +268,8 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         const wins = dam.races.getWins();
         let winningProgeny = 0;
 
-        for (let j = 0; j < dam.progeny.length; j += 2) {
-            await Promise.all(Array(2).fill(0).map(async (_, k) => {
+        for (let j = 0; j < dam.progeny.length; j += 3) {
+            await Promise.all(Array(3).fill(0).map(async (_, k) => {
                 const progeny = dam.progeny[j + k];
 
                 if (progeny?.id == null)
@@ -484,7 +488,7 @@ export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumb
     const fonts = await loadFonts(pdfDoc);
 
     while (horses.length > 0)
-        await Promise.all(horses.splice(0, 2).map(([horse, hipNumber]) => addPedigreePage(pdfDoc, horse, showHipNumbers ? hipNumber : undefined, csrfToken, fonts)));
+        await Promise.all(horses.splice(0, 3).map(([horse, hipNumber]) => addPedigreePage(pdfDoc, horse, showHipNumbers ? hipNumber : undefined, csrfToken, fonts)));
 
     await addWatermark(pdfDoc);
     await downloadFile(await pdfDoc.saveAsBase64({ dataUri: true }), `hnplus-pedigree-catalog-${toTimestamp().replace(/\D/g, '')}.pdf`);
