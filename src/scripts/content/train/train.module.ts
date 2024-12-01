@@ -1,6 +1,6 @@
 import { onInstalled, onLoad } from '../../../lib/events.js';
 
-type TrainingGroup = 'main' | 'breeding';
+type TrainingGroup = 'yearlings' | 'older';
 type TrainingInputElement = HTMLInputElement | HTMLSelectElement;
 
 const copiedSettings: Map<TrainingGroup, Map<string, string>> = new Map();
@@ -83,10 +83,10 @@ function addPasteButton(row: Element): void {
 function copySettings(row: Element): void {
     copiedSettings.set(getTrainingGroup(row), getSettings(row));
 
-    row.closest('form')?.querySelector('.horseField.hn-plus-copy-source')?.classList.remove('hn-plus-copy-source');
-    row.closest('.horseField')?.classList.add('hn-plus-copy-source');
+    row.closest('form')?.querySelector(':is(.horseField, .horseFieldYearling).hn-plus-copy-source')?.classList.remove('hn-plus-copy-source');
+    row.closest('.horseField, .horseFieldYearling')?.classList.add('hn-plus-copy-source');
 
-    row.closest('form')?.querySelectorAll('.horseField').forEach((row: Element): void => {
+    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach((row: Element): void => {
         addPasteButton(row);
     });
 }
@@ -94,7 +94,7 @@ function copySettings(row: Element): void {
 function copySettingsToAll(row: Element): void {
     const settings: Map<string, string> = getSettings(row);
 
-    row.closest('form')?.querySelectorAll('.horseField').forEach((row: Element): void => {
+    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach((row: Element): void => {
         pasteSettings(row, settings);
     });
 }
@@ -108,14 +108,14 @@ function getKey(el: TrainingInputElement): string {
 }
 
 function getTrainingGroup(row: Element): TrainingGroup {
-    return row.closest('form')?.classList.contains('olderHorseTrain') ? 'main' : 'breeding';
+    return row.closest('form')?.classList.contains('olderHorseTrain') ? 'older' : 'yearlings';
 }
 
 function getSettings(row: Element): Map<string, string> {
     const settings: Map<string, string> = new Map()
 
     getInputs(row).forEach((el: TrainingInputElement): void => {
-        if (null != el.offsetParent && !/^input(HorseName|FastworkGait)_\d+$/i.test(el.id))
+        if (null != el.offsetParent && !/^input(HorseName|FastworkGait)(Yearling)?_\d+$/i.test(el.id))
             settings.set(getKey(el), el.value);
     });
 
@@ -125,7 +125,7 @@ function getSettings(row: Element): Map<string, string> {
 function handleAutoSelect(e: Event): void {
     const form: Element | null | undefined = (<Element>e.target).closest('.pb-3 > .row')?.querySelector('form');
 
-    form?.querySelectorAll<HTMLSelectElement>('.horseField').forEach((row: HTMLSelectElement): void => {
+    form?.querySelectorAll<HTMLSelectElement>('.horseField, .horseFieldYearling').forEach((row: HTMLSelectElement): void => {
         removeButtons(row);
         addButtons(row);
     });
@@ -155,14 +155,14 @@ function removeButtons(row?: Element | undefined): void {
 const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
     mutations.forEach((mutation: MutationRecord): void => {
         [].forEach.call(mutation.addedNodes, (node: HTMLElement): void => {
-            if (node.classList?.contains('horseField')) {
-                node.querySelector('select.horseNameSelect')?.addEventListener('change', (e: Event): void => {
-                    const el: HTMLSelectElement = <HTMLSelectElement>e.target;
-
-                    if (el.value)
-                        addButtons(node);
-                    else
-                        removeButtons(node)
+            if (node.classList?.contains('horseField') || node.classList?.contains('horseFieldYearling')) {
+                node.querySelectorAll<HTMLSelectElement>('select.horseNameSelect, select.horseNameSelectYearling')?.forEach(select => {
+                    select.addEventListener('change', (e: Event): void => {
+                        if (select.value)
+                            addButtons(node);
+                        else
+                            removeButtons(node)
+                    });
                 });
             }
         });
@@ -174,20 +174,20 @@ observer.observe(window.document, { childList: true, subtree: true });
 onInstalled((): void => {
     font.remove();
     observer.disconnect();
-    document.querySelectorAll('button.autoSelectHorses').forEach((button: Element): void => button.removeEventListener('click', handleAutoSelect));
+    document.querySelectorAll('button.autoSelectHorses, button.autoSelectYearlings').forEach((button: Element): void => button.removeEventListener('click', handleAutoSelect));
     removeButtons();
     copiedSettings.clear();
 });
 
 onLoad((): void => {
     document.querySelectorAll('form').forEach((form: Element): void => {
-        form.querySelectorAll('.horseField').forEach((row: Element): void => {
+        form.querySelectorAll('.horseField, .horseFieldYearliog').forEach((row: Element): void => {
             removeButtons(row);
 
-            if (row.querySelector<HTMLSelectElement>('select.trainingSelect')?.value)
+            if (row.querySelector<HTMLSelectElement>('select.trainingSelect, select.trainingSelectYearling')?.value)
                 addButtons(row);
         });
 
-        form.closest('.pb-3 > .row')?.querySelector('button.autoSelectHorses')?.addEventListener('click', handleAutoSelect);
+        form.closest('.pb-3 > .row')?.querySelectorAll('button.autoSelectHorses, button.autoSelectYearlings').forEach((button: Element): void => button.addEventListener('click', handleAutoSelect));
     });
 });
