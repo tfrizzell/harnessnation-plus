@@ -1,78 +1,82 @@
 import { onInstalled, onLoad } from '../../../lib/events.js';
+import { removeAll } from '../../../lib/utils.js';
 
 type TrainingGroup = 'yearlings' | 'older';
 type TrainingInputElement = HTMLInputElement | HTMLSelectElement;
 
+const materialSymbolsStyleUrl = chrome.runtime.getURL('/public/fonts/MaterialSymbolsOutlined.css');
+const buttonClasses = ['btn', 'p-2', 'btn-sm', 'waves-effect', 'waves-light', 'hn-plus-button'];
 const copiedSettings: Map<TrainingGroup, Map<string, string>> = new Map();
-const buttonClasses: string[] = ['btn', 'p-2', 'btn-sm', 'waves-effect', 'waves-light', 'hn-plus-button'];
-
-const font: HTMLLinkElement = document.createElement('link');
-font.setAttribute('rel', 'stylesheet');
-font.setAttribute('href', chrome.runtime.getURL('/public/fonts/MaterialSymbolsOutlined.css'));
-document.head.append(font);
 
 function addButtons(row: Element): void {
-    const wrapper: HTMLElement = document.createElement('div');
+    const wrapper = document.createElement('div');
     wrapper.classList.add('hn-plus-button-wrapper');
 
-    const copyButton: HTMLButtonElement = document.createElement('button');
+    const copyButton = document.createElement('button');
     copyButton.classList.add(...buttonClasses, 'hn-plus-copy-button');
     copyButton.title = 'Copy Training Settings';
     copyButton.type = 'button';
     wrapper.append(copyButton);
 
-    copyButton.addEventListener('click', (e: Event): void => {
+    copyButton.addEventListener('click', e => {
         e.preventDefault();
         copySettings(row);
     });
 
-    const copyIcon: HTMLElement = document.createElement('span');
+    const copyIcon = document.createElement('span');
     copyIcon.classList.add('material-symbols-outlined');
     copyIcon.innerHTML = 'content_copy';
     copyButton.append(copyIcon);
 
-    const cloneButton: HTMLButtonElement = document.createElement('button');
+    const cloneButton = document.createElement('button');
     cloneButton.classList.add(...buttonClasses, 'hn-plus-clone-button');
     cloneButton.title = 'Copy Training Settings to All Rows';
     cloneButton.type = 'button';
     wrapper.append(cloneButton);
 
-    const cloneIcon: HTMLElement = document.createElement('span');
+    const cloneIcon = document.createElement('span');
     cloneIcon.classList.add('material-symbols-outlined');
     cloneIcon.innerHTML = 'copy_all';
     cloneButton.append(cloneIcon);
 
-    cloneButton.addEventListener('click', (e: Event): void => {
+    cloneButton.addEventListener('click', e => {
         e.preventDefault();
         copySettingsToAll(row);
     });
 
-    row.querySelector<HTMLButtonElement>('button.horseInfoBtn')!.parentNode?.append(wrapper);
+    row.querySelector('button.horseInfoBtn')!.parentNode?.append(wrapper);
 
     if (copiedSettings.has(getTrainingGroup(row)))
         addPasteButton(row);
+}
+
+function addMaterialSymbols(): void {
+    const font = document.createElement('link');
+    font.setAttribute('rel', 'stylesheet');
+    font.setAttribute('href', `${materialSymbolsStyleUrl}?t=${Date.now()}`);
+    document.head.append(font);
 }
 
 function addPasteButton(row: Element): void {
     if (row.querySelector('.hn-plus-button-wrapper .hn-plus-paste-button'))
         return;
 
-    const wrapper: Element | null = row.querySelector('.hn-plus-button-wrapper');
+    const wrapper = row.querySelector('.hn-plus-button-wrapper');
 
-    if (null == wrapper)
+    if (wrapper == null)
         return;
 
-    const pasteButton: HTMLButtonElement = document.createElement('button');
+    const pasteButton = document.createElement('button');
     pasteButton.classList.add(...buttonClasses, 'hn-plus-paste-button');
     pasteButton.title = 'Paste Training Settings';
     pasteButton.type = 'button';
 
-    pasteButton.addEventListener('click', (e: Event): void => {
+    pasteButton.addEventListener('click', e => {
         e.preventDefault();
         pasteSettings(row);
     });
 
-    const pasteIcon: HTMLElement = document.createElement('span');
+    const pasteIcon = document.createElement('span');
     pasteIcon.classList.add('material-symbols-outlined');
     pasteIcon.innerHTML = 'content_paste';
     pasteButton.append(pasteIcon);
@@ -85,18 +89,13 @@ function copySettings(row: Element): void {
 
     row.closest('form')?.querySelector(':is(.horseField, .horseFieldYearling).hn-plus-copy-source')?.classList.remove('hn-plus-copy-source');
     row.closest('.horseField, .horseFieldYearling')?.classList.add('hn-plus-copy-source');
-
-    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach((row: Element): void => {
-        addPasteButton(row);
-    });
+    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach(addPasteButton);
 }
 
 function copySettingsToAll(row: Element): void {
     const settings: Map<string, string> = getSettings(row);
 
-    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach((row: Element): void => {
-        pasteSettings(row, settings);
-    });
+    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach(row => pasteSettings(row, settings));
 }
 
 function getInputs(row: Element): NodeListOf<TrainingInputElement> {
@@ -115,7 +114,7 @@ function getSettings(row: Element): Map<string, string> {
     const settings: Map<string, string> = new Map()
 
     getInputs(row).forEach((el: TrainingInputElement): void => {
-        if (null != el.offsetParent && !/^input(HorseName|FastworkGait)(Yearling)?_\d+$/i.test(el.id))
+        if (el.offsetParent != null && !/^input(HorseName|FastworkGait)(Yearling)?_\d+$/i.test(el.id))
             settings.set(getKey(el), el.value);
     });
 
@@ -123,25 +122,25 @@ function getSettings(row: Element): Map<string, string> {
 }
 
 function handleAutoSelect(e: Event): void {
-    const form: Element | null | undefined = (<Element>e.target).closest('.pb-3 > .row')?.querySelector('form');
+    const form = (<Element>e.target).closest('.pb-3 > .row')?.querySelector('form');
 
-    form?.querySelectorAll<HTMLSelectElement>('.horseField, .horseFieldYearling').forEach((row: HTMLSelectElement): void => {
+    form?.querySelectorAll('.horseField, .horseFieldYearling').forEach(row => {
         removeButtons(row);
         addButtons(row);
     });
 }
 
 function pasteSettings(row: Element, settings: Map<string, string> | undefined | null = null): void {
-    if (null === settings)
+    if (settings === null)
         return pasteSettings(row, copiedSettings.get(getTrainingGroup(row)));
 
-    if (null == settings)
+    if (settings == null)
         return;
 
-    getInputs(row).forEach((el: TrainingInputElement): void => {
-        const key: string = getKey(el);
+    getInputs(row).forEach(el => {
+        const key = getKey(el);
 
-        if (null != el.offsetParent && settings.has(key)) {
+        if (el.offsetParent != null && settings.has(key)) {
             el.value = settings.get(key)!;
             el.dispatchEvent(new Event('change'));
         }
@@ -149,12 +148,19 @@ function pasteSettings(row: Element, settings: Map<string, string> | undefined |
 }
 
 function removeButtons(row?: Element | undefined): void {
-    (row ?? document).querySelectorAll<HTMLButtonElement>('.hn-plus-button-wrapper, .hn-plus-button').forEach((el: HTMLButtonElement): void => el.remove());
+    if (row != null)
+        row.querySelectorAll('.hn-plus-button-wrapper, .hn-plus-button').forEach(el => el.remove());
+    else
+        removeAll('.hn-plus-button-wrapper', '.hn-plus-button');
 }
 
-const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
-    mutations.forEach((mutation: MutationRecord): void => {
-        [].forEach.call(mutation.addedNodes, (node: HTMLElement): void => {
+function removeMaterialSymbols(): void {
+    removeAll(`link[href*="${materialSymbolsStyleUrl}"]`);
+}
+
+const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+        [].forEach.call(mutation.addedNodes, (node: HTMLElement) => {
             if (node.classList?.contains('horseField') || node.classList?.contains('horseFieldYearling')) {
                 node.querySelectorAll<HTMLSelectElement>('select.horseNameSelect, select.horseNameSelectYearling')?.forEach(select => {
                     select.addEventListener('change', (e: Event): void => {
@@ -169,21 +175,17 @@ const observer: MutationObserver = new MutationObserver((mutations: MutationReco
     });
 });
 
-observer.observe(window.document, { childList: true, subtree: true });
+observer.observe(document, { childList: true, subtree: true });
+onInstalled(() => observer.disconnect());
 
-onInstalled((): void => {
-    font.remove();
-    observer.disconnect();
-    document.querySelectorAll('button.autoSelectHorses, button.autoSelectYearlings').forEach((button: Element): void => button.removeEventListener('click', handleAutoSelect));
-    removeButtons();
+onLoad(() => {
     copiedSettings.clear();
-});
+    removeButtons();
+    removeMaterialSymbols();
+    addMaterialSymbols();
 
-onLoad((): void => {
-    document.querySelectorAll('form').forEach((form: Element): void => {
-        form.querySelectorAll('.horseField, .horseFieldYearliog').forEach((row: Element): void => {
-            removeButtons(row);
-
+    document.querySelectorAll('form').forEach(form => {
+        form.querySelectorAll('.horseField, .horseFieldYearliog').forEach(row => {
             if (row.querySelector<HTMLSelectElement>('select.trainingSelect, select.trainingSelectYearling')?.value)
                 addButtons(row);
         });

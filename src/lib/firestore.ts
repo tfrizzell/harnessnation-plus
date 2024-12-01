@@ -1,8 +1,8 @@
-import { FirebaseApp, initializeApp } from './firebasejs/firebase-app.js';
+import { initializeApp } from './firebasejs/firebase-app.js';
 import { clearIndexedDbPersistence, enableIndexedDbPersistence, Firestore, getFirestore as initFirestore, terminate } from './firebasejs/firebase-firestore.js';
 try { self.window = self; } catch (e: any) {}
 
-const firebase: FirebaseApp = initializeApp({
+const firebase = initializeApp({
     apiKey: 'AIzaSyDKTO4YNgByizsu7px3a81-F-1BKkHoXYY',
     authDomain: 'harnessnation-plus.firebaseapp.com',
     projectId: 'harnessnation-plus',
@@ -17,12 +17,12 @@ export async function clearCache(firestore: Firestore): Promise<void> {
 }
 
 export async function connect(): Promise<Firestore> {
-    const firestore: Firestore = initFirestore(firebase);
+    const firestore = initFirestore(firebase);
     await enableIndexedDbPersistence(firestore, { forceOwnership: true });
     return firestore;
 }
 
-const firestore: Firestore = initFirestore(firebase);
+const firestore = initFirestore(firebase);
 enableIndexedDbPersistence(firestore, { forceOwnership: true });
 
 export function singleton(): Firestore {

@@ -17,12 +17,12 @@ export function extend(selector: string, script: string, { indent, saveSearch, s
     if (!selector.match(/^\s*[''`]/))
         selector = `'${selector.replace(/'/g, `\\'`)}'`;
 
-    const table: RegExpMatchArray | null = script.match(new RegExp(`\\$\\(${regexEscape(selector)}\\)\\s*\\.DataTable\\s*\\((\\s*\\{(.*?)\\}\\s*)?\\)`, 'is'));
+    const table = script.match(new RegExp(`\\$\\(${regexEscape(selector)}\\)\\s*\\.DataTable\\s*\\((\\s*\\{(.*?)\\}\\s*)?\\)`, 'is'));
 
     if (table == null)
         return Promise.resolve(script);
 
-    const tableIndent: string = (table[2].match(/^[\r\n]*(\s*)/)?.[1] ?? '').replace(/^(\t|    )/, '');
+    const tableIndent = (table[2].match(/^[\r\n]*(\s*)/)?.[1] ?? '').replace(/^(\t|    )/, '');
 
     return Promise.resolve(script.replace(table[0], `$(${selector}).DataTable({
     // HarnessNation
@@ -37,7 +37,7 @@ ${JSON.stringify({ saveState, stateDuration }, null, 4).replace(/(^\{[\r\n]*|[\r
 
 export async function getSettings(key: string): Promise<DataTablesOptions | undefined> {
     const settings: Record<string, any> = await chrome.storage.sync.get('dt');
-    const { enabled, duration, mode }: DataTablesSettings = <DataTablesSettings>(key?.split('.').reduce<Record<string, any> | undefined>((data: Record<string, any> | undefined, key: string): object | undefined => data?.[key], settings.dt) ?? {});
+    const { enabled, duration, mode } = <DataTablesSettings>(key?.split('.').reduce<Record<string, any> | undefined>((data: Record<string, any> | undefined, key: string): object | undefined => data?.[key], settings.dt) ?? {});
 
     if (!enabled)
         return undefined;

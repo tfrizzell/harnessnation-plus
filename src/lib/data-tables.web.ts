@@ -5,12 +5,12 @@ Object.assign(window, {
             if (!selector.match(/^\s*[''`]/))
                 selector = `'${selector.replace(/'/g, `\\'`)}'`;
 
-            const table: RegExpMatchArray | null = script.match(new RegExp(`\\$\\(${window.regexEscape(selector)}\\)\\s*\\.DataTable\\s*\\((\\s*\\{(.*?)\\}\\s*)?\\)`, 'is'));
+            const table = script.match(new RegExp(`\\$\\(${window.regexEscape(selector)}\\)\\s*\\.DataTable\\s*\\((\\s*\\{(.*?)\\}\\s*)?\\)`, 'is'));
 
             if (table == null)
                 return Promise.resolve(script);
 
-            const tableIndent: string = (table[2].match(/^[\r\n]*(\s*)/)?.[1] ?? '').replace(/^(\t|    )/, '');
+            const tableIndent = (table[2].match(/^[\r\n]*(\s*)/)?.[1] ?? '').replace(/^(\t|    )/, '');
 
             return Promise.resolve(script.replace(table[0], `$(${selector}).DataTable({
             // HarnessNation

@@ -1,7 +1,7 @@
 {
   "name": "harnessnation-plus",
   "description": "Enhance your HarnessNation experience with these client-side add-ons and fixes!",
-  "version": "3.8.1",
+  "version": "3.9.0",
   "repository": "https://github.com/tfrizzell/harnessnation-plus.git",
   "author": "Trevor Frizzell <trevor@frizzell.ca>",
   "license": "MIT",
@@ -23,11 +23,13 @@
     "watch": "tsc --watch --sourceMap"
   },
   "devDependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
     "@types/chrome": "^0.0.188",
     "@types/jest": "^27.5.1",
-    "@types/react": "^18.3.11",
-    "@types/react-dom": "^18.3.1",
+    "@types/node": "ts4.7",
+    "blob-polyfill": "^9.0.20240710",
     "del": "^6.1.1",
+    "fake-indexeddb": "^6.0.0",
     "firebase": "9.6.1",
     "fs": "^0.0.1-security",
     "gulp": "^4.0.2",
@@ -36,8 +38,9 @@
     "gulp-zip": "^5.1.0",
     "jest": "^28.1.0",
     "jest-chrome": "^0.7.2",
-    "jest-environment-jsdom": "^28.1.0",
+    "jest-environment-jsdom": "^29.7.0",
     "path": "^0.12.7",
+    "pdf-lib": "^1.17.1",
     "ts-jest": "^28.0.3",
     "typescript": "^4.7.2"
   },

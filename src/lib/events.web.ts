@@ -5,7 +5,27 @@ Object.assign(window, {
             window.addEventListener(window.EventType.Installed, callback, { once: true, ...options });
         },
         onLoad: function Events__onLoad(callback: EventListenerOrEventListenerObject, options?: AddEventListenerOptions | boolean): void {
-            window.addEventListener('DOMContentLoaded', callback, options);
+            if (document.readyState === 'loading') {
+                window.addEventListener('DOMContentLoaded', callback, options);
+                return;
+            }
+        
+            const event = new Event('DOMContentLoaded', {
+                bubbles: true,
+                cancelable: false,
+                composed: false,
+            });
+        
+            Object.defineProperties(event, {
+                srcElement: {
+                    get() { return document; }
+                },
+                target: {
+                    get() { return document; }
+                },
+            });
+        
+            (callback as (this: Window, ev: Event) => void).call(window, event);
         },
     },
     EventType: {

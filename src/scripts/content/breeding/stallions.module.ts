@@ -2,25 +2,29 @@ import { ActionType, sendAction } from '../../../lib/actions.js';
 import { EventType, onInstalled, onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
 import { StallionRegistrySettings } from '../../../lib/settings.js';
-import { sleep } from '../../../lib/utils.js';
+import { removeAll, sleep } from '../../../lib/utils.js';
+
+const searchScriptUrl = chrome.runtime.getURL('/scripts/content/breeding/stallions.search.js');
+const tooltolScriptUrl = chrome.runtime.getURL('/public/components/tooltip.js');
+let controller: AbortController;
 
 async function addExportButtons(): Promise<void> {
-    const exportRunning: boolean = (await chrome.storage.local.get('breeding.export'))?.['breeding.export'] ?? false;
+    const exportRunning = (await chrome.storage.local.get('breeding.export'))?.['breeding.export'] ?? false;
 
-    document.querySelectorAll('.buyHorsePagination .pagination').forEach((el: Element): void => {
-        const wrapper: HTMLDivElement = document.createElement('div');
+    document.querySelectorAll('.buyHorsePagination .pagination').forEach(el => {
+        const wrapper = document.createElement('div');
         wrapper.classList.add('hn-plus-button-wrapper');
         el.parentNode?.insertBefore(wrapper, el);
 
-        const button: HTMLButtonElement = document.createElement('button');
+        const button = document.createElement('button');
         button.classList.add('hn-plus-button');
         button.disabled = exportRunning;
         button.textContent = 'Report (CSV)';
         button.type = 'button';
 
-        button.addEventListener('click', async (e: Event): Promise<void> => {
+        button.addEventListener('click', async e => {
             e.preventDefault();
-            const message: NodeJS.Timeout = setTimeout(() => alert('Your stallion report is being generated in the background and will be downloaded automatically upon completion. You are free to continue browsing without impacting this process.'), 50);
+            const message = setTimeout(() => alert('Your stallion report is being generated in the background and will be downloaded automatically upon completion. You are free to continue browsing without impacting this process.'), 50);
 
             try {
                 await exportReport(document.querySelector('#saleTable_wrapper')?.innerHTML ?? '');
@@ -32,7 +36,7 @@ async function addExportButtons(): Promise<void> {
             }
         });
 
-        const tooltip: HNPlusTooltipElement = document.createElement('hn-plus-tooltip') as HNPlusTooltipElement;
+        const tooltip = document.createElement('hn-plus-tooltip');
         tooltip.textContent = 'Generate a CSV export of all stallions listed in this table. This report includes data from their progeny report and may take several minutes to generate.';
         wrapper.append(button, tooltip);
     });
@@ -42,42 +46,41 @@ async function addExportButtons(): Promise<void> {
             return;
 
         if (changes['breeding.export']?.newValue)
-            document.querySelectorAll('.hn-plus-button').forEach((el: Element): void => { (<HTMLButtonElement>el).disabled = true; });
+            document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = true; });
         else
-            document.querySelectorAll('.hn-plus-button').forEach((el: Element): void => { (<HTMLButtonElement>el).disabled = false; });
+            document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = true; });
     }
 
     chrome.storage.onChanged.addListener(handleStateChange);
-
-    onInstalled((): void => {
-        chrome.storage.onChanged.removeListener(handleStateChange);
-        document.querySelectorAll('.hn-plus-button-wrapper').forEach((el: Element): void => { el.remove(); });
-    });
+    onInstalled(() => chrome.storage.onChanged.removeListener(handleStateChange));
 }
 
 async function addScripts(): Promise<void> {
-    const tooltip: HTMLScriptElement = document.createElement('script');
-    tooltip.setAttribute('type', 'module');
-    tooltip.setAttribute('src', `${chrome.runtime.getURL('/public/components/tooltip.js')}?t=${Date.now()}`);
-    document.body.append(tooltip);
+    if (document.querySelector(`script[src*="${tooltolScriptUrl}"]`) == null) {
+        const tooltip = document.createElement('script');
+        tooltip.setAttribute('type', 'module');
+        tooltip.setAttribute('src', `${tooltolScriptUrl}?t=${Date.now()}`);
+        document.body.append(tooltip);
+    }
 
-    const script: HTMLScriptElement = document.createElement('script');
-    script.setAttribute('type', 'module');
-    script.setAttribute('src', `${chrome.runtime.getURL('/scripts/content/breeding/stallions.search.js')}?t=${Date.now()}`);
-    script.setAttribute('class', 'hn-plus-script');
-    document.body.append(script);
+    if (document.querySelector(`script[src*="${searchScriptUrl}"]`) == null) {
+        const script = document.createElement('script');
+        script.setAttribute('type', 'module');
+        script.setAttribute('src', `${searchScriptUrl}?t=${Date.now()}`);
+        document.body.append(script);
+    }
 }
 
 async function addStallionScores(): Promise<void> {
-    const cells: HTMLAnchorElement[] = Array.from(document.querySelectorAll('#saleTable > tbody > tr > td:nth-child(1)'));
-    const horses: Horse[] | undefined = (await sendAction(ActionType.GetHorses)).data;
+    const cells = Array.from(document.querySelectorAll<HTMLTableCellElement>('#saleTable > tbody > tr > td:nth-child(1)'));
+    const horses = (await sendAction(ActionType.GetHorses)).data;
 
     if (horses == null)
         return;
 
     for (const cell of cells) {
-        const id: number | undefined = cell.innerHTML.match(/\/horse\/(\d+)/)?.slice(1)?.map(parseInt)?.[0];
-        const horse: Horse | undefined = horses.find(horse => horse.id === id);
+        const id = cell.innerHTML.match(/\/horse\/(\d+)/)?.slice(1)?.map(parseInt)?.[0];
+        const horse = horses.find(horse => horse.id === id);
 
         if (horse?.stallionScore?.value == null)
             continue;
@@ -88,38 +91,11 @@ async function addStallionScores(): Promise<void> {
 }
 
 async function bindBloodlineSearch(): Promise<void> {
-    const filter: HTMLElement = document.querySelector('#saleTable_filter')!;
-    const search: HTMLInputElement = filter.querySelector('input[type="search"]')!;
-    let controller: AbortController;
-
-    async function handleSearch(): Promise<void> {
-        try {
-            controller?.abort();
-            controller = new AbortController();
-
-            await sleep(200, controller.signal);
-            const settings: StallionRegistrySettings = (await chrome.storage.sync.get('stallions'))?.stallions?.registry ?? {};
-
-            window.dispatchEvent(new CustomEvent(EventType.BloodlineSearch, {
-                detail: settings.bloodlineSearch
-                    ? (await sendAction(ActionType.SearchHorses, { term: search.value, maxGenerations: settings.maxGenerations })).data
-                    : search.value,
-            }));
-        } catch (e: any) {
-            if (e !== 'Aborted by the user')
-                throw e;
-        }
-    }
-
-    search.addEventListener('input', handleSearch);
-
-    onInstalled(() => {
-        search.removeEventListener('input', handleSearch);
-    });
+    document.querySelector('#saleTable_filter input[type="search"]')?.addEventListener('input', handleSearch);
 }
 
 async function exportReport(html: string): Promise<void> {
-    const pattern: RegExp = />\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
+    const pattern = />\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
     const ids: number[] = [];
     let id: string | undefined;
 
@@ -129,20 +105,45 @@ async function exportReport(html: string): Promise<void> {
     await sendAction(ActionType.ExportStallionReport, { ids, headers: { 1: 'Stallion' } });
 }
 
+async function handleSearch(e: Event): Promise<void> {
+    const search = <HTMLInputElement>e.target;
+
+    try {
+        controller?.abort();
+        controller = new AbortController();
+
+        await sleep(200, controller.signal);
+        const settings: StallionRegistrySettings = (await chrome.storage.sync.get('stallions'))?.stallions?.registry ?? {};
+
+        window.dispatchEvent(new CustomEvent(EventType.BloodlineSearch, {
+            detail: settings.bloodlineSearch
+                ? (await sendAction(ActionType.SearchHorses, { term: search.value, maxGenerations: settings.maxGenerations })).data
+                : search.value,
+        }));
+    } catch (e: any) {
+        if (e !== 'Aborted by the user')
+            throw e;
+    }
+}
+
 async function removeExportButtons(): Promise<void> {
-    document.querySelectorAll('.hn-plus-button-wrapper').forEach(el => el.remove());
+    removeAll('.hn-plus-button-wrapper');
 }
 
 async function removeScripts(): Promise<void> {
-    document.querySelectorAll('.hn-plus-script').forEach(el => el.remove());
+    removeAll(`script[src*="${searchScriptUrl}"]`, `script[src*="${tooltolScriptUrl}"]`)
 }
 
 async function removeStallionScores(): Promise<void> {
-    document.querySelectorAll('.hn-plus-stallion-score').forEach(el => el.remove());
+    removeAll('.hn-plus-stallion-score');
+}
+
+async function unbindBloodlineSearch(): Promise<void> {
+    document.querySelector('#saleTable_filter input[type="search"]')?.removeEventListener('input', handleSearch);
 }
 
 async function updateHorses(html: string): Promise<void> {
-    const pattern: RegExp = /<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?(?:Unknown\s*x\s*Unknown|<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>\s*x\s*<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>)/gs;
+    const pattern = /<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?(?:Unknown\s*x\s*Unknown|<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>\s*x\s*<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>)/gs;
     const horses: { [key: string]: Horse } = {};
     let data;
 
@@ -166,43 +167,36 @@ async function updateHorses(html: string): Promise<void> {
     await sendAction(ActionType.SaveHorses, Object.values(horses));
 }
 
-const observer: MutationObserver = new MutationObserver((mutations: MutationRecord[]): void => {
-    mutations.forEach((mutation: MutationRecord): void => {
+const observer: MutationObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
         [].forEach.call(mutation.addedNodes, (node: Element) => {
             if (node.id === 'saleTable_wrapper') {
-                removeExportButtons();
                 addExportButtons();
-
-                removeStallionScores();
                 addStallionScores();
-
                 bindBloodlineSearch();
-                updateHorses((mutation.target as HTMLElement).innerHTML);
+                updateHorses((<HTMLElement>mutation.target).innerHTML);
             }
         });
     });
 });
 
-observer.observe(window.document, { childList: true, subtree: true });
+observer.observe(document, { childList: true, subtree: true });
 
-onInstalled((): void => {
+onInstalled(() => {
     observer.disconnect();
-    removeStallionScores();
-    removeExportButtons();
-    removeScripts();
+    unbindBloodlineSearch();
 });
 
-onLoad((): void => {
+onLoad(() => {
+    unbindBloodlineSearch();
+    removeStallionScores();
+    removeExportButtons();
     removeScripts();
     addScripts();
 
     if (document.querySelector('#saleTable_wrapper')) {
-        removeExportButtons();
         addExportButtons();
-
-        removeStallionScores();
         addStallionScores();
-
         bindBloodlineSearch();
         updateHorses(document.querySelector('#saleTable_wrapper')!.innerHTML);
     }

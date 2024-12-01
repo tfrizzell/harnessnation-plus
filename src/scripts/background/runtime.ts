@@ -12,12 +12,12 @@ declare type ContentScript = {
     exclude_globs?: string[] | undefined;
 }
 
-chrome.runtime.onStartup.addListener(async (): Promise<void> => {
-    await chrome.storage.local.clear();
+chrome.runtime.onStartup.addListener(async () => {
+    // await chrome.storage.local.clear();
 });
 
-chrome.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledDetails): Promise<void> => {
-    await chrome.storage.local.clear();
+chrome.runtime.onInstalled.addListener(async details => {
+    // await chrome.storage.local.clear();
 
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL || await chrome.storage.sync.getBytesInUse() < 1)
         await chrome.storage.sync.set(settings);
@@ -25,8 +25,8 @@ chrome.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledD
     if (details.reason !== chrome.runtime.OnInstalledReason.UPDATE)
         return;
 
-    chrome.runtime.getManifest().content_scripts?.forEach(async ({ css = [], js = [], matches = [] }: ContentScript): Promise<void> => {
-        const tabs: chrome.tabs.Tab[] = await chrome.tabs.query({ url: matches });
+    chrome.runtime.getManifest().content_scripts?.forEach(async ({ css = [], js = [], matches = [] }) => {
+        const tabs = await chrome.tabs.query({ url: matches });
 
         for (const tab of tabs) {
             setTimeout(async () => {

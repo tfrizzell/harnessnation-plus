@@ -1,20 +1,48 @@
 import { Timestamp } from 'firebase/firestore';
+import { Race, RaceList } from './horses';
 
 export type DownloadOptions = {
     contentType?: string;
     saveAs?: boolean
+};
 
+export function ageToText(age: number): string {
+    return [
+        'Zero',
+        'One',
+        'Two',
+        'Three',
+        'Four',
+        'Five',
+        'Six',
+        'Seven',
+        'Eight',
+        'Nine',
+        'Ten',
+        'Eleven',
+        'Twelve',
+        'Thirteen',
+        'Fourteen',
+        'Fifteen',
+        'Sixteen',
+        'Seventeen',
+        'Eighteen',
+        'Nineteen',
+        'Twenty',
+        'Twenty-One',
+    ][age] ?? age.toString();
 }
+
 export async function downloadFile(file: string | Blob, filename: string, options: DownloadOptions = {}): Promise<void> {
     if (typeof file === 'string' && /^data:([^;]+);/i.test(file)) {
         const [contentType, encoding, content] = /^data:([^;]+);(?:([^,]+),)?(.*)$/.exec(file)!.slice(1);
-        return await downloadFile('base64' === encoding ? window.atob(content) : content, filename, { contentType, ...options });
+        return await downloadFile(encoding === 'base64' ? window.atob(content) : content, filename, { contentType, ...options });
     }
 
     options ??= {}
 
     if (!options.contentType?.trim()) {
-        switch (filename.split('.')[-1]) {
+        switch (filename.split('.')?.pop()?.toLowerCase()) {
             case 'csv':
                 options.contentType = 'text/csv';
                 break;
@@ -25,6 +53,10 @@ export async function downloadFile(file: string | Blob, filename: string, option
 
             case 'json':
                 options.contentType = 'application/json';
+                break;
+
+            case 'pdf':
+                options.contentType = 'application/pdf';
                 break;
 
             case 'xls':
@@ -43,7 +75,7 @@ export async function downloadFile(file: string | Blob, filename: string, option
 
     let revokeObjectUrl = false;
 
-    if (null != window.URL?.createObjectURL) {
+    if (window.URL?.createObjectURL != null) {
         if (!(file instanceof Blob))
             file = new Blob([file], { type: options.contentType });
 
@@ -53,7 +85,7 @@ export async function downloadFile(file: string | Blob, filename: string, option
         file = await new Promise<string>(resolve => {
             const reader = new FileReader();
 
-            reader.addEventListener('loadend', () => {
+            reader.addEventListener('load', () => {
                 resolve(<string>reader.result);
             });
 
@@ -68,12 +100,51 @@ export async function downloadFile(file: string | Blob, filename: string, option
             filename,
             saveAs: options.saveAs ?? false,
         });
-
-        await chrome.downloads.search({ filename });
     } finally {
         if (revokeObjectUrl)
             window.URL.revokeObjectURL(file);
     }
+}
+
+export function formatMark(race: Race | undefined, age?: number): string {
+    return !race ? '' : [
+        race.gait?.charAt(0)?.toLocaleLowerCase(),
+        age,
+        secondsToTime(race.time!),
+    ].filter(m => m).join(',');
+}
+
+export function formatOrdinal(value: number): string {
+    const englishOrdinalRules = new Intl.PluralRules('en', { type: 'ordinal' })
+    const category = englishOrdinalRules.select(value)
+
+    switch (category) {
+        case 'one': {
+            return `${value}st`
+        }
+
+        case 'two': {
+            return `${value}nd`
+        }
+
+        case 'few': {
+            return `${value}rd`
+        }
+
+        default: {
+            return `${value}th`
+        }
+    }
+}
+
+export function getLifetimeMark(races: RaceList): string {
+    const race = races.findFastestWin();
+    return !race ? '' : formatMark(race, races.findAge(race));
+}
+
+export async function isMobileOS(): Promise<boolean> {
+    const platform = await chrome.runtime.getPlatformInfo();
+    return platform.os === 'android';
 }
 
 export function parseCurrency(value: string | number): number {
@@ -92,11 +163,31 @@ export function regexEscape(value: string): string {
     return value?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function sleep(value: number, abortSignal: AbortSignal | null = null): Promise<void> {
-    return new Promise((resolve: (value: void | PromiseLike<void>) => void, reject: (reason?: any) => void): void => {
-        const timeout: NodeJS.Timeout = setTimeout(resolve, value);
+export function removeAll(...selectors: string[]): void {
+    document.querySelectorAll(selectors.join(', ')).forEach((el: Element) => el.remove());
+}
 
-        abortSignal?.addEventListener('abort', (): void => {
+export function seasonsBetween(from: Date, to: Date): number {
+    const start = new Date(from);
+    start.setDate(1);
+    start.setMonth(from.getMonth() - (from.getMonth() % 3));
+
+    const end = new Date(to);
+    end.setDate(1);
+    end.setMonth(to.getMonth() - (to.getMonth() % 3));
+
+    return 4 * (end.getFullYear() - start.getFullYear()) + (end.getMonth() - start.getMonth()) / 3;
+}
+
+export function secondsToTime(seconds: number): string {
+    return `${Math.floor(seconds / 60)}:${Number(seconds % 60).toFixed(2).padStart(5, '0')}`;
+}
+
+export function sleep(value: number, abortSignal: AbortSignal | null = null): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(resolve, value);
+
+        abortSignal?.addEventListener('abort', () => {
             clearTimeout(timeout);
             reject('Aborted by the user');
         });

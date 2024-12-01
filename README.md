@@ -1,7 +1,7 @@
 [![build and test](https://github.com/tfrizzell/harnessnation-plus/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/tfrizzell/harnessnation-plus/actions/workflows/build-and-test.yml)
 
 # harnessnation-plus
-HarnessNation+ Extension - Enhance your HarnessNation experience with these client-side add-ons and fixes!
+**HarnessNation+** Extension - Enhance your [HarnessNation](https://www.harnessnation.com) experience with a convenient browser extension!
 
 ## Features
 
@@ -24,3 +24,7 @@ See the [features page on our wiki](https://github.com/tfrizzell/harnessnation-p
 ### <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Chromium_Logo.svg/64px-Chromium_Logo.svg.png" height="30" valign="text-bottom" /> &nbsp; Other Chromium-based Browsers
 
 Other Chromium-based browsers, such as Brave, Opera, and Vivaldi are compatible with the [Google Chrome version of **HarnessNation+**](#google-chrome)
+
+## Features
+
+See the [version history page on our wiki](https://github.com/tfrizzell/harnessnation-plus/wiki/Version-History) for information about the progression of **HarnessNation+** over time.
