@@ -1,5 +1,4 @@
 import './pdf-lib/pdf-lib.min.js';
-import './pdf-lib/fontkit.umd.min.js';
 import { PDFDocument, PDFFont } from 'pdf-lib/ts3.4/es';
 
 import { PDFParagraphBuilder } from './pdf-lib/builder.js';
@@ -150,7 +149,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     page.setFontSize(DEFAULT_FONT_SIZE);
 
     // Consignor Name
-    page.moveDown(fonts.Normal.heightAtSize(8.5) - 1.7);
+    page.moveDown(fonts.Normal.heightAtSize(8.5));
     const owner = info.match(/<b[^>]*>\s*Owner:\s*<\/b[^>]*>\s*<a[^>]*>(.*?)<\/a>/i)?.[1]?.trim();
 
     if (owner)
@@ -167,7 +166,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     }
 
     // Horse Name
-    page.moveDown(fonts.Bold.heightAtSize(16) - 1.75);
+    page.moveDown(fonts.Bold.heightAtSize(16) + 1);
     drawTextCentered(page, horse.name!.toUpperCase(), { font: fonts.Bold, size: 16 });
 
     // Racing Statistics
@@ -176,7 +175,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     const age = parseInt(info.match(/<b[^>]*>\s*Age:\s*<\/b[^>]*>\s*(\d+)/i)?.[1] ?? 0);
 
     if (lifetimeMark || age) {
-        page.moveDown(fonts.Normal.heightAtSize(10));
+        page.moveDown(fonts.Normal.heightAtSize(10) + 2);
 
         drawTextCentered(page,
             `${lifetimeMark}${fastestWin ? `-'${fastestWin.date!.getFullYear() % 100}` : ''} ${age === 1 ? '(Yearling)' : age > 0 ? `(${ageToText(age)} Year Old)` : ''}`.trim(),
@@ -185,7 +184,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     }
 
     // Horse Info
-    page.moveDown(fonts.Bold.heightAtSize(8.5) + 2.5);
+    page.moveDown(fonts.Bold.heightAtSize(8.5) + 4);
 
     const color = info.match(/<b[^>]*>\s*Coat Color:\s*<\/b[^>]*>\s*(.*?)\s*<br[^>]*>/i)?.[1]?.trim()?.toUpperCase();
     const gender = info.match(/<b[^>]*>\s*Gender:\s*<\/b[^>]*>\s*(\S+)/i)?.[1]?.trim()?.toUpperCase();
@@ -197,12 +196,13 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     );
 
     // Horse ID
-    page.moveDown(fonts.Bold.heightAtSize(8.5));
+    page.moveDown(fonts.Bold.heightAtSize(8.5) + 2);
     drawTextCentered(page, `Horse ID. ${horse.id}`, { font: fonts.Bold, size: 8.5 });
 
     // Pedigree
+    const rowHeight = fonts.Normal.heightAtSize(7) * 2.05;
     page.moveRight(1);
-    page.moveDown(8.3 * fonts.Bold.heightAtSize(7));
+    page.moveDown(4.878 * rowHeight);
 
     page.drawText(`${horse.name!.toUpperCase()} ${lifetimeMark}`.trim(), {
         font: fonts.Bold,
@@ -211,11 +211,9 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
     page.moveRight(18);
 
-    const rowHeight = fonts.Normal.heightAtSize(7) * 1.703297;
-    let column = 0, row = 0;
-
     const damInfo: ParagraphBuilder[] = [];
     let paragraph: ParagraphBuilder;
+    let column = 0, row = 0;
 
     const maxWidth = page.getWidth() - margin.right - margin.left;
     const indent = 18;
@@ -396,8 +394,8 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     }
 
     page.moveLeft(page.getX() - margin.left);
-    page.moveDown(8.9 * fonts.Bold.heightAtSize(7))
-    let totalHeight = damInfo.reduce((total, paragraph) => total + paragraph.getHeight(), 0) + 0.5 * Math.max(0, damInfo.length - 1);
+    page.moveDown(5.25 * rowHeight);
+    let totalHeight = damInfo.reduce((total, paragraph) => total + paragraph.getHeight(), 0) + 1 * Math.max(0, damInfo.length - 1);
 
     while (page.getY() - totalHeight < margin.bottom) {
         const lowestPriority = Math.min(...damInfo.map(paragraph => paragraph.priority));
@@ -407,7 +405,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
             if (damInfo[i].priority === lowestPriority) {
                 damInfo.splice(i, 1);
-                totalHeight -= paragraph.getHeight() + 0.5;
+                totalHeight -= paragraph.getHeight() + 1;
                 break;
             }
         }
@@ -415,7 +413,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
     for (const paragraph of damInfo) {
         paragraph.write(page);
-        page.moveDown(paragraph.getHeight() - 0.5);
+        page.moveDown(paragraph.getHeight() + 1);
     }
 }
 
@@ -676,22 +674,20 @@ function isKeyRace(race: Race, includeOpen: boolean = false, includePreferred: b
 }
 
 async function loadFonts(pdfDoc: PDFDocument): Promise<FontMap> {
-    pdfDoc.registerFontkit(window.fontkit);
-
     return await Promise.all([
-        fetch(chrome.runtime.getURL('/lib/pdf-lib/fonts/arial.ttf')).then(res => res.arrayBuffer()).then(font => pdfDoc!.embedFont(font, { subset: true })),
-        fetch(chrome.runtime.getURL('/lib/pdf-lib/fonts/arialbd.ttf')).then(res => res.arrayBuffer()).then(font => pdfDoc!.embedFont(font, { subset: true })),
-        fetch(chrome.runtime.getURL('/lib/pdf-lib/fonts/arialbi.ttf')).then(res => res.arrayBuffer()).then(font => pdfDoc!.embedFont(font, { subset: true })),
-        fetch(chrome.runtime.getURL('/lib/pdf-lib/fonts/ariali.ttf')).then(res => res.arrayBuffer()).then(font => pdfDoc!.embedFont(font, { subset: true })),
-    ]).then(([Arial, ArialBold, ArialBoldItalic, ArialItalic]): FontMap => ({
-        Normal: Arial,
-        Bold: ArialBold,
-        BoldItalic: ArialBoldItalic,
-        Italic: ArialItalic,
-        Arial,
-        ArialBold,
-        ArialBoldItalic,
-        ArialItalic,
+        pdfDoc.embedFont(window.PDFLib.StandardFonts.Helvetica, { subset: true }),
+        pdfDoc.embedFont(window.PDFLib.StandardFonts.HelveticaBold, { subset: true }),
+        pdfDoc.embedFont(window.PDFLib.StandardFonts.HelveticaBoldOblique, { subset: true }),
+        pdfDoc.embedFont(window.PDFLib.StandardFonts.HelveticaOblique, { subset: true }),
+    ]).then(([Helvetica, HelveticaBold, HelveticaBoldOblique, HelveticaOblique]): FontMap => ({
+        Normal: Helvetica,
+        Bold: HelveticaBold,
+        BoldItalic: HelveticaBoldOblique,
+        Italic: HelveticaOblique,
+        Helvetica,
+        HelveticaBold,
+        HelveticaBoldOblique,
+        HelveticaOblique,
     }));
 }
 
