@@ -155,7 +155,7 @@ export class PDFParagraphBuilder {
         if (this.#buildRequired)
             this.build();
 
-        return (this.#lines?.reduce((total, line) => total + Math.max(...line.map(comp => (comp.font ?? this.font).heightAtSize(comp.size ?? this.size))), 0) ?? 0) - 0.5 * Math.max(0, (this.#lines?.length ?? 0) - 1);
+        return (this.#lines?.reduce((total, line) => total + Math.max(...line.map(comp => (comp.font ?? this.font).heightAtSize(comp.size ?? this.size))), 0) ?? 0) + 1 * Math.max(0, (this.#lines?.length ?? 0) - 1);
     }
 
     /**
@@ -218,7 +218,7 @@ export class PDFParagraphBuilder {
                 page.moveTo(x + this.firstLineIndent, y);
             } else if (i > 0) {
                 const lineHeight = Math.max(...this.#lines![i].map(comp => (comp.font ?? this.font).heightAtSize((comp.size ?? this.size))));
-                page.moveTo(x + (this.indent ?? 0), page.getY() - lineHeight + 0.5);
+                page.moveTo(x + (this.indent ?? 0), page.getY() - lineHeight - 1);
             }
 
             for (let j = 0; j < this.#lines![i].length; j++) {
