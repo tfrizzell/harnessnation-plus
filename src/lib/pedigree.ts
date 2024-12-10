@@ -296,7 +296,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         paragraph.add(` ${getMarkString(dam.races, ageRef)}`.replace(/^\s+$/, ''));
 
         if (ancestors.has(dam.sireId))
-            paragraph.add(`  by ${ancestors.get(dam.sireId)!.name}.`);
+            paragraph.add(` by ${ancestors.get(dam.sireId)!.name}.`);
         else
             paragraph.add('.');
 
