@@ -24,7 +24,7 @@ function cacheError(message: string, error?: Error): void {
  */
 export class HarnessNationAPI {
     #cache?: IDBDatabase;
-    #cacheTTL: number = 3_600_600;
+    #cacheTTL: number = 3_600_000;
     #startUp?: Promise<void>;
 
     constructor() {
