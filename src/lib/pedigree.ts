@@ -559,6 +559,15 @@ function getAwardText(data: string | Progeny): string {
     return '';
 }
 
+function getAwardText(data: string | Progeny): string {
+    if (typeof data === 'string' ? /trophyhorse\.png/i.test(data) : data.overallAwardWinner)
+        return 'Overall Award Winner';
+    else if (typeof data === 'string' ? /trophyhorse_silver\.png/i.test(data) : data.conferenceAwardWinner)
+        return 'Conference Award Winner';
+
+    return '';
+}
+
 async function getDamProgeny(id: number, csrfToken?: string): Promise<Progeny[]> {
     const progenyIds: number[] = [];
 
