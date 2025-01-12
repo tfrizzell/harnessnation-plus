@@ -58,11 +58,6 @@ function handleStateChange(changes: { [key: string]: chrome.storage.StorageChang
         document.querySelectorAll<HTMLButtonElement>('.hn-plus-catalog-button').forEach(el => { el.disabled = false; });
         document.querySelectorAll<HNPlusCatalogCreatorElement>('hn-plus-catalog-creator').forEach(el => { el.toggleAttribute('disabled', false); });
     }
-
-    console.log(
-        changes['running.catalogs.pedigree']?.newValue,
-        Array.from(document.querySelectorAll<HTMLButtonElement | HNPlusCatalogCreatorElement>('.hn-plus-catalog-button, hn-plus-catalog-creator')).map(el => [el, el.disabled])
-    );
 }
 
 function removeCatalogCreator(): void {
