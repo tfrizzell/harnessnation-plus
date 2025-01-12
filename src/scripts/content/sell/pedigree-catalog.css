@@ -1,0 +1,7 @@
+@import '../../../public/style/theme.css';
+@import '../../../public/style/common.css';
+@import '../common/pedigree-catalog.css';
+
+.hn-plus-catalog-button {
+    float: right;
+}

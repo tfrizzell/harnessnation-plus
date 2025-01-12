@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 import { Race, RaceList } from './horses';
 
-export type DownloadOptions = {
+export interface DownloadOptions {
     contentType?: string;
     saveAs?: boolean
 };
@@ -142,9 +142,20 @@ export function getLifetimeMark(races: RaceList): string {
     return !race ? '' : formatMark(race, races.findAge(race));
 }
 
+export function getCurrentSeason(): Date {
+    const value = new Date();
+    value.setMonth(value.getMonth() - (value.getMonth() % 3));
+    value.setDate(1);
+    value.setHours(0);
+    value.setMinutes(0);
+    value.setSeconds(0);
+    value.setMilliseconds(0);
+    return value;
+}
+
 export async function isMobileOS(): Promise<boolean> {
-    const platform = await chrome.runtime.getPlatformInfo();
-    return platform.os === 'android';
+    const platform = await chrome.runtime.getPlatformInfo?.();
+    return platform?.os === 'android' || <any>platform?.os === 'ios';
 }
 
 export function parseCurrency(value: string | number): number {

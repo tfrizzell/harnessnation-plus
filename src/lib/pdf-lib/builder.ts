@@ -17,14 +17,16 @@ export class PDFParagraphBuilder {
     #size: number;
     #indent?: number;
     #firstLineIndent?: number;
+    #paddingTop?: number;
     #buildRequired: boolean = false;
 
-    constructor(font: PDFFont, size: number = 24, maxWidth: number = window.PDFLib.PageSizes.A4[0], indent?: number, firstLineIndent?: number) {
+    constructor(font: PDFFont, size: number = 24, maxWidth: number = window.PDFLib.PageSizes.A4[0], indent?: number, firstLineIndent?: number, paddingTop?: number) {
         this.#maxWidth = Math.max(0, maxWidth ?? window.PDFLib.PageSizes.A4[0]);
         this.#font = font;
         this.#size = size;
         this.#indent = indent;
         this.#firstLineIndent = firstLineIndent;
+        this.#paddingTop = paddingTop;
     }
 
     get firstLineIndent(): number | undefined {
@@ -71,6 +73,14 @@ export class PDFParagraphBuilder {
             this.#maxWidth = value;
             this.#buildRequired = (this.#components.length > 0);
         }
+    }
+
+    get paddingTop(): number | undefined {
+        return this.#paddingTop;
+    }
+
+    set paddingTop(value: number | undefined) {
+        this.#paddingTop = value;
     }
 
     get size(): number {
@@ -155,7 +165,9 @@ export class PDFParagraphBuilder {
         if (this.#buildRequired)
             this.build();
 
-        return (this.#lines?.reduce((total, line) => total + Math.max(...line.map(comp => (comp.font ?? this.font).heightAtSize(comp.size ?? this.size))), 0) ?? 0);
+        return (this.#lines?.reduce((total, line) => total + Math.max(...line.map(comp => (comp.font ?? this.font).heightAtSize(comp.size ?? this.size))), 0) ?? 0)
+            + 1 * Math.max(0, (this.#lines?.length ?? 0) - 1)
+            + (this.#paddingTop ?? 0);
     }
 
     /**
@@ -208,17 +220,21 @@ export class PDFParagraphBuilder {
      * @param page The page to write the paragraph to.
      */
     write(page: PDFPage): void {
-        if (this.#buildRequired)
+        if (!this.#lines || this.#buildRequired)
             this.build();
 
         const { x, y } = page.getPosition();
 
         for (let i = 0; i < this.#lines!.length; i++) {
-            if (i === 0 && this.firstLineIndent != null) {
-                page.moveTo(x + this.firstLineIndent, y);
+            if (i === 0) {
+                if (this.firstLineIndent != null)
+                    page.moveTo(x + this.firstLineIndent, y);
+
+                if (this.paddingTop != null)
+                    page.moveDown(this.paddingTop);
             } else if (i > 0) {
                 const lineHeight = Math.max(...this.#lines![i].map(comp => (comp.font ?? this.font).heightAtSize((comp.size ?? this.size))));
-                page.moveTo(x + (this.indent ?? 0), page.getY() - lineHeight);
+                page.moveTo(x + (this.indent ?? 0), page.getY() - lineHeight - 1);
             }
 
             for (let j = 0; j < this.#lines![i].length; j++) {

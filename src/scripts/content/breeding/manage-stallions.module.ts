@@ -2,8 +2,7 @@ import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onLoad } from '../../../lib/events.js';
 import { StudFeeFormula } from '../../../lib/settings.js';
 import { removeAll } from '../../../lib/utils.js';
-
-const materialSymbolsStyleUrl = chrome.runtime.getURL('/public/fonts/MaterialSymbolsOutlined.css');
+import '../fonts/material-symbols.js';
 
 function addCalculateButtons(): void {
     document.querySelectorAll<HTMLInputElement>('#inputStudFee, #inputStudFeeUpdate').forEach(input => {
@@ -46,24 +45,11 @@ function addCalculateButtons(): void {
     });
 }
 
-function addMaterialSymbols(): void {
-    const font = document.createElement('link');
-    font.setAttribute('rel', 'stylesheet');
-    font.setAttribute('href', `${materialSymbolsStyleUrl}?t=${Date.now()}`);
-    document.head.append(font);
-}
-
 function removeCalculateButtons(): void {
     removeAll('.hn-plus-calculate-button');
 }
 
-function removeMaterialSymbols(): void {
-    removeAll(`link[href*="${materialSymbolsStyleUrl}"]`);
-}
-
 onLoad(() => {
     removeCalculateButtons();
-    removeMaterialSymbols();
-    addMaterialSymbols();
     addCalculateButtons();
 });

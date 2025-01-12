@@ -4,9 +4,9 @@ import { StudFeeFormula } from './settings.js';
 export enum ActionType {
     CalculateStudFee = 'ACTION__CALCULATE_STUD_FEE',
     ClearHorseCache = 'ACTION__CLEAR_HORSE_CACHE',
-    ExportBroodmareReport = 'ACTION__EXPORT_BROODMARE_REPORT',
-    ExportStallionReport = 'ACTION__EXPORT_STALLION_REPORT',
-    GenerateBreedingReport = 'ACTION__GENERATE_BREEDING_REPORT',
+    GenerateBroodmareReport = 'ACTION__GENERATE_BROODMARE_REPORT',
+    GeneratePedigreeCatalog = 'ACTION__GENERATE_PEDIGREE_CATALOG',
+    GenerateStallionReport = 'ACTION__GENERATE_STALLION_REPORT',
     GetHorse = 'ACTION__GET_HORSE',
     GetHorses = 'ACTION__GET_HORSES',
     PreviewStallionScore = 'ACTION__PREVIEW_STALLION_SCORE',
@@ -15,31 +15,33 @@ export enum ActionType {
     UpdateStallionScores = 'ACTION__UPDATE_STALLION_SCORES',
 }
 
-export type BreedingReportData = {
+export interface BreedingReportData {
     ids: number[];
     headers?: { [key: number]: string };
-}
-
-export type BreedingReportExportData = BreedingReportData & {
     filename?: string;
-    ids: number[];
 }
 
-export type CalculateStudFeeData = {
+export interface CalculateStudFeeData {
     id: number;
     formula?: StudFeeFormula
 }
 
-export type HorseIdData = {
+export interface HorseIdData {
     id: number;
 }
 
-export type HorseSearchData = {
+export interface HorseSearchData {
     term: string;
     maxGenerations?: number;
 }
 
-export type SendResponse = {
+export interface PedigreeCatalogData {
+    data: number[] | [number, number][];
+    showHipNumbers?: boolean;
+    filename?: string;
+}
+
+export interface SendResponse {
     (data: ActionResponse<any> | ActionError | object): void;
 }
 
@@ -78,9 +80,9 @@ export class Action<T> {
     }
 
     public constructor(type: ActionType.CalculateStudFee, data: CalculateStudFeeData);
-    public constructor(type: ActionType.ExportBroodmareReport, data: BreedingReportExportData);
-    public constructor(type: ActionType.ExportStallionReport, data: BreedingReportExportData);
-    public constructor(type: ActionType.GenerateBreedingReport, data: BreedingReportData);
+    public constructor(type: ActionType.GenerateBroodmareReport, data: BreedingReportData);
+    public constructor(type: ActionType.GeneratePedigreeCatalog, data: PedigreeCatalogData);
+    public constructor(type: ActionType.GenerateStallionReport, data: BreedingReportData);
     public constructor(type: ActionType.GetHorse, data: HorseIdData);
     public constructor(type: ActionType.GetHorses, data: void);
     public constructor(type: ActionType.PreviewStallionScore, data: HorseIdData);
@@ -205,9 +207,9 @@ export class ActionResponse<T> {
 }
 
 export async function sendAction(type: ActionType.CalculateStudFee, data: CalculateStudFeeData): Promise<ActionResponse<number>>;
-export async function sendAction(type: ActionType.ExportBroodmareReport, data: BreedingReportExportData): Promise<ActionResponse<void>>;
-export async function sendAction(type: ActionType.ExportBroodmareReport, data: BreedingReportExportData): Promise<ActionResponse<void>>;
-export async function sendAction(type: ActionType.GenerateBreedingReport, data: BreedingReportData): Promise<ActionResponse<string>>;
+export async function sendAction(type: ActionType.GenerateBroodmareReport, data: BreedingReportData): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.GeneratePedigreeCatalog, data: PedigreeCatalogData): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.GenerateStallionReport, data: BreedingReportData): Promise<ActionResponse<void>>;
 export async function sendAction(type: ActionType.GetHorse, data: HorseIdData): Promise<ActionResponse<Horse>>;
 export async function sendAction(type: ActionType.GetHorses): Promise<ActionResponse<Horse[]>>;
 export async function sendAction(type: ActionType.PreviewStallionScore, data: HorseIdData): Promise<ActionResponse<StallionScore | null>>;

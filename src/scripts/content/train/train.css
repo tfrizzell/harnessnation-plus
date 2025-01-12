@@ -11,7 +11,7 @@
 .hn-plus-button {
     align-items: center !important;
     background: color-mix(in hsl, var(--hn-plus-theme-primary) 90%, #ffffff) !important;
-    border: revert;
+    border: none;
     border-radius: revert;
     color: #ffffff !important;
     column-gap: revert;

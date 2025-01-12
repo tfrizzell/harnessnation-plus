@@ -1,12 +1,10 @@
 import { AlarmType } from './lib/alarms.js';
-import api from './lib/harnessnation.js';
+import { api } from './lib/harnessnation.js';
 import { isMobileOS } from './lib/utils.js';
 
 import './scripts/background/settings.js';
 import './scripts/background/runtime.js';
 import './scripts/background/horses.js';
-
-
 
 chrome.alarms.onAlarm.addListener(async alarm => {
     switch (alarm.name) {
@@ -39,7 +37,7 @@ function getNext__updateStallionScores(from: Date): Date {
     return next;
 }
 
-async function register__pruneAPICache(from: Date | number = new Date()): Promise<void> {
+async function register__pruneAPICache(): Promise<void> {
     await chrome.alarms.clear(AlarmType.PruneAPICache);
 
     if (await isMobileOS()) {

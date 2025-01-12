@@ -1,6 +1,6 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onLoad } from '../../../lib/events.js';
-import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/horses.js';
+import { createStallionScoreBadge } from '../../../lib/horses.js';
 import { removeAll } from '../../../lib/utils.js';
 
 async function addStallionScore(): Promise<void> {
@@ -58,8 +58,8 @@ async function addStallionScore(): Promise<void> {
         }, { once: true });
     }
 
-    const name = document.querySelector('h1.font-weight-bold.text-left');
-    name?.parentElement?.nextElementSibling?.insertBefore(badge, name?.parentElement?.nextElementSibling.firstChild);
+    const parent =  document.querySelector('h1.font-weight-bold.text-left')?.parentElement?.nextElementSibling;
+    parent?.insertBefore(badge, parent?.firstChild);
 }
 
 function removeStallionScore(): void {

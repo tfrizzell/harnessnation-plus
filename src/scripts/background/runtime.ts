@@ -1,23 +1,22 @@
-import { default as settings, Settings } from '../../lib/settings.js';
+import { default as settings } from '../../lib/settings.js';
 
-declare type ContentScript = {
-    matches?: string[] | undefined;
-    exclude_matches?: string[] | undefined;
-    css?: string[] | undefined;
-    js?: string[] | undefined;
-    run_at?: string | undefined;
-    all_frames?: boolean | undefined;
-    match_about_blank?: boolean | undefined;
-    include_globs?: string[] | undefined;
-    exclude_globs?: string[] | undefined;
+async function clearLocalStorage(clearTelemetry: boolean = false): Promise<void> {
+    if (clearTelemetry)
+        return await chrome.storage.local.clear();
+
+    const data = await chrome.storage.local.get();
+
+    for (const key of Object.keys(data))
+        if (!key.startsWith('telemetry.'))
+            await chrome.storage.local.remove(key);
 }
 
 chrome.runtime.onStartup.addListener(async () => {
-    // await chrome.storage.local.clear();
+    await clearLocalStorage();
 });
 
 chrome.runtime.onInstalled.addListener(async details => {
-    // await chrome.storage.local.clear();
+    await clearLocalStorage(true);
 
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL || await chrome.storage.sync.getBytesInUse() < 1)
         await chrome.storage.sync.set(settings);

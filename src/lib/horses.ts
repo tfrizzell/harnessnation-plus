@@ -3,12 +3,12 @@ import { api } from './harnessnation.js'
 import { StudFeeFormula } from './settings.js';
 import { parseCurrency, parseInt, seasonsBetween } from './utils.js';
 
-export type BreedingScore = {
+export interface BreedingScore {
     score: number | null;
     confidence: number;
 }
 
-export type Horse = {
+export interface Horse {
     id?: number;
     name?: string;
     sireId?: number | null;
@@ -17,7 +17,7 @@ export type Horse = {
     stallionScore?: StallionScore | null;
 }
 
-export type Race = {
+export interface Race {
     id?: number;
     name?: string;
     stake?: boolean;
@@ -110,7 +110,7 @@ export class RaceList extends Array<Race> {
     }
 }
 
-export type StallionScore = {
+export interface StallionScore {
     value?: number | null;
     confidence?: number;
     racing?: number | null;
@@ -118,7 +118,7 @@ export type StallionScore = {
     bloodline?: number | null;
 }
 
-export type StallionScoreBadgeOptions = {
+export interface StallionScoreBadgeOptions {
     preview?: boolean;
     clickable?: boolean;
 }
@@ -314,7 +314,7 @@ export async function getHorse(id: number): Promise<Horse> {
 
     return {
         id: parseInt(html?.match(/<b[^>]*>\s*ID:\s*<\/b[^>]*>\s*(\d+)/is)?.[1]!),
-        name: html?.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1]?.trim()?.replace(/&#039;/g, "'"),
+        name: html?.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1]?.trim(),
         sireId: html?.match(/<b[^>]*>\s*Sire:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
         damId: html?.match(/<b[^>]*>\s*Dam:\s*<\/b[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
         retired: !!html?.match(/<br[^>]*>\s*<br[^>]*>\s*Retired\s*<br[^>]*>/is)?.[0],

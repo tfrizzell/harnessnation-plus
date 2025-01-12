@@ -33,6 +33,22 @@
   "content_scripts": [
     {
       "matches": [
+        "*://*.harnessnation.com/auctions/entries"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "scripts/content/common/pedigree-catalog.css",
+        "scripts/content/auctions/pedigree-catalog.css"
+      ],
+      "js": [
+        "lib/events.web.js",
+        "scripts/content/auctions/pedigree-catalog.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
         "*://*.harnessnation.com/breeding/inhouse",
         "*://*.harnessnation.com/breeding/pedigree/generate"
       ],
@@ -80,17 +96,36 @@
       ],
       "css": [
         "public/style/theme.css",
+        "public/style/common.css",
+        "scripts/content/common/pedigree.css",
+        "scripts/content/horse/pedigree.css",
         "public/style/stallion-score.css",
         "scripts/content/horse/stallion-score.css",
-        "scripts/content/common/pedigree.css",
-        "scripts/content/horse/pedigree.css"
+        "scripts/content/horse/pedigree-page.css"
       ],
       "js": [
         "lib/data-tables.web.js",
         "lib/events.web.js",
         "scripts/content/common/pedigree.js",
         "scripts/content/horse/progeny-table.js",
-        "scripts/content/horse/stallion-score.js"
+        "scripts/content/horse/stallion-score.js",
+        "scripts/content/horse/pedigree-page.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.harnessnation.com/sell/horse"
+      ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "scripts/content/common/pedigree-catalog.css",
+        "scripts/content/sell/pedigree-catalog.css"
+      ],
+      "js": [
+        "lib/events.web.js",
+        "scripts/content/sell/pedigree-catalog.js"
       ],
       "run_at": "document_start"
     },
@@ -98,10 +133,16 @@
       "matches": [
         "*://*.harnessnation.com/stable/main"
       ],
+      "css": [
+        "public/style/theme.css",
+        "public/style/common.css",
+        "scripts/content/common/pedigree-catalog.css"
+      ],
       "js": [
         "lib/data-tables.web.js",
         "lib/events.web.js",
-        "scripts/content/stable/horse-table.js"
+        "scripts/content/stable/horse-table.js",
+        "scripts/content/stable/pedigree-catalog.js"
       ],
       "run_at": "document_start"
     },
@@ -113,13 +154,15 @@
         "public/style/theme.css",
         "public/style/common.css",
         "public/style/stallion-score.css",
-        "scripts/content/stable/breeding.css"
+        "scripts/content/stable/breeding.css",
+        "scripts/content/common/pedigree-catalog.css"
       ],
       "js": [
         "lib/data-tables.web.js",
         "lib/events.web.js",
         "scripts/content/stable/horse-table.js",
-        "scripts/content/stable/breeding.js"
+        "scripts/content/stable/breeding.js",
+        "scripts/content/stable/pedigree-catalog.js"
       ],
       "run_at": "document_start"
     },
@@ -149,6 +192,8 @@
         "scripts/content/**/*.module.js",
         "scripts/content/**/*.script.js",
         "scripts/content/**/*.search.js",
+        "scripts/content/common/tooltip.js",
+        "scripts/content/fonts/*.js",
         "scripts/installed.js"
       ]
     }

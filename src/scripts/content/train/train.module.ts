@@ -1,10 +1,10 @@
 import { onInstalled, onLoad } from '../../../lib/events.js';
 import { removeAll } from '../../../lib/utils.js';
+import '../fonts/material-symbols.js';
 
-type TrainingGroup = 'main' | 'breeding';
+type TrainingGroup = 'yearlings' | 'older';
 type TrainingInputElement = HTMLInputElement | HTMLSelectElement;
 
-const materialSymbolsStyleUrl = chrome.runtime.getURL('/public/fonts/MaterialSymbolsOutlined.css');
 const buttonClasses = ['btn', 'p-2', 'btn-sm', 'waves-effect', 'waves-light', 'hn-plus-button'];
 const copiedSettings: Map<TrainingGroup, Map<string, string>> = new Map();
 
@@ -50,13 +50,6 @@ function addButtons(row: Element): void {
         addPasteButton(row);
 }
 
-function addMaterialSymbols(): void {
-    const font = document.createElement('link');
-    font.setAttribute('rel', 'stylesheet');
-    font.setAttribute('href', `${materialSymbolsStyleUrl}?t=${Date.now()}`);
-    document.head.append(font);
-}
-
 function addPasteButton(row: Element): void {
     if (row.querySelector('.hn-plus-button-wrapper .hn-plus-paste-button'))
         return;
@@ -87,14 +80,15 @@ function addPasteButton(row: Element): void {
 function copySettings(row: Element): void {
     copiedSettings.set(getTrainingGroup(row), getSettings(row));
 
-    row.closest('form')?.querySelector('.horseField.hn-plus-copy-source')?.classList.remove('hn-plus-copy-source');
-    row.closest('.horseField')?.classList.add('hn-plus-copy-source');
-    row.closest('form')?.querySelectorAll('.horseField').forEach(addPasteButton);
+    row.closest('form')?.querySelector(':is(.horseField, .horseFieldYearling).hn-plus-copy-source')?.classList.remove('hn-plus-copy-source');
+    row.closest('.horseField, .horseFieldYearling')?.classList.add('hn-plus-copy-source');
+    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach(addPasteButton);
 }
 
 function copySettingsToAll(row: Element): void {
     const settings: Map<string, string> = getSettings(row);
-    row.closest('form')?.querySelectorAll('.horseField').forEach(row => pasteSettings(row, settings));
+
+    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach(row => pasteSettings(row, settings));
 }
 
 function getInputs(row: Element): NodeListOf<TrainingInputElement> {
@@ -106,14 +100,14 @@ function getKey(el: TrainingInputElement): string {
 }
 
 function getTrainingGroup(row: Element): TrainingGroup {
-    return row.closest('form')?.classList.contains('olderHorseTrain') ? 'main' : 'breeding';
+    return row.closest('form')?.classList.contains('olderHorseTrain') ? 'older' : 'yearlings';
 }
 
 function getSettings(row: Element): Map<string, string> {
     const settings: Map<string, string> = new Map()
 
     getInputs(row).forEach((el: TrainingInputElement): void => {
-        if (el.offsetParent != null && !/^input(HorseName|FastworkGait)_\d+$/i.test(el.id))
+        if (el.offsetParent != null && !/^input(HorseName|FastworkGait)(Yearling)?_\d+$/i.test(el.id))
             settings.set(getKey(el), el.value);
     });
 
@@ -123,7 +117,7 @@ function getSettings(row: Element): Map<string, string> {
 function handleAutoSelect(e: Event): void {
     const form = (<Element>e.target).closest('.pb-3 > .row')?.querySelector('form');
 
-    form?.querySelectorAll('.horseField').forEach(row => {
+    form?.querySelectorAll('.horseField, .horseFieldYearling').forEach(row => {
         removeButtons(row);
         addButtons(row);
     });
@@ -153,21 +147,17 @@ function removeButtons(row?: Element | undefined): void {
         removeAll('.hn-plus-button-wrapper', '.hn-plus-button');
 }
 
-function removeMaterialSymbols(): void {
-    removeAll(`link[href*="${materialSymbolsStyleUrl}"]`);
-}
-
 const observer = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
         [].forEach.call(mutation.addedNodes, (node: HTMLElement) => {
-            if (node.classList?.contains('horseField')) {
-                node.querySelector('select.horseNameSelect')?.addEventListener('change', e => {
-                    const el = <HTMLSelectElement>e.target;
-
-                    if (el.value)
-                        addButtons(node);
-                    else
-                        removeButtons(node)
+            if (node.classList?.contains('horseField') || node.classList?.contains('horseFieldYearling')) {
+                node.querySelectorAll<HTMLSelectElement>('select.horseNameSelect, select.horseNameSelectYearling')?.forEach(select => {
+                    select.addEventListener('change', (e: Event): void => {
+                        if (select.value)
+                            addButtons(node);
+                        else
+                            removeButtons(node)
+                    });
                 });
             }
         });
@@ -180,15 +170,13 @@ onInstalled(() => observer.disconnect());
 onLoad(() => {
     copiedSettings.clear();
     removeButtons();
-    removeMaterialSymbols();
-    addMaterialSymbols();
 
     document.querySelectorAll('form').forEach(form => {
-        form.querySelectorAll('.horseField').forEach(row => {
-            if (row.querySelector<HTMLSelectElement>('select.trainingSelect')?.value)
+        form.querySelectorAll('.horseField, .horseFieldYearliog').forEach(row => {
+            if (row.querySelector<HTMLSelectElement>('select.trainingSelect, select.trainingSelectYearling')?.value)
                 addButtons(row);
         });
 
-        form.closest('.pb-3 > .row')?.querySelector('button.autoSelectHorses')?.addEventListener('click', handleAutoSelect);
+        form.closest('.pb-3 > .row')?.querySelectorAll('button.autoSelectHorses, button.autoSelectYearlings').forEach((button: Element): void => button.addEventListener('click', handleAutoSelect));
     });
 });
