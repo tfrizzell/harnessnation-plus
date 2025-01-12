@@ -8,14 +8,14 @@ export enum DataTablesDisplayUnits {
     Years = Days * 365.25,
 }
 
-export type DataTablesSettings = {
+export interface DataTablesSettings {
     enabled: boolean;
     mode: DataTablesMode;
     duration: number;
     displayUnits: DataTablesDisplayUnits;
 }
 
-export type Settings = {
+export interface Settings {
     dt: {
         breeding: DataTablesSettings;
         main: DataTablesSettings;
@@ -28,11 +28,11 @@ export type Settings = {
     };
 }
 
-export type StallionManagementSettings = {
+export interface StallionManagementSettings {
     formula: StudFeeFormula;
 }
 
-export type StallionRegistrySettings = {
+export interface StallionRegistrySettings {
     bloodlineSearch: boolean;
     maxGenerations: number;
 }

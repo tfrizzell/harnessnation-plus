@@ -1,9 +1,10 @@
 import { DocumentData, DocumentSnapshot, WriteBatch } from 'firebase/firestore';
 import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocsFromServer, limit, orderBy, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from '../../lib/firebasejs/firebase-firestore.js';
 
-import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, BreedingReportExportData, HorseSearchData } from '../../lib/actions.js';
+import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, HorseSearchData, PedigreeCatalogData } from '../../lib/actions.js';
 import { AlarmType } from '../../lib/alarms.js';
 import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, getHorse, Horse, StallionScore, calculateStallionScore } from '../../lib/horses.js';
+import { generatePedigreeCatalog as downloadPedigreeCatalog } from '../../lib/pedigree.js';
 import { generateBreedingReport as generateBreedingReportAsync } from '../../lib/reporting.js';
 import { downloadFile, isMobileOS, regexEscape, sleep, toTimestamp } from '../../lib/utils.js';
 
@@ -28,21 +29,21 @@ chrome.runtime.onMessage.addListener((action: Action<any>, _sender, _sendRespons
                 .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
-        case ActionType.ExportBroodmareReport:
-            exportBroodmareReport(action.data)
+        case ActionType.GenerateBroodmareReport:
+            generateBroodmareReport(action.data)
                 .then(() => sendResponse(new ActionResponse(action)))
                 .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
-        case ActionType.ExportStallionReport:
-            exportStallionReport(action.data)
+        case ActionType.GeneratePedigreeCatalog:
+            generatePedigreeCatalog(action.data)
                 .then(() => sendResponse(new ActionResponse(action)))
                 .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
-        case ActionType.GenerateBreedingReport:
-            generateBreedingReport(action.data)
-                .then((data: string) => sendResponse(new ActionResponse(action, data)))
+        case ActionType.GenerateStallionReport:
+            generateStallionReport(action.data)
+                .then(() => sendResponse(new ActionResponse(action)))
                 .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
@@ -89,16 +90,22 @@ chrome.runtime.onMessage.addListener((action: Action<any>, _sender, _sendRespons
     return true;
 });
 
-type StallionScoreWithLastModified = StallionScore & {
-    lastModified?: Timestamp;
-}
-
-type HorseWithGeneration = Horse & {
+interface HorseWithGeneration extends Horse {
     generation: number;
 }
 
-type HorseWithLastModified = Horse & {
+interface HorseWithLastModified extends Horse {
     stallionScore?: StallionScoreWithLastModified;
+    lastModified?: Timestamp;
+}
+
+interface PedigreeTelemetry {
+    totalRuns: number;
+    totalRunTime: number;
+    pagesGenerated: number;
+}
+
+interface StallionScoreWithLastModified extends StallionScore {
     lastModified?: Timestamp;
 }
 
@@ -138,9 +145,25 @@ async function createSearchPattern({ term, maxGenerations = 4 }: HorseSearchData
     ).join('|')})`;
 }
 
-async function exportBroodmareReport(data: BreedingReportExportData): Promise<void> {
+async function generateBreedingReport(data: BreedingReportData): Promise<string> {
+    const isRunning = (await chrome.storage.local.get('running.exports.breeding'))?.['running.exports.breeding'] ?? false;
+
+    if (isRunning)
+        throw 'A breeding report is already running. Please wait for it to finish before starting a new one. If you are certain there is not one running, or you want to cancel it, try restarting your browser.';
+
+    await chrome.storage.local.set({ 'running.exports.breeding': true });
+
     try {
-        downloadFile(
+        return await generateBreedingReportAsync(data);
+    } finally {
+        console.debug(`%chorses.ts%c     Clearing breeding export flag`, 'color:#406e8e;font-weight:bold;', '');
+        await chrome.storage.local.remove('running.exports.breeding');
+    }
+}
+
+async function generateBroodmareReport(data: BreedingReportData): Promise<void> {
+    try {
+        await downloadFile(
             await generateBreedingReport(data),
             data.filename?.trim() || `hn-plus-broodmare-report-${toTimestamp().replace(/\D/g, '')}.csv`
         );
@@ -150,7 +173,38 @@ async function exportBroodmareReport(data: BreedingReportExportData): Promise<vo
     }
 }
 
-async function exportStallionReport(data: BreedingReportExportData): Promise<void> {
+async function generatePedigreeCatalog(data: PedigreeCatalogData): Promise<void> {
+    const isRunning = (await chrome.storage.local.get('running.catalogs.pedigree'))?.['running.catalogs.pedigree'] ?? false;
+
+    if (isRunning)
+        throw 'A pedigree catalog is already being generated. Please wait for it to finish before starting a new one. If you are certain there is not one running, or you want to cancel it, try restarting your browser.';
+
+    await chrome.storage.local.set({ 'running.catalogs.pedigree': true });
+
+    try {
+        const telemetry: PedigreeTelemetry = (await chrome.storage.local.get('telemetry.pedigree'))?.['telemetry.pedigree'] ?? { totalRuns: 0, totalRunTime: 0, pagesGenerated: 0 };
+        const start = performance.now();
+        const catalog = await downloadPedigreeCatalog(data.data, data.showHipNumbers);
+
+        chrome.storage.local.set({
+            'telemetry.pedigree': <PedigreeTelemetry>{
+                totalRuns: telemetry.totalRuns + 1,
+                totalRunTime: telemetry.totalRunTime + (performance.now() - start),
+                pagesGenerated: telemetry.pagesGenerated + data.data.length,
+            }
+        });
+
+        await downloadFile(
+            catalog,
+            data.filename?.trim() || `hnplus-pedigree-catalog-${toTimestamp().replace(/\D/g, '')}.pdf`
+        );
+    } finally {
+        console.debug(`%chorses.ts%c     Clearing pedigree catalog flag`, 'color:#406e8e;font-weight:bold;', '');
+        await chrome.storage.local.remove('running.catalogs.pedigree');
+    }
+}
+
+async function generateStallionReport(data: BreedingReportData): Promise<void> {
     let report = await generateBreedingReport(data);
     const rows = window.atob(report.slice(21)).split('\n');
 
@@ -178,7 +232,7 @@ async function exportStallionReport(data: BreedingReportExportData): Promise<voi
     }
 
     try {
-        downloadFile(
+        await downloadFile(
             report,
             data.filename?.trim() || `hn-plus-stallion-report-${toTimestamp().replace(/\D/g, '')}.csv`
         );
@@ -188,23 +242,7 @@ async function exportStallionReport(data: BreedingReportExportData): Promise<voi
     }
 }
 
-async function generateBreedingReport(data: BreedingReportData): Promise<string> {
-    const isRunning = (await chrome.storage.local.get('breeding.export'))?.['breeding.export'] ?? false;
-
-    if (isRunning)
-        throw 'A breeding report is already running. Please wait for it to finish before starting a new one. If you are certain there is not one running, or you want to cancel it, try restarting your browser.';
-
-    await chrome.storage.local.set({ 'breeding.export': true });
-
-    try {
-        return await generateBreedingReportAsync(data);
-    } finally {
-        console.debug(`%chorses.ts%c     Clearing breeding export flag`, 'color:#406e8e;font-weight:bold;', '');
-        await chrome.storage.local.remove('breeding.export');
-    }
-}
-
-export async function getHorseById(id: number): Promise<Horse | undefined> {
+async function getHorseById(id: number): Promise<Horse | undefined> {
     const colRef = collection(db, 'horses');
     const querySnapshot = await getDocsFromCache<HorseWithLastModified>(colRef);
 
@@ -240,7 +278,7 @@ export async function getHorseById(id: number): Promise<Horse | undefined> {
     }
 }
 
-export async function getHorses(): Promise<Horse[]> {
+async function getHorses(): Promise<Horse[]> {
     return (await getHorsesWithLastModified()).map(horse => {
         delete horse.lastModified;
         delete horse.stallionScore?.lastModified;
@@ -394,7 +432,7 @@ async function saveHorses(horses: Horse[]): Promise<void> {
     }
 }
 
-export async function updateStallionScores(): Promise<void> {
+async function updateStallionScores(): Promise<void> {
     if (await isMobileOS()) {
         console.debug(`%chorses.ts%c     Mobile OS Detected: skipping stallion score update`, 'color:#406e8e;font-weight:bold;', '');
         return;

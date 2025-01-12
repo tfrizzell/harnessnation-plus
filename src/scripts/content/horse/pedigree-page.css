@@ -1,0 +1,28 @@
+@import '../../../public/style/theme.css';
+@import '../../../public/style/common.css';
+
+.hn-plus-pedigree-button {
+    border-radius: 0.2em;
+    display: inline-flex;
+    font-size: 1em;
+    margin: 0 1em 0 0;
+    padding: 0.49em;
+    transform: translateY(0.2em);
+}
+
+.hn-plus-pedigree-button::before {
+    display: none;
+}
+
+.hn-plus-pedigree-button .material-symbols-outlined {
+    font-size: 0.98em;
+}
+
+.hn-plus-pedigree-button:not(:is([disabled], :disabled)) .material-symbols-outlined {
+    color: var(--hn-plus-theme-secondary);
+}
+
+.hn-plus-stallion-score~.hn-plus-pedigree-button {
+    margin-left: -0.5em;
+    margin-right: 0.5em;
+}

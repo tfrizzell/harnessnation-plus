@@ -6,7 +6,7 @@ export enum DataTablesMode {
     Custom,
 }
 
-export type DataTablesOptions = {
+export interface DataTablesOptions {
     indent?: string,
     saveSearch?: boolean,
     saveState?: boolean,

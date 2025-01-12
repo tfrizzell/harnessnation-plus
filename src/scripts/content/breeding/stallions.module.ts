@@ -3,13 +3,13 @@ import { EventType, onInstalled, onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
 import { StallionRegistrySettings } from '../../../lib/settings.js';
 import { removeAll, sleep } from '../../../lib/utils.js';
+import '../common/tooltip.js';
 
 const searchScriptUrl = chrome.runtime.getURL('/scripts/content/breeding/stallions.search.js');
-const tooltolScriptUrl = chrome.runtime.getURL('/public/components/tooltip.js');
 let controller: AbortController;
 
 async function addExportButtons(): Promise<void> {
-    const exportRunning = (await chrome.storage.local.get('breeding.export'))?.['breeding.export'] ?? false;
+    const exportRunning = (await chrome.storage.local.get('running.exports.breeding'))?.['running.exports.breeding'] ?? false;
 
     document.querySelectorAll('.buyHorsePagination .pagination').forEach(el => {
         const wrapper = document.createElement('div');
@@ -42,10 +42,10 @@ async function addExportButtons(): Promise<void> {
     });
 
     function handleStateChange(changes: { [key: string]: chrome.storage.StorageChange }, areaName: chrome.storage.AreaName): void {
-        if (areaName !== 'local' || !changes['breeding.export'])
+        if (areaName !== 'local' || !changes['running.exports.breeding'])
             return;
 
-        if (changes['breeding.export']?.newValue)
+        if (changes['running.exports.breeding']?.newValue)
             document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = true; });
         else
             document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = true; });
@@ -56,19 +56,13 @@ async function addExportButtons(): Promise<void> {
 }
 
 async function addScripts(): Promise<void> {
-    if (document.querySelector(`script[src*="${tooltolScriptUrl}"]`) == null) {
-        const tooltip = document.createElement('script');
-        tooltip.setAttribute('type', 'module');
-        tooltip.setAttribute('src', `${tooltolScriptUrl}?t=${Date.now()}`);
-        document.body.append(tooltip);
-    }
+    if (document.querySelector(`script[src*="${searchScriptUrl}"]`))
+        return;
 
-    if (document.querySelector(`script[src*="${searchScriptUrl}"]`) == null) {
-        const script = document.createElement('script');
-        script.setAttribute('type', 'module');
-        script.setAttribute('src', `${searchScriptUrl}?t=${Date.now()}`);
-        document.body.append(script);
-    }
+    const script = document.createElement('script');
+    script.setAttribute('type', 'module');
+    script.setAttribute('src', `${searchScriptUrl}?t=${Date.now()}`);
+    document.body.append(script);
 }
 
 async function addStallionScores(): Promise<void> {
@@ -102,7 +96,7 @@ async function exportReport(html: string): Promise<void> {
     while (id = pattern.exec(html)?.[1])
         ids.push(+id);
 
-    await sendAction(ActionType.ExportStallionReport, { ids, headers: { 1: 'Stallion' } });
+    await sendAction(ActionType.GenerateStallionReport, { ids, headers: { 1: 'Stallion' } });
 }
 
 async function handleSearch(e: Event): Promise<void> {
@@ -131,7 +125,7 @@ async function removeExportButtons(): Promise<void> {
 }
 
 async function removeScripts(): Promise<void> {
-    removeAll(`script[src*="${searchScriptUrl}"]`, `script[src*="${tooltolScriptUrl}"]`)
+    removeAll(`script[src*="${searchScriptUrl}"]`)
 }
 
 async function removeStallionScores(): Promise<void> {

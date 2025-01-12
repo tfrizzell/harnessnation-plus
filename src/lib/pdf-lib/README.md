@@ -1,7 +1,7 @@
 pdf-lib
-==========
+=======
 
-pdf-lib v1.17.1 libraries downloaded from https://unpkg.com/pdf-lib@1.17.1/dist/. See: https://pdf-lib.js.org/#install
+pdf-lib v1.17.1 library downloaded from https://unpkg.com/pdf-lib@1.17.1/dist/. See: https://pdf-lib.js.org/#install
 
 **Local**                   | **Google CDN**
 ----------------------------|-------------------------------------------------------------------

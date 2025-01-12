@@ -2,4 +2,5 @@
     --hn-plus-theme-primary: #0c1426;
     --hn-plus-theme-secondary: #f7ae26;
     --hn-plus-theme-tertiary: color-mix(in hsl, var(--hn-plus-theme-primary) 25%, #ffffff);
+    --border-color: color-mix(in hsl, var(--hn-plus-theme-primary) 25%, #ffffff);
 }

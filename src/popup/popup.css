@@ -16,7 +16,7 @@ body {
     flex-direction: column;
     font-family: 'Roboto', sans-serif;
     font-size: 12px;
-    height: 40em;
+    height: 42.2em;
     width: 33em;
 }
 
@@ -88,6 +88,7 @@ input:is([type="checkbox" i], [type="radio" i])[role="toggle" i] {
     color: #ffffff;
     cursor: pointer;
     display: inline-flex;
+    font-size: 0.9em;
     height: 2.5em;
     padding: 4px;
     transition: var(--transition-speed) ease;
@@ -141,37 +142,40 @@ input:is([type="checkbox" i], [type="radio" i])[role="toggle" i][data-initializi
 }
 
 .extension-name::after {
-    all: inherit;
-    content: "+";
+    bottom: 0;
     color: var(--hn-plus-theme-secondary);
-    height: 100%;
-    left: 0.5px;
+    content: '+';
     position: absolute;
-    text-align: right;
-    top: 0;
-    width: 100%;
+    transform: translate(-100%, 0);
 }
 
 #page-content {
+    display: flex;
     flex: 1;
     overflow: auto;
     scrollbar-width: thin;
+}
+
+#page-content>section {
+    flex: 1;
 }
 
 #page-content>section:not(.active) {
     display: none;
 }
 
-#page-content details {
+#page-content>section>:is(details, section) {
     padding: 0 1em;
 }
 
-#page-content details summary {
+#page-content>section>details>summary,
+#page-content>section>section>header {
     align-items: center;
     background: color-mix(in srgb, var(--hn-plus-theme-primary) 15%, #ffffff);
     cursor: pointer;
     display: flex;
     gap: 0.5em;
+    height: 3em;
     justify-content: flex-start;
     margin: 0 -1em;
     padding: 0.5em;
@@ -179,7 +183,8 @@ input:is([type="checkbox" i], [type="radio" i])[role="toggle" i][data-initializi
     width: calc(100% + 2em);
 }
 
-#page-content details summary::before {
+#page-content>section>details>summary::before,
+#page-content>section>section>header::before {
     content: 'keyboard_arrow_down';
     direction: ltr;
     font-family: 'Material Symbols Outlined';
@@ -201,20 +206,27 @@ input:is([type="checkbox" i], [type="radio" i])[role="toggle" i][data-initializi
     -webkit-font-smoothing: antialiased;
 }
 
-#page-content details summary~*+ :not(dialog) {
+#page-content>section>details>*:not(:first-child):not(dialog),
+#page-content>section>section>*:not(:first-child):not(:nth-child(2)):not(dialog) {
     margin-top: 1em;
 }
 
-#page-content details[open] {
+#page-content>section>:is(details[open], section) {
     padding: 0 1em 1em;
 }
 
-#page-content details[open] summary {
+#page-content>section>details[open]>summary,
+#page-content>section>section>header {
     margin-bottom: 1em;
 }
 
-#page-content details[open] summary::before {
+#page-content>section>details[open]>summary::before,
+#page-content>section>section>header::before {
     content: 'keyboard_arrow_up';
+}
+
+#page-content>section>section>header {
+    cursor: default;
 }
 
 #page-content .settings-group {
@@ -288,13 +300,117 @@ input:is([type="checkbox" i], [type="radio" i])[role="toggle" i][data-initializi
     display: none;
 }
 
-#page-content .save-duration select[name$=".mode" i]:has(option[value="1" i]:checked) ~ :is(input[name$=".duration" i], select[name$=".displayUnits" i]) {
+#page-content .save-duration select[name$=".mode" i]:has(option[value="1" i]:checked)~ :is(input[name$=".duration" i], select[name$=".displayUnits" i]) {
     display: inline-flex;
 }
 
 #page-content .actions {
     padding: 0.5em 0;
     text-align: right;
+}
+
+hn-plus-catalog-creator {
+    flex: 1;
+    margin-bottom: -1em;
+    overflow: hidden;
+}
+
+#pedigree-page-form {
+    align-content: flex-start;
+    display: grid;
+    flex: 1;
+    gap: 1em;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.65fr);
+    margin-bottom: -1em;
+    margin-right: -1em;
+    overflow: hidden;
+    padding-bottom: 1em;
+    padding-right: 1em;
+    width: calc(100% + 1em);
+}
+
+#pedigree-page-form .actions {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-bottom: 0;
+    margin-top: 0;
+    padding-bottom: 0;
+    padding-top: 0;
+}
+
+#pedigree-page-form .add-row {
+    all: unset;
+    color: #00aa00;
+    cursor: pointer;
+    font-size: 0.85em;
+    grid-column: 2;
+    margin-bottom: -0.5em;
+    margin-left: auto;
+    margin-top: -0.5em;
+}
+
+#pedigree-page-form #pedigree-rows {
+    align-items: center;
+    display: grid;
+    gap: 0.5em;
+    grid-column: 1 / span 2;
+    grid-template-columns: [hip-number] minmax(0, 0.5fr) [horse-id] minmax(0, 1fr) [remove-button] auto;
+    height: calc(100% + 1em);
+    margin-bottom: -1em;
+    margin-right: -1em;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 1em;
+    padding-bottom: 1em;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    width: calc(100% + 1em);
+}
+
+#pedigree-page-form #pedigree-rows .input-row {
+    display: contents;
+}
+
+#pedigree-page-form #pedigree-rows .input-row input[name="hipNumber" i] {
+    grid-column: hip-number;
+}
+
+#pedigree-page-form #pedigree-rows .input-row input[name="horseId" i] {
+    grid-column: horse-id;
+}
+
+#pedigree-page-form #pedigree-rows .input-row .remove-row {
+    all: unset;
+    color: #aa0000;
+    cursor: pointer;
+    grid-column: remove-button;
+    font-size: 0.85em;
+}
+
+#pedigree-page-form :is(.add-row, #pedigree-rows .input-row .remove-row):is([disabled], :disabled) {
+    color: #e7e7e7;
+    cursor: default;
+}
+
+#pedigree-page-form:not(:has(input[name="useHipNumbers" i]:checked)) {
+    align-items: flex-start;
+}
+
+#pedigree-page-form:not(:has(input[name="useHipNumbers" i]:checked)) input[name="hipNumber" i] {
+    display: none;
+}
+
+#panel-pedigree-pages {
+    display: flex;
+}
+
+#panel-pedigree-pages>section {
+    align-items: flex-start;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
 }
 
 #page-footer {

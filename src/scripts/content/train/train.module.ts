@@ -1,10 +1,10 @@
 import { onInstalled, onLoad } from '../../../lib/events.js';
 import { removeAll } from '../../../lib/utils.js';
+import '../fonts/material-symbols.js';
 
 type TrainingGroup = 'yearlings' | 'older';
 type TrainingInputElement = HTMLInputElement | HTMLSelectElement;
 
-const materialSymbolsStyleUrl = chrome.runtime.getURL('/public/fonts/MaterialSymbolsOutlined.css');
 const buttonClasses = ['btn', 'p-2', 'btn-sm', 'waves-effect', 'waves-light', 'hn-plus-button'];
 const copiedSettings: Map<TrainingGroup, Map<string, string>> = new Map();
 
@@ -48,13 +48,6 @@ function addButtons(row: Element): void {
 
     if (copiedSettings.has(getTrainingGroup(row)))
         addPasteButton(row);
-}
-
-function addMaterialSymbols(): void {
-    const font = document.createElement('link');
-    font.setAttribute('rel', 'stylesheet');
-    font.setAttribute('href', `${materialSymbolsStyleUrl}?t=${Date.now()}`);
-    document.head.append(font);
 }
 
 function addPasteButton(row: Element): void {
@@ -154,10 +147,6 @@ function removeButtons(row?: Element | undefined): void {
         removeAll('.hn-plus-button-wrapper', '.hn-plus-button');
 }
 
-function removeMaterialSymbols(): void {
-    removeAll(`link[href*="${materialSymbolsStyleUrl}"]`);
-}
-
 const observer = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
         [].forEach.call(mutation.addedNodes, (node: HTMLElement) => {
@@ -181,8 +170,6 @@ onInstalled(() => observer.disconnect());
 onLoad(() => {
     copiedSettings.clear();
     removeButtons();
-    removeMaterialSymbols();
-    addMaterialSymbols();
 
     document.querySelectorAll('form').forEach(form => {
         form.querySelectorAll('.horseField, .horseFieldYearliog').forEach(row => {

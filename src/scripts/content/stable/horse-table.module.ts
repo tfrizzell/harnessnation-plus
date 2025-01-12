@@ -1,4 +1,4 @@
-import DataTables, { DataTablesOptions } from '../../../lib/data-tables.js';
+import DataTables from '../../../lib/data-tables.js';
 import { onInstalled } from '../../../lib/events.js';
 
 const page = window.location.pathname.split('/').pop() ?? '';

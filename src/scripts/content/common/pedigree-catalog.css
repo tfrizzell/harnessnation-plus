@@ -1,0 +1,89 @@
+@import '../../../public/fonts/Roboto.css';
+@import '../../../public/style/theme.css';
+@import '../../../public/style/common.css';
+
+.hn-plus-catalog-button {
+    border-radius: 0;
+    display: inline-flex;
+    font-size: 0.9em;
+    margin: 0.375rem;
+    padding: 0.61em 1.22em;
+    vertical-align: middle;
+}
+
+.hn-plus-catalog-button::before {
+    display: none;
+}
+
+.hn-plus-catalog-button .material-symbols-outlined {
+    font-size: 1em;
+}
+
+.hn-plus-catalog-button:not(:is([disabled], :disabled)) .material-symbols-outlined {
+    color: var(--hn-plus-theme-secondary);
+}
+
+#hn-plus-catalog-modal {
+    align-items: flex-start;
+    border: 0;
+    box-shadow: 0 0 5px 0 #000000;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    font-family: Roboto, sans-serif;
+    font-size: 12px;
+    height: 45.25em;
+    justify-content: flex-start;
+    max-height: 57.5vh;
+    padding: 0;
+    overflow: hidden;
+    width: 33em;
+}
+
+#hn-plus-catalog-modal::backdrop {
+    background: rgba(0, 0, 0, 0.67);
+}
+
+#hn-plus-catalog-modal header {
+    align-items: center;
+    background: var(--hn-plus-theme-primary);
+    color: #ffffff;
+    display: flex;
+    flex: 0;
+    gap: 0.3em;
+    justify-content: center;
+    left: 0;
+    margin: 0;
+    padding: 1em 3em;
+    position: sticky;
+    top: 0;
+    width: 100%;
+}
+
+#hn-plus-catalog-modal header h2 {
+    font-family: inherit;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 0;
+}
+
+#hn-plus-catalog-modal .extension-name {
+    position: relative;
+}
+
+#hn-plus-catalog-modal .extension-name::after {
+    bottom: 0;
+    color: var(--hn-plus-theme-secondary);
+    content: '+';
+    position: absolute;
+    transform: translate(-100%, 0);
+}
+
+#hn-plus-catalog-modal hn-plus-catalog-creator {
+    height: calc(100% - 4em);
+    padding: 1em 1em 0;
+}
+
+#hn-plus-catalog-modal p {
+    padding: 1em;
+}

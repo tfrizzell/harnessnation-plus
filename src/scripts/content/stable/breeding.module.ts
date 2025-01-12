@@ -2,11 +2,10 @@ import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onInstalled, onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
 import { removeAll } from '../../../lib/utils.js';
-
-const tooltipScriptUrl = chrome.runtime.getURL('/public/components/tooltip.js');
+import '../common/tooltip.js';
 
 async function addExportButtons(): Promise<void> {
-    const exportRunning = (await chrome.storage.local.get('breeding.export'))?.['breeding.export'] ?? false;
+    const exportRunning = (await chrome.storage.local.get('running.exports.breeding'))?.['running.exports.breeding'] ?? false;
 
     document.querySelectorAll('#breedingHorseTable_3_wrapper').forEach(el => {
         [el.parentNode, el.parentNode?.parentNode].forEach(node => {
@@ -46,10 +45,10 @@ async function addExportButtons(): Promise<void> {
             wrapper.append(tooltip, button);
 
             function handleStateChange(changes: { [key: string]: chrome.storage.StorageChange }, areaName: chrome.storage.AreaName): void {
-                if (areaName !== 'local' || !changes['breeding.export'])
+                if (areaName !== 'local' || !changes['running.exports.breeding'])
                     return;
 
-                if (changes['breeding.export']?.newValue)
+                if (changes['running.exports.breeding']?.newValue)
                     document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = true; });
                 else
                     document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = false; });
@@ -80,16 +79,6 @@ async function addStallionScores(): Promise<void> {
     }
 }
 
-function addTooltips(): void {
-    if (document.querySelector(`script[src*="${tooltipScriptUrl}"]`))
-        return;
-
-    const tooltip = document.createElement('script');
-    tooltip.setAttribute('type', 'module');
-    tooltip.setAttribute('src', `${tooltipScriptUrl}?t=${Date.now()}`);
-    document.body.append(tooltip);
-}
-
 async function exportReport(html: string): Promise<void> {
     const pattern = /<tr[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*>/gs;
     const ids: number[] = [];
@@ -98,7 +87,7 @@ async function exportReport(html: string): Promise<void> {
     while (id = pattern.exec(html)?.[1])
         ids.push(+id);
 
-    await sendAction(ActionType.ExportBroodmareReport, { ids });
+    await sendAction(ActionType.GenerateBroodmareReport, { ids });
 }
 
 function removeExportButtons(): void {
@@ -107,10 +96,6 @@ function removeExportButtons(): void {
 
 function removeStallionScores(): void {
     removeAll('.horseContentContainer_4 .hn-plus-stallion-score');
-}
-
-function removeTooltips(): void {
-    removeAll(`script[src*="${tooltipScriptUrl}"]`);
 }
 
 const observer = new MutationObserver(mutations => {
@@ -131,8 +116,6 @@ onInstalled(() => observer.disconnect());
 onLoad(() => {
     removeStallionScores();
     removeExportButtons();
-    removeTooltips();
-    addTooltips();
 
     if (document.querySelector('.horseContentContainer_3'))
         addExportButtons();

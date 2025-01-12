@@ -6,9 +6,9 @@ import { drawTextCentered } from './pdf-lib/utils.js';
 
 import { api } from './harnessnation.js'
 import { getHorse, getRaces, Horse, Race, RaceList } from './horses.js';
-import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, isMobileOS, parseCurrency, parseInt, secondsToTime, toTimestamp } from './utils.js';
+import { ageToText, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, isMobileOS, parseCurrency, parseInt, secondsToTime } from './utils.js';
 
-type Ancestor = {
+interface Ancestor {
     id?: number;
     name: string | 'Unknown';
     sireId?: number;
@@ -26,13 +26,13 @@ enum Context {
     Production = 16,
 }
 
-type DamLineAncestor = Ancestor & {
+interface DamLineAncestor extends Ancestor {
     id: number;
     progeny: Progeny[];
     races: RaceList;
 }
 
-type FontMap = {
+interface FontMap {
     Normal: PDFFont;
     Bold: PDFFont;
     BoldItalic: PDFFont;
@@ -40,18 +40,7 @@ type FontMap = {
     [key: string]: PDFFont;
 }
 
-class ParagraphBuilder extends PDFParagraphBuilder {
-    #priority: ParagraphPriority;
-
-    constructor(priority: ParagraphPriority, font: PDFFont, size: number = 8.5, maxWidth: number = window.PDFLib.PageSizes.Letter[0], indent?: number, firstLineIndent?: number, paddingTop?: number) {
-        super(font, size, maxWidth, indent, firstLineIndent, paddingTop);
-        this.#priority = priority;
-    }
-
-    get priority(): ParagraphPriority {
-        return this.#priority;
-    }
-}
+type HipNumberType = string | number | boolean;
 
 enum ParagraphPriority {
     OnlyIfNeeded,
@@ -63,9 +52,9 @@ enum ParagraphPriority {
     Required
 }
 
-type PedigreeIdType = number | [number, string | number | undefined];
+type PedigreeIdType = number | [number, HipNumberType | undefined];
 
-type Progeny = {
+interface Progeny {
     id: number;
     name: string;
     sireId: number;
@@ -80,6 +69,12 @@ type Progeny = {
     races?: RaceList;
 }
 
+export interface Telemetry {
+    totalRuns: number;
+    totalRunTime: number;
+    pagesGenerated: number;
+}
+
 const earningsFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -88,6 +83,20 @@ const earningsFormatter = new Intl.NumberFormat('en-US', {
 });
 
 const PEDIGREE_GENERATIONS = 3;
+
+
+class ParagraphBuilder extends PDFParagraphBuilder {
+    #priority: ParagraphPriority;
+
+    constructor(priority: ParagraphPriority, font: PDFFont, size: number = 8.5, maxWidth: number = window.PDFLib.PageSizes.Letter[0], indent?: number, firstLineIndent?: number, paddingTop?: number) {
+        super(font, size, maxWidth, indent, firstLineIndent, paddingTop);
+        this.#priority = priority;
+    }
+
+    get priority(): ParagraphPriority {
+        return this.#priority;
+    }
+}
 
 /**
  * Adds a sale catalog style pedigree page to the pdf document.
@@ -326,11 +335,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         }
 
         for (const progeny of dam.progeny) {
-            if (progeny.age < 2 && progeny.id === horse.id)
-                continue;
-
             paragraphs.push(paragraph = new ParagraphBuilder(
-                getParagraphPriority(horse, dam, progeny),
+                dam.progeny.length > 1 && damIds.includes(progeny.id)
+                    ? ParagraphPriority.OnlyIfNeeded
+                    : getParagraphPriority(horse, dam, progeny),
                 fonts.Normal,
                 8.5,
                 maxWidth,
@@ -347,44 +355,48 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         await addHorseInfo(paragraph, horse, races, Context.Create);
     }
 
-    if (gender === 'MARE' && /<b[^>]*>\s*Total Foals:\s*<\/b[^>]*>\s*\d+/.test(info)) {
-        paragraphs.push(paragraph = new ParagraphBuilder(
-            ParagraphPriority.Required,
-            fonts.Bold,
-            10,
-            undefined,
-            undefined,
-            (page.getWidth() - fonts.Bold.widthOfTextAtSize('PRODUCTION RECORD', 10)) / 2 - margin.left,
-            fonts.Bold.heightAtSize(10) * 0.3,
-        ));
+    if (/<b[^>]*>\s*Total Foals:\s*<\/b[^>]*>\s*\d+/.test(info)) {
+        if (gender === 'STALLION') {
 
-        paragraph.add('PRODUCTION RECORD');
-
-        const currentSeason = getCurrentSeason();
-        const progeny = await getDamProgeny(horse.id!);
-        await populateProgenyData(progeny);
-
-        progeny.sort((a, b) => (b.age - a.age) || (a.id - b.id));
-        const ageOffsetIndex = progeny.findIndex(p => p.age !== 21);
-
-        for (const prog of progeny) {
-            if (prog.age === 21)
-                prog.age += ageOffsetIndex - progeny.indexOf(prog) - 1;
-
-            const birthSeason = new Date(currentSeason.valueOf());
-            birthSeason.setMonth(birthSeason.getMonth() - 3 * (prog.age - 1));
-
+        } else if (gender === 'MARE') {
             paragraphs.push(paragraph = new ParagraphBuilder(
-                getParagraphPriority(horse, <DamLineAncestor>horse, prog) + 3,
-                fonts.Normal,
-                8.5,
-                maxWidth,
-                indent * 2,
-                indent,
+                ParagraphPriority.Required,
+                fonts.Bold,
+                10,
+                undefined,
+                undefined,
+                (page.getWidth() - fonts.Bold.widthOfTextAtSize('PRODUCTION RECORD', 10)) / 2 - margin.left,
+                fonts.Bold.heightAtSize(10) * 0.3,
             ));
 
-            paragraph.add(`${birthSeason.toLocaleString('default', { month: 'short', year: 'numeric' })}-`);
-            await addHorseInfo(paragraph, prog, prog.races, Context.Progeny | Context.Production);
+            paragraph.add('PRODUCTION RECORD');
+
+            const currentSeason = getCurrentSeason();
+            const progeny = await getDamProgeny(horse.id!);
+            await populateProgenyData(progeny);
+
+            progeny.sort((a, b) => (b.age - a.age) || (a.id - b.id));
+            const ageOffsetIndex = progeny.findIndex(p => p.age !== 21);
+
+            for (const prog of progeny) {
+                if (prog.age === 21)
+                    prog.age += ageOffsetIndex - progeny.indexOf(prog) - 1;
+
+                const birthSeason = new Date(currentSeason.valueOf());
+                birthSeason.setMonth(birthSeason.getMonth() - 3 * (prog.age - 1));
+
+                paragraphs.push(paragraph = new ParagraphBuilder(
+                    getParagraphPriority(horse, <DamLineAncestor>horse, prog) + 3,
+                    fonts.Normal,
+                    8.5,
+                    maxWidth,
+                    indent * 2,
+                    indent,
+                ));
+
+                paragraph.add(`${birthSeason.toLocaleString('default', { month: 'short', year: 'numeric' })}-`);
+                await addHorseInfo(paragraph, prog, prog.races, Context.Progeny | Context.Production);
+            }
         }
     }
 
@@ -444,76 +456,98 @@ async function addWatermark(pdfDoc: PDFDocument): Promise<void> {
     }
 }
 
+function convertHipNumber(hipNumber?: HipNumberType, index: number = 0): string | number | undefined {
+    if (hipNumber === true)
+        return index + 1;
+
+    if (hipNumber === false)
+        return undefined;
+
+    return hipNumber;
+}
+
+async function createPDF(): Promise<PDFDocument> {
+    const pdfDoc = await window.PDFLib.PDFDocument.create();
+    pdfDoc.setTitle('HarnessNation Pedigree Catalog');
+    pdfDoc.setCreationDate(new Date());
+    pdfDoc.setCreator('HarnessNation+ (https://github.com/tfrizzell/harnessnation-plus)');
+    return pdfDoc;
+}
+
 /**
  * Generates a sale catalog for the given horses.
  * @param {number[]} ids - the ids of the horses. Accepted formats:  
  *                          `[id1, id2, ...]`  
  *                          `[[id1, hip1], [id2, hip2], ...]`
  * @param {boolean} showHipNumbers - if true, hip numbers will be displayed on each page.
- * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
+ * @returns {Promise<Horse>} A `Promise` that resolves with the data-uri of the pdf file.
  */
-export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumbers: boolean = false): Promise<void> {
+export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumbers: boolean = false): Promise<string> {
     if (await isMobileOS()) {
         console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree catalog generation`, 'color:#406e8e;font-weight:bold;', '');
-        return;
+        throw new Error('Pedigree catalogs are not supported on mobile');
     }
 
     if (ids.length === 1) {
         const [id, hipNumber] = Array.isArray(ids[0]) ? ids[0] : [ids[0], 1];
-        return await generatePedigreePage(id, showHipNumbers ? Math.max(1, parseInt(hipNumber ?? 0) || 0) : false);
+        return await generatePedigreePage(id, showHipNumbers ? hipNumber ?? true : false);
     }
 
-    const horses: [Horse, string | number][] = [];
+    const start = performance.now();
+    const horses: [Horse, string | number | undefined][] = [];
     let csrfToken: string | undefined;
 
     for (let i = 0; i < ids.length; i++) {
-        const [id, hipNumber] = <[number, string | number | undefined]>(Array.isArray(ids[i]) ? ids[i] : [ids[i], i + 1]);
+        const [id, hipNumber] = <[number, HipNumberType | undefined]>(Array.isArray(ids[i]) ? ids[i] : [ids[i], i + 1]);
         const horse = await getHorse(id);
         csrfToken ??= await api.getCSRFToken();
 
         if (horse.id !== id || csrfToken == null)
             throw new ReferenceError(`Failed to generate sale catalog: could not parse info for horse ${id}`);
 
-        horses.push([horse, Math.max(1, parseInt(hipNumber ?? 0) || i + 1)]);
+        horses.push([horse, convertHipNumber(hipNumber, i)]);
     }
 
-    const pdfDoc = await window.PDFLib.PDFDocument.create();
+    const pdfDoc = await createPDF();
     const fonts = await loadFonts(pdfDoc);
 
     while (horses.length > 0)
         await Promise.all(horses.splice(0, 3).map(([horse, hipNumber]) => addPedigreePage(pdfDoc, horse, showHipNumbers ? hipNumber : undefined, csrfToken, fonts)));
 
     await addWatermark(pdfDoc);
-    await downloadFile(await pdfDoc.saveAsBase64({ dataUri: true }), `hnplus-pedigree-catalog-${toTimestamp().replace(/\D/g, '')}.pdf`);
+
+    const dataUri = await pdfDoc.saveAsBase64({ dataUri: true });
+    recordTelemetry(start, ids.length);
+    return dataUri;
 }
 
 /**
  * Generates a sale catalog style pedigree page for the given horse.
  * @param {number} id - the id of the horse.
  * @param {string | number | boolean} hipNumber - if set, the hip number will be displayed on the pedigree page.
- * @returns {Promise<Horse>} A `Promise` that resolves with the `Horse` object.
+ * @returns {Promise<Horse>} A `Promise` that resolves with the data-uri of the pdf file.
  */
-export async function generatePedigreePage(id: number, hipNumber?: string | number | boolean): Promise<void> {
+export async function generatePedigreePage(id: number, hipNumber?: HipNumberType): Promise<string> {
     if (await isMobileOS()) {
         console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree page generation`, 'color:#406e8e;font-weight:bold;', '');
-        return;
+        throw new Error('Pedigree catalogs are not supported on mobile');
     }
 
+    const start = performance.now();
     const horse = await getHorse(id);
     const csrfToken = await api.getCSRFToken();
 
     if (horse.id !== id || csrfToken == null)
         throw new ReferenceError(`Failed to generate sale catalog: could not parse info for horse ${id}`);
 
-    if (hipNumber === true)
-        hipNumber = 1;
-    else if (hipNumber === false)
-        hipNumber = undefined;
 
-    const pdfDoc = await window.PDFLib.PDFDocument.create();
-    await addPedigreePage(pdfDoc, horse, hipNumber == null ? undefined : Math.max(1, parseInt(hipNumber ?? 0)), csrfToken);
+    const pdfDoc = await createPDF();
+    await addPedigreePage(pdfDoc, horse, convertHipNumber(hipNumber), csrfToken);
     await addWatermark(pdfDoc);
-    await downloadFile(await pdfDoc.saveAsBase64({ dataUri: true }), `${horse.name}.pdf`);
+
+    const dataUri = await pdfDoc.saveAsBase64({ dataUri: true });
+    recordTelemetry(start, 1);
+    return dataUri;
 }
 
 function getAwardText(data: string | Progeny): string {
@@ -557,6 +591,16 @@ async function getDamProgeny(id: number, csrfToken?: string): Promise<Progeny[]>
             conferenceAwardWinner: /trophyhorse_silver\.png/i.test(match),
         };
     }).filter((progeny, index) => progenyIds.indexOf(progeny.id) === index).sort(sortProgeny);
+}
+
+/**
+ * Returns the estimated runtime to generate a catalog of the given page count.
+ * @param {number} pageCount - the number of pages to be generated.
+ * @returns {Promise<number>} A `Promise` that resolves with the estimated runtime in milliseconds.
+ */
+export async function getEstimatedRuntime(pageCount: number): Promise<number> {
+    const telemetry: Telemetry = (await chrome.storage.local.get('telemetry.pedigree'))?.['telemetry.pedigree'] ?? { totalRuns: 0, totalRunTime: 15000, pagesGenerated: 1 };
+    return pageCount * telemetry.totalRunTime / telemetry.pagesGenerated;
 }
 
 function getKeyRaces(races: RaceList, ageRef?: Race, includeOpen?: boolean, includePreferred?: boolean): RaceList {
@@ -758,6 +802,25 @@ async function populateProgenyData(progeny: Progeny[], csrfToken?: string): Prom
             prog.earnings = prog.races.getEarnings();
         }));
     }
+}
+
+async function recordTelemetry(start: number, pageCount: number): Promise<void> {
+    if (pageCount < 1)
+        return;
+
+    const runtime = performance.now() - start;
+
+    chrome.storage.local.get('telemetry.pedigree').then(data => {
+        const telemetry: Telemetry = data['telemetry.pedigree'] ?? { totalRuns: 0, totalRunTime: 0, pagesGenerated: 0 };
+
+        chrome.storage.local.set({
+            'telemetry.pedigree': <Telemetry>{
+                totalRuns: telemetry.totalRuns + 1,
+                totalRunTime: telemetry.totalRunTime + runtime,
+                pagesGenerated: telemetry.pagesGenerated + pageCount,
+            }
+        });
+    });
 }
 
 function showDamInfo(index: number): boolean {

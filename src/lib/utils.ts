@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 import { Race, RaceList } from './horses';
 
-export type DownloadOptions = {
+export interface DownloadOptions {
     contentType?: string;
     saveAs?: boolean
 };

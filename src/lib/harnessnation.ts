@@ -1,6 +1,6 @@
 import { isMobileOS } from './utils.js';
 
-type CacheEntry = {
+interface CacheEntry {
     response: string;
     expiresAt: number;
 }
@@ -28,53 +28,59 @@ export class HarnessNationAPI {
     #startUp?: Promise<void>;
 
     constructor() {
-        this.#startUp = isMobileOS().then(isMobile => {
-            if (isMobile) {
-                cacheError('Mobile OS Detected: disabling api cache');
+        this.#startUp = (chrome?.runtime?.getPlatformInfo == null
+            ? new Promise<void>(resolve => {
                 this.#cacheTTL = 0;
-                return;
-            }
+                resolve();
+            })
+            : isMobileOS().then(isMobile => {
+                if (isMobile) {
+                    cacheError('Mobile OS Detected: disabling api cache');
+                    this.#cacheTTL = 0;
+                    return;
+                }
 
-            return new Promise<void>(resolve => {
-                const timeout = setTimeout(() => {
-                    cacheError('Failed to open api cache: timed out');
-                    resolve();
-                }, 5000);
+                return new Promise<void>(resolve => {
+                    const timeout = setTimeout(() => {
+                        cacheError('Failed to open api cache: timed out');
+                        resolve();
+                    }, 5000);
 
-                const req = indexedDB.open('cache:api', 1);
+                    const req = indexedDB.open('cache:api', 1);
 
-                req.addEventListener('error', e => {
-                    clearTimeout(timeout);
-                    const error = <Error>(e.target as any).error;
-                    cacheError(`Failed to open api cache: ${error.message}`, error);
-                    resolve();
-                });
-
-                req.addEventListener('success', () => {
-                    clearTimeout(timeout);
-                    this.#cache = req.result;
-                    resolve();
-                });
-
-                req.addEventListener('upgradeneeded', e => {
-                    clearTimeout(timeout);
-                    cacheDebug('Updating api cache');
-
-                    const db: IDBDatabase = (e.target as any).result;
-
-                    db.addEventListener('error', e => {
+                    req.addEventListener('error', e => {
+                        clearTimeout(timeout);
                         const error = <Error>(e.target as any).error;
-                        cacheError(`Failed to update api cache: ${error.message}`, error);
+                        cacheError(`Failed to open api cache: ${error.message}`, error);
                         resolve();
                     });
 
-                    const store = db.createObjectStore('responses', { keyPath: 'key' });
-                    store.createIndex('response', 'response', { unique: false });
-                    store.createIndex('expiresAt', 'expiresAt', { unique: false });
-                    resolve();
+                    req.addEventListener('success', () => {
+                        clearTimeout(timeout);
+                        this.#cache = req.result;
+                        resolve();
+                    });
+
+                    req.addEventListener('upgradeneeded', e => {
+                        clearTimeout(timeout);
+                        cacheDebug('Updating api cache');
+
+                        const db: IDBDatabase = (e.target as any).result;
+
+                        db.addEventListener('error', e => {
+                            const error = <Error>(e.target as any).error;
+                            cacheError(`Failed to update api cache: ${error.message}`, error);
+                            resolve();
+                        });
+
+                        const store = db.createObjectStore('responses', { keyPath: 'key' });
+                        store.createIndex('response', 'response', { unique: false });
+                        store.createIndex('expiresAt', 'expiresAt', { unique: false });
+                        resolve();
+                    });
                 });
-            });
-        }).then(() => this.#startUp = undefined);
+            })
+        ).then(() => this.#startUp = undefined);
     }
 
     get cacheTTL(): number {

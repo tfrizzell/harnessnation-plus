@@ -3,12 +3,12 @@ import { api } from './harnessnation.js'
 import { StudFeeFormula } from './settings.js';
 import { parseCurrency, parseInt, seasonsBetween } from './utils.js';
 
-export type BreedingScore = {
+export interface BreedingScore {
     score: number | null;
     confidence: number;
 }
 
-export type Horse = {
+export interface Horse {
     id?: number;
     name?: string;
     sireId?: number | null;
@@ -17,7 +17,7 @@ export type Horse = {
     stallionScore?: StallionScore | null;
 }
 
-export type Race = {
+export interface Race {
     id?: number;
     name?: string;
     stake?: boolean;
@@ -110,7 +110,7 @@ export class RaceList extends Array<Race> {
     }
 }
 
-export type StallionScore = {
+export interface StallionScore {
     value?: number | null;
     confidence?: number;
     racing?: number | null;
@@ -118,7 +118,7 @@ export type StallionScore = {
     bloodline?: number | null;
 }
 
-export type StallionScoreBadgeOptions = {
+export interface StallionScoreBadgeOptions {
     preview?: boolean;
     clickable?: boolean;
 }
