@@ -158,6 +158,7 @@ describe(`downloadFile`, () => {
                     saveAs: false,
                 });
 
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 expect(createdUrlCount).toBe(1);
                 expect(createdUrls.length).toBe(0);
             } finally {
