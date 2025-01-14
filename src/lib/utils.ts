@@ -102,7 +102,7 @@ export async function downloadFile(file: string | Blob, filename: string, option
         });
     } finally {
         if (revokeObjectUrl)
-            window.URL.revokeObjectURL(file);
+            setTimeout(window.URL.revokeObjectURL, 1, file);
     }
 }
 
