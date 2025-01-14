@@ -77,7 +77,7 @@ export async function downloadFile(file: string | Blob, filename: string, option
 
     if (window.URL?.createObjectURL != null) {
         if (!(file instanceof Blob))
-            file = new Blob([file], { type: options.contentType });
+            file = new Blob([new Uint8Array(Array.from(file).map(char => char.charCodeAt(0)))], { type: options.contentType });
 
         file = window.URL.createObjectURL(file);
         revokeObjectUrl = true;

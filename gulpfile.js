@@ -54,11 +54,11 @@ gulp.task('build', gulp.series('clean', 'copy:icons', 'copy:public', 'compile'))
 
 /***********************
  **                   **
- **     Dev Build     **
+ **       Build       **
  **                   **
  ***********************/
 
- const copyManifest = browser => () =>
+const copyManifest = browser => () =>
     gulp.src([`./manifests/manifest-${browser}.json`], { base: './' })
         .pipe(rename(path => {
             if (path.basename === `manifest-${browser}`) {
@@ -71,7 +71,6 @@ gulp.task('build', gulp.series('clean', 'copy:icons', 'copy:public', 'compile'))
 gulp.task('build:chrome', gulp.series('build', copyManifest('chrome')));
 gulp.task('build:edge', gulp.series('build', copyManifest('edge')));
 gulp.task('build:firefox', gulp.series('build', copyManifest('firefox')));
-gulp.task('build:debug', gulp.parallel('build:chrome'));
 
 /***********************
  **                   **
@@ -102,3 +101,13 @@ gulp.task('package:firefox', gulp.series('build', package('firefox')));
 
 gulp.task('package:all', gulp.series('build', gulp.parallel(package('chrome'), package('edge'), package('firefox'))));
 gulp.task('package', gulp.parallel('package:all'));
+
+/***********************
+ **                   **
+ **       Debug       **
+ **                   **
+ ***********************/
+
+gulp.task('debug:chrome', gulp.parallel('build:chrome'));
+gulp.task('debug:edge', gulp.parallel('build:edge'));
+gulp.task('debug:firefox', gulp.series('package:firefox'));
