@@ -73,7 +73,7 @@ function showCatalogDialog(optionsSelector?: string): Promise<void> {
         dialog.addEventListener('click', (e: MouseEvent) => {
             const { top, right, bottom, left } = dialog.getBoundingClientRect();
 
-            if (e.y < top || e.y > bottom || e.x < left || e.x > right)
+            if (e.target === dialog && (e.y < top || e.y > bottom || e.x < left || e.x > right))
                 dialog.close();
         });
 

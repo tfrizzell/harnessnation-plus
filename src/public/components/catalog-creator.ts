@@ -46,8 +46,8 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
             '/public/style/theme.css',
             '/public/style/common.css',
         ].map(file => {
-            if (chrome?.runtime?.getURL != null)
-                return chrome.runtime.getURL(file);
+            if (window?.chrome?.runtime?.getURL != null)
+                return window.chrome.runtime.getURL(file);
 
             try {
                 return new URL(file, import.meta.url).toString();

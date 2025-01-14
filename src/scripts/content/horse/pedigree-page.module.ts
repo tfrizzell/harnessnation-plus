@@ -63,7 +63,7 @@ async function createPedigreePage(): Promise<void> {
         });
     } catch (e: any) {
         if (e)
-            console.error(`%pedigree-page.module.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+            console.error(`%cpedigree-page.module.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
     }
 }
 
