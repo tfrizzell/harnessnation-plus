@@ -87,3 +87,7 @@
 #hn-plus-catalog-modal p {
     padding: 1em;
 }
+
+#hn-plus-catalog-modal p:last-child {
+    margin-bottom: 0;
+}
