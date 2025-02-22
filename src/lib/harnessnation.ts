@@ -1,4 +1,4 @@
-import { isMobileOS } from './utils.js';
+import { isMobileOS, sleep } from './utils.js';
 
 interface CacheEntry {
     response: string;
@@ -26,6 +26,12 @@ export class HarnessNationAPI {
     #cache?: IDBDatabase;
     #cacheTTL: number = 3_600_000;
     #startUp?: Promise<void>;
+
+    #requestThrottleThreshold: number = 15_000;
+    #requestThrottleCount: number = 15;
+    #requestThrottleTimeout: number = 15_000;
+    #requestCount: number = 0;
+    #lastRequestAt: number = 0
 
     constructor() {
         this.#startUp = (chrome?.runtime?.getPlatformInfo == null
@@ -131,7 +137,15 @@ export class HarnessNationAPI {
         if (cached != null)
             return cached;
 
+        if (Date.now() - this.#lastRequestAt > this.#requestThrottleThreshold)
+            this.#requestCount = 0
+
+        if (this.#requestCount > 0 && this.#requestCount % this.#requestThrottleCount === 0)
+            await sleep(this.#requestThrottleTimeout)
+
         const res = await generator();
+        this.#lastRequestAt = Date.now()
+        this.#requestCount++;
 
         if (!res.ok)
             throw new Error(`${res.status} ${res.statusText}`);
