@@ -16,10 +16,10 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 
 chrome.runtime.onInstalled.addListener(async details => {
-    await clearLocalStorage(true);
-
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL || await chrome.storage.sync.getBytesInUse() < 1)
         await chrome.storage.sync.set(settings);
+
+    await clearLocalStorage(details.reason === chrome.runtime.OnInstalledReason.UPDATE);
 
     if (details.reason !== chrome.runtime.OnInstalledReason.UPDATE)
         return;
