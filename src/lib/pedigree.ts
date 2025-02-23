@@ -176,6 +176,16 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         return races?.some(r => r.stake && r.finish! <= 3) ? fonts!.Bold : fonts!.Normal;
     }
 
+    function isNotable(progeny: Progeny): boolean {
+        return progeny.id !== horse.id
+            && !damIds.includes(progeny.id)
+            && (
+                progeny.overallAwardWinner
+                || progeny.conferenceAwardWinner
+                || progeny.races?.some(r => r.stake === true && r.finish === 1) === true
+            )
+    }
+
     function mayBeBroodmare(progeny: Progeny): boolean {
         return progeny.gender === 'female' && progeny.stable !== 'main' && progeny.id !== horse.id && !damIds.includes(progeny.id)
     }
@@ -359,7 +369,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
             if (mayBeBroodmare(progeny)) {
                 const xProgeny = progeny as ProgenyExtended;
-                xProgeny.progeny = await getDamProgeny(progeny.id, csrfToken);
+                xProgeny.progeny = await getProgeny(progeny.id, csrfToken);
                 await populateProgenyData(xProgeny.progeny, csrfToken);
                 xProgeny.progeny.sort(sortProgeny)
 
@@ -368,12 +378,12 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                 for (const grandProgeny of xProgeny.progeny) {
                     if (mayBeBroodmare(grandProgeny)) {
                         const xGrandProgeny = grandProgeny as ProgenyExtended;
-                        xGrandProgeny.progeny = await getDamProgeny(grandProgeny.id, csrfToken);
+                        xGrandProgeny.progeny = await getProgeny(grandProgeny.id, csrfToken);
                         await populateProgenyData(xGrandProgeny.progeny, csrfToken);
                         xGrandProgeny.progeny.sort(sortProgeny)
                     }
 
-                    if (getParagraphPriority(horse, {} as DamLineAncestor, grandProgeny) < ParagraphPriority.High)
+                    if (!isNotable(grandProgeny))
                         continue;
 
                     paragraph.add(count === 0 ? ` Dam of` : ',');
@@ -383,7 +393,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                         getNameFont(grandProgeny.races)
                     );
 
-                    paragraph.add(` ${getMarkString(grandProgeny.races!.filter(r => r.finish === 1))}`);
+                    paragraph.add(` ${getMarkString(grandProgeny.races!)}`);
                     count++;
                 }
 
@@ -392,7 +402,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
                 const xGrandProgeny = xProgeny.progeny.
                     reduce((grandProgeny, progeny) => [...grandProgeny, ...(progeny as ProgenyExtended)?.progeny ?? []], [] as Progeny[])
-                    .filter(p => getParagraphPriority(horse, {} as DamLineAncestor, p) >= ParagraphPriority.VeryHigh && p.id !== horse.id && !damIds.includes(p.id));
+                    .filter(isNotable);
 
                 if (xGrandProgeny.length > 0) {
                     paragraph.add(' Granddam of');
@@ -406,7 +416,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                             getNameFont(greatGrandProgeny.races)
                         );
 
-                        paragraph.add(` ${getMarkString(greatGrandProgeny.races!.filter(r => r.finish === 1))}`);
+                        paragraph.add(` ${getMarkString(greatGrandProgeny.races!)}`);
                     }
 
                     paragraph.add('.');
@@ -422,7 +432,61 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
     if (/<b[^>]*>\s*Total Foals:\s*<\/b[^>]*>\s*\d+/.test(info)) {
         if (gender === 'STALLION') {
+            const progeny = await getProgeny(horse.id!);
+            await populateProgenyData(progeny);
 
+            const [starters, winners, earnings] = progeny.reduce(([starters, winners, earnings], p) => [
+                starters + (p.races?.[0] ? 1 : 0),
+                winners + (p.races?.some(r => r.finish === 1) ? 1 : 0),
+                earnings + p.earnings,
+            ], [0, 0, 0]);
+
+            if (starters > 0) {
+                const notableProgeny = progeny.filter(isNotable);
+
+                paragraphs.push(paragraph = new ParagraphBuilder(
+                    ParagraphPriority.Required,
+                    fonts.Normal,
+                    8.5,
+                    maxWidth,
+                    indent / 2,
+                    indent / 4
+                ));
+
+                paragraph.add(`From ${starters} starters`);
+
+                if (winners > 0)
+                    paragraph.add(`, sire of ${winners} winners`);
+
+                if (earnings > 0)
+                    paragraph.add(`, with earnings of ${earningsFormatter.format(earnings)}`);
+
+                if (notableProgeny.length > 0) {
+                    paragraph.add(`${winners + earnings > 0 ? ',' : ''} including:`);
+
+                    for (const progeny of notableProgeny) {
+                        paragraphs.push(paragraph = new ParagraphBuilder(
+                            ParagraphPriority.High,
+                            fonts.Normal,
+                            8.5,
+                            maxWidth,
+                            indent,
+                            indent / 2
+                        ));
+
+                        paragraph.add(
+                            ` ${formatName(progeny.name!, progeny.races)}`,
+                            getNameFont(progeny.races)
+                        );
+
+                        if (progeny.gender === 'female')
+                            paragraph.add(' (M)');
+
+                        paragraph.add(` ${getMarkString(progeny.races!)}`);
+                    }
+                } else
+                    paragraph.add('.');
+            }
         } else if (gender === 'MARE') {
             paragraphs.push(paragraph = new ParagraphBuilder(
                 ParagraphPriority.Required,
@@ -437,7 +501,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
             paragraph.add('PRODUCTION RECORD');
 
             const currentSeason = getCurrentSeason();
-            const progeny = await getDamProgeny(horse.id!);
+            const progeny = await getProgeny(horse.id!);
             await populateProgenyData(progeny);
 
             progeny.sort((a, b) => (b.age - a.age) || (a.id - b.id));
@@ -475,7 +539,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         for (let i = paragraphs.length - 1; i >= 0; i--) {
             const paragraph = paragraphs[i];
 
-            if (paragraph.text.match(/^\d+\w{2} Dam$/i) && (i + 3 > paragraphs.length || paragraphs[i + 2]?.text.match(/^Production Record$/i))) {
+            if (paragraph.text.match(/^(\d+\w{2} Dam$|From \d+ starters)/i) && (i + 3 > paragraphs.length || paragraphs[i + 2]?.text.match(/^(Production Record$|From \d+ starters)/i))) {
                 totalHeight -= paragraphs.splice(i, 2).reduce((h, p) => h + p.getHeight() + 1, 0);
                 break;
             }
@@ -629,40 +693,6 @@ function getAwardText(data: string | Progeny): string {
     return '';
 }
 
-async function getDamProgeny(id: number, csrfToken?: string): Promise<Progeny[]> {
-    const progenyIds: number[] = [];
-
-    return Array.from(
-        (await api.getProgenyList(id, csrfToken))
-            .matchAll(/<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>().*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+\s*-\s*(\d+)\s*-\s*\d+\s*-\s*\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
-    ).map(([match, id, name, sireId, sireName, age, gender, stable, wins, earnings]): Progeny => {
-        const progenyId = parseInt(id);
-        progenyIds.push(progenyId)
-
-        return {
-            id: progenyId,
-            name: name.trim(),
-            sireId: parseInt(sireId),
-            sireName: sireName.trim(),
-            age: parseInt(age),
-            gender: gender.toLowerCase() === 'mars'
-                ? 'male'
-                : gender.toLowerCase() === 'venus'
-                    ? 'female'
-                    : 'gelding',
-            stable: stable.toLowerCase() === 'm'
-                ? 'main'
-                : stable.toLowerCase() === 'b'
-                    ? 'breeding'
-                    : 'retired',
-            wins: parseInt(wins),
-            earnings: parseCurrency(earnings),
-            overallAwardWinner: /trophyhorse\.png/i.test(match),
-            conferenceAwardWinner: /trophyhorse_silver\.png/i.test(match),
-        };
-    }).filter((progeny, index) => progenyIds.indexOf(progeny.id) === index).sort(sortProgeny);
-}
-
 /**
  * Returns the estimated runtime to generate a catalog of the given page count.
  * @param {number} pageCount - the number of pages to be generated.
@@ -733,9 +763,10 @@ function getKeyRaceString(races: RaceList, ageRef?: Race, includeOpen?: boolean,
 
 function getMarkString(races: RaceList, ageRef?: Race): string {
     ageRef ??= races.findAgeRef();
-    const fastestWin = races.findFastestWin();
-    const fastestWinAtTwo = races.findFastestWin(race => races.findAge(race, ageRef) === 2);
-    const fastestWinAtThree = races.findFastestWin(race => races.findAge(race, ageRef) === 3);
+    const wins = races.filter(r => r.finish === 1);
+    const fastestWin = wins.findFastestWin();
+    const fastestWinAtTwo = wins.findFastestWin(race => races.findAge(race, ageRef) === 2);
+    const fastestWinAtThree = wins.findFastestWin(race => races.findAge(race, ageRef) === 3);
     const fastestRace = races.findFastestRace();
     const [starts, earnings] = races.getSummary().filter((_value, index, array) => index === 0 || index === array.length - 1);
 
@@ -786,6 +817,40 @@ async function getPedigree(id: number, csrfToken?: string): Promise<Ancestor[]> 
         id: match[1] ? parseInt(match[1]!) : undefined,
         name: match[2] ?? match[3],
     }));
+}
+
+async function getProgeny(id: number, csrfToken?: string): Promise<Progeny[]> {
+    const progenyIds: number[] = [];
+
+    return Array.from(
+        (await api.getProgenyList(id, csrfToken))
+            .matchAll(/<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>().*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+\s*-\s*(\d+)\s*-\s*\d+\s*-\s*\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
+    ).map(([match, id, name, sireId, sireName, age, gender, stable, wins, earnings]): Progeny => {
+        const progenyId = parseInt(id);
+        progenyIds.push(progenyId)
+
+        return {
+            id: progenyId,
+            name: name.trim(),
+            sireId: parseInt(sireId),
+            sireName: sireName.trim(),
+            age: parseInt(age),
+            gender: gender.toLowerCase() === 'mars'
+                ? 'male'
+                : gender.toLowerCase() === 'venus'
+                    ? 'female'
+                    : 'gelding',
+            stable: stable.toLowerCase() === 'm'
+                ? 'main'
+                : stable.toLowerCase() === 'b'
+                    ? 'breeding'
+                    : 'retired',
+            wins: parseInt(wins),
+            earnings: parseCurrency(earnings),
+            overallAwardWinner: /trophyhorse\.png/i.test(match),
+            conferenceAwardWinner: /trophyhorse_silver\.png/i.test(match),
+        };
+    }).filter((progeny, index) => progenyIds.indexOf(progeny.id) === index).sort(sortProgeny);
 }
 
 function getWinText(wins: number, ageStart?: number, ageEnd?: number): string {
@@ -846,7 +911,7 @@ async function populateAncestors(pedigree: Ancestor[], csrfToken?: string): Prom
                 }
 
                 if (showDamInfo(i + j) && (ancestor.progeny == null || ancestor.races == null)) {
-                    ancestor.progeny = await getDamProgeny(ancestor.id, csrfToken);
+                    ancestor.progeny = await getProgeny(ancestor.id, csrfToken);
                     ancestor.races = races;
                 }
             }
