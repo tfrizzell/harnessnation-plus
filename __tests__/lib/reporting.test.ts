@@ -2,7 +2,16 @@ import fs from 'fs';
 import path from 'path';
 
 import { generateBreedingReport } from '../../src/lib/reporting.js';
-import * as utils from '../../src/lib/utils.js';
+import { sleep } from '../../src/lib/utils.js';
+
+jest.mock('../../src/lib/utils.js', () => {
+    const originalModule = jest.requireActual('../../src/lib/utils.js');
+
+    return {
+        ...originalModule,
+        sleep: jest.fn().mockImplementation((value: number, abortSignal: AbortSignal | null = null): Promise<void> => Promise.resolve()),
+    };
+});
 
 beforeAll(() => {
     global.fetch = <jest.Mock>jest.fn((input: RequestInfo, init?: RequestInit): Promise<{ ok: boolean, text: () => Promise<string> }> => {
@@ -40,17 +49,10 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-    (<jest.Mock>global.fetch).mockRestore();
+    jest.restoreAllMocks();
 });
 
 describe(`generateBreedingReport`, () => {
-    const mockSleep = jest.spyOn(utils, 'sleep')
-        .mockImplementation((value: number, abortSignal: AbortSignal | null = null): Promise<void> => Promise.resolve());
-
-    afterAll(() => {
-        mockSleep.mockRestore();
-    });
-
     it(`exists`, () => {
         expect(generateBreedingReport).not.toBeUndefined();
     });
@@ -78,7 +80,7 @@ describe(`generateBreedingReport`, () => {
 
     it(`sleeps for 15 seconds after every 7.5 rows`, async () => {
         await generateBreedingReport({ ids: Array(20).fill(0).map((_, i) => i + 1) });
-        expect(mockSleep).toHaveBeenCalledTimes(2);
-        expect(mockSleep).toHaveBeenCalledWith(15000);
+        expect(sleep).toHaveBeenCalledTimes(2);
+        expect(sleep).toHaveBeenCalledWith(15000);
     });
 });
