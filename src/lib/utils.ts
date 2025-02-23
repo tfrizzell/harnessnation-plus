@@ -115,8 +115,8 @@ export function formatMark(race: Race | undefined, age?: number): string {
 }
 
 export function formatOrdinal(value: number): string {
-    const englishOrdinalRules = new Intl.PluralRules('en', { type: 'ordinal' })
-    const category = englishOrdinalRules.select(value)
+    const englishOrdinalRules = new Intl.PluralRules('en', { type: 'ordinal' });
+    const category = englishOrdinalRules.select(value);
 
     switch (category) {
         case 'one': {
