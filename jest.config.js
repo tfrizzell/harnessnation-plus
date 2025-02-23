@@ -1,5 +1,4 @@
 module.exports = {
-    preset: 'ts-jest',
     testEnvironment: 'jsdom',
     globalSetup: './global.setup.js',
     setupFilesAfterEnv: ['./jest.setup.js'],
@@ -16,17 +15,14 @@ module.exports = {
         '!./src/lib/pedigree.ts',
     ],
     maxWorkers: 1,
-    globals: {
-        'ts-jest': {
-            isolatedModules: true,
-            useESM: true,
-        },
-    },
-    moduleNameMapper: {
-        '^(\\.{1,2}/.*)\\.js$': '$1',
-        '([a-zA-Z_ ]+\\.html)\\?raw$': '$1.ts',
+    transform: {
+        '^.+\\.(t|j)sx?$': '@swc/jest',
     },
     transformIgnorePatterns: [
         'node_modules/(?!pdf-lib)'
-    ]
+    ],
+    moduleNameMapper: {
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+        '([a-zA-Z_ ]+\\.html)\\?raw$': '$1.ts',
+    }
 };

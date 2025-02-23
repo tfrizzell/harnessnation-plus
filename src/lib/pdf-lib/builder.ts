@@ -96,6 +96,10 @@ export class PDFParagraphBuilder {
         }
     }
 
+    get text() {
+        return this.#components.map(c => c.text).join(' ');
+    }
+
     /**
      * Adds a new text component to the paragraph builder.
      * @param text The text to be added to the paragraph.

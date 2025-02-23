@@ -2,7 +2,16 @@ import fs from 'fs';
 import path from 'path';
 
 import { generateBreedingReport } from '../../src/lib/reporting.js';
-import * as utils from '../../src/lib/utils.js';
+import { sleep } from '../../src/lib/utils.js';
+
+jest.mock('../../src/lib/utils.js', () => {
+    const originalModule = jest.requireActual('../../src/lib/utils.js');
+
+    return {
+        ...originalModule,
+        sleep: jest.fn().mockImplementation((value: number, abortSignal: AbortSignal | null = null): Promise<void> => Promise.resolve()),
+    };
+});
 
 beforeAll(() => {
     global.fetch = <jest.Mock>jest.fn((input: RequestInfo, init?: RequestInit): Promise<{ ok: boolean, text: () => Promise<string> }> => {
@@ -40,21 +49,10 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-    (<jest.Mock>global.fetch).mockRestore();
-});
-
-it('is ok', () => {
-    expect(true).toBeTruthy();
+    jest.restoreAllMocks();
 });
 
 describe(`generateBreedingReport`, () => {
-    const mockSleep = jest.spyOn(utils, 'sleep')
-        .mockImplementation((value: number, abortSignal: AbortSignal | null = null): Promise<void> => Promise.resolve());
-
-    afterAll(() => {
-        mockSleep.mockRestore();
-    });
-
     it(`exists`, () => {
         expect(generateBreedingReport).not.toBeUndefined();
     });
@@ -80,16 +78,9 @@ describe(`generateBreedingReport`, () => {
         })).resolves.toBe('data:text/csv;base64,IlN0YWxsaW9uIiwiTmFtZSIsIkFnZSIsIkdhaXQiLCJUcmFjayBTaXplIiwiR3JhZGUiLCJTaXJlIiwiRGFtIiwiRGFtLVNpcmUiLCJSYWNlIFJlY29yZCIsIlN0YWtlIFJlY29yZCIsIlRvdGFsIEZvYWxzIiwiVG90YWwgU3RhcnRlcnMiLCJUb3RhbCBTdGFydGVycyAoJSkiLCJUb3RhbCBXaW5uZXJzIiwiVG90YWwgV2lubmVycyAoJSkiLCJUb3RhbCBFYXJuaW5ncyIsIkF2ZyBFYXJuaW5ncyBQZXIgU3RhcnRlciIsIlN0YWtlIFN0YXJ0ZXJzIiwiU3Rha2UgU3RhcnRlcnMgKCUpIiwiU3Rha2UgV2lubmVycyIsIlN0YWtlIFdpbm5lcnMgKCUpIiwiU3Rha2UgU3RhcnRzIiwiU3Rha2UgV2lucyIsIlN0YWtlIFBsYWNlIiwiU3Rha2UgU2hvdyIsIlN0YWtlIEVhcm5pbmdzIgoiMTQiLCJBc3Ryb25vbWljYWwiLCIyMSIsIlBhY2UiLCJIYWxmIE1pbGUiLCJBIiwiVW5rbm93biIsIlVua25vd24iLCJVbmtub3duIiwiMzUgLSAxNyAtIDUgLSA0ICgkNzY5LDQ3NCkiLCI3IC0gMSAtIDAgLSAxICgkMTkxLDUwMCkiLCI3NzgiLCI2NjAiLCI4NC44MyUiLCI2MDAiLCI5MC45MSUiLCIkMjMyLDkxMCwyMTQiLCIkMzUyLDg5NCIsIjE4NSIsIjI4LjAzJSIsIjM1IiwiNS4zMCUiLCI3MjMiLCI5NCIsIjYzIiwiNjgiLCIkMjQsNjAxLDAwMCIKIjEwNDc0IiwiUmVhZGx5IEV4cHJlc3MiLCIyMSIsIlRyb3QiLCJIYWxmIE1pbGUiLCJBKyIsIlVua25vd24iLCJVbmtub3duIiwiVW5rbm93biIsIjE1IC0gMTAgLSAzIC0gMiAoJDc3Miw4NzUpIiwiMyAtIDEgLSAxIC0gMSAoJDQyMiw1MDApIiwiMTIwOSIsIjEwNDYiLCI4Ni41MiUiLCI5NTYiLCI5MS40MCUiLCIkMzYwLDMyMywyOTMiLCIkMzQ0LDQ3NyIsIjI3NCIsIjI2LjIwJSIsIjQxIiwiMy45MiUiLCIxLDA4NyIsIjEyOCIsIjEwNCIsIjk3IiwiJDM4LDgwMSw4MDAiCiIxNTcyOSIsIkZpZ2h0ZXIgQXBleCIsIjIxIiwiUGFjZSIsIkZ1bGwgTWlsZSIsIkIiLCJTaGFkb3cgUGxheSIsIktpbnRzdWt1cm9pIiwiVW5rbm93biIsIjU3IC0gMjIgLSAxOSAtIDIgKCQxLDEyNSw2MzcpIiwiMTAgLSAwIC0gMiAtIDEgKCQyMjMsNzUwKSIsIjkxIiwiNzUiLCI4Mi40MiUiLCI2OCIsIjkwLjY3JSIsIiQyNiwwODMsNjU1IiwiJDM0Nyw3ODIiLCIxMCIsIjEzLjMzJSIsIjMiLCI0LjAwJSIsIjY5IiwiMTEiLCI5IiwiOCIsIiQzLDg0OCw2NTAiCiIyNjMyNiIsIkxlYWRlciBBcGV4IiwiMTkiLCJQYWNlIiwiRnVsbCBNaWxlIiwiRCsiLCJGaWdodGVyIEFwZXgiLCJTaW1wbGVTIEFubmllIiwiVW5rbm93biIsIjgxIC0gMjkgLSAxMiAtIDE0ICgkMiwwODEsNDEzKSIsIjIxIC0gMyAtIDMgLSAzICgkODk1LDQwMCkiLCI5OCIsIjcxIiwiNzIuNDUlIiwiNDYiLCI2NC43OSUiLCIkOSw3OTIsNzUwIiwiJDEzNyw5MjYiLCI0IiwiNS42MyUiLCIwIiwiMC4wMCUiLCI0IiwiMCIsIjAiLCIwIiwiJDAiCiI3NTc1NiIsIlphbmplcm8gQXBleCIsIjUiLCJUcm90IiwiRnVsbCBNaWxlIiwiQyIsIkNhbGxlZCBPdXQiLCJPYmxpcXVpdHkgQXBleCIsIkl3YW4gQXBleCIsIjM0IC0gMTUgLSAzIC0gNSAoJDk2MCwzMDApIiwiNiAtIDEgLSAxIC0gMCAoJDMyNyw1MDApIiwiMTIiLCIwIiwiMC4wMCUiLCIwIiwiMC4wMCUiLCIkMCIsIiQwIiwiMCIsIjAuMDAlIiwiMCIsIjAuMDAlIiwiMCIsIjAiLCIwIiwiMCIsIiQwIg==');
     });
 
-    it(`sleeps for 30 seconds after every 10 rows`, async () => {
+    it(`sleeps for 15 seconds after every 7.5 rows`, async () => {
         await generateBreedingReport({ ids: Array(20).fill(0).map((_, i) => i + 1) });
-        expect(mockSleep).toHaveBeenCalledTimes(1);
-        expect(mockSleep).toHaveBeenCalledWith(30000);
-    });
-
-    it(`sleeps for 15 seconds after every 50 rows`, async () => {
-        await generateBreedingReport({ ids: Array(100).fill(0).map((_, i) => i + 1) });
-        expect(mockSleep).toHaveBeenCalledTimes(11);
-        expect(mockSleep).toHaveBeenCalledWith(30000);
-        expect(mockSleep).toHaveBeenCalledWith(15000);
+        expect(sleep).toHaveBeenCalledTimes(2);
+        expect(sleep).toHaveBeenCalledWith(15000);
     });
 });

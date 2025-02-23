@@ -1,4 +1,4 @@
-import { isMobileOS } from './utils.js';
+import { isMobileOS, sleep } from './utils.js';
 
 interface CacheEntry {
     response: string;
@@ -15,6 +15,17 @@ function cacheError(message: string, error?: Error): void {
     if (error)
         console.error(error);
 }
+
+const throttleConfig = {
+    resetThreshold: 15_000,
+    requestCount: 15,
+    timeout: 15_000
+};
+
+const global = {
+    requestCount: 0,
+    lastRequestAt: 0,
+};
 
 /**
  * Created an interface to request data from HarnessNation.
@@ -131,7 +142,16 @@ export class HarnessNationAPI {
         if (cached != null)
             return cached;
 
+        if (Date.now() - global.lastRequestAt >= throttleConfig.resetThreshold)
+            global.requestCount = 0;
+
+        const requestNumber = (global.requestCount += 1);
+
+        if (requestNumber % throttleConfig.requestCount === 0)
+            await sleep(throttleConfig.timeout);
+
         const res = await generator();
+        global.lastRequestAt = Date.now();
 
         if (!res.ok)
             throw new Error(`${res.status} ${res.statusText}`);

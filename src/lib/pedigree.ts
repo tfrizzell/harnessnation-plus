@@ -69,6 +69,11 @@ interface Progeny {
     races?: RaceList;
 }
 
+interface ProgenyExtended extends Progeny {
+    races: RaceList;
+    progeny: Progeny[];
+}
+
 export interface Telemetry {
     totalRuns: number;
     totalRunTime: number;
@@ -169,6 +174,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
     function getNameFont(races?: RaceList): PDFFont {
         return races?.some(r => r.stake && r.finish! <= 3) ? fonts!.Bold : fonts!.Normal;
+    }
+
+    function mayBeBroodmare(progeny: Progeny): boolean {
+        return progeny.gender === 'female' && progeny.stable !== 'main' && progeny.id !== horse.id && !damIds.includes(progeny.id)
     }
 
     const page = pdfDoc.addPage(window.PDFLib.PageSizes.Letter);
@@ -347,6 +356,62 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
             ));
 
             await addHorseInfo(paragraph, progeny, progeny.races, Context.Progeny);
+
+            if (mayBeBroodmare(progeny)) {
+                const xProgeny = progeny as ProgenyExtended;
+                xProgeny.progeny = await getDamProgeny(progeny.id, csrfToken);
+                await populateProgenyData(xProgeny.progeny, csrfToken);
+                xProgeny.progeny.sort(sortProgeny)
+
+                let count = 0;
+
+                for (const grandProgeny of xProgeny.progeny) {
+                    if (mayBeBroodmare(grandProgeny)) {
+                        const xGrandProgeny = grandProgeny as ProgenyExtended;
+                        xGrandProgeny.progeny = await getDamProgeny(grandProgeny.id, csrfToken);
+                        await populateProgenyData(xGrandProgeny.progeny, csrfToken);
+                        xGrandProgeny.progeny.sort(sortProgeny)
+                    }
+
+                    if (getParagraphPriority(horse, {} as DamLineAncestor, grandProgeny) < ParagraphPriority.High)
+                        continue;
+
+                    paragraph.add(count === 0 ? ` Dam of` : ',');
+
+                    paragraph.add(
+                        ` ${formatName(grandProgeny.name!, grandProgeny.races)}`,
+                        getNameFont(grandProgeny.races)
+                    );
+
+                    paragraph.add(` ${getMarkString(grandProgeny.races!.filter(r => r.finish === 1))}`);
+                    count++;
+                }
+
+                if (count > 0)
+                    paragraph.add('.');
+
+                const xGrandProgeny = xProgeny.progeny.
+                    reduce((grandProgeny, progeny) => [...grandProgeny, ...(progeny as ProgenyExtended)?.progeny ?? []], [] as Progeny[])
+                    .filter(p => getParagraphPriority(horse, {} as DamLineAncestor, p) >= ParagraphPriority.VeryHigh && p.id !== horse.id && !damIds.includes(p.id));
+
+                if (xGrandProgeny.length > 0) {
+                    paragraph.add(' Granddam of');
+
+                    for (const greatGrandProgeny of xGrandProgeny) {
+                        if (greatGrandProgeny !== xGrandProgeny[0])
+                            paragraph.add(',');
+
+                        paragraph.add(
+                            ` ${formatName(greatGrandProgeny.name!, greatGrandProgeny.races)}`,
+                            getNameFont(greatGrandProgeny.races)
+                        );
+
+                        paragraph.add(` ${getMarkString(greatGrandProgeny.races!.filter(r => r.finish === 1))}`);
+                    }
+
+                    paragraph.add('.');
+                }
+            }
         }
     }
 
@@ -409,6 +474,11 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
         for (let i = paragraphs.length - 1; i >= 0; i--) {
             const paragraph = paragraphs[i];
+
+            if (paragraph.text.match(/^\d+\w{2} Dam$/i) && (i + 3 > paragraphs.length || paragraphs[i + 2]?.text.match(/^Production Record$/i))) {
+                totalHeight -= paragraphs.splice(i, 2).reduce((h, p) => h + p.getHeight() + 1, 0);
+                break;
+            }
 
             if (paragraphs[i].priority === lowestPriority) {
                 paragraphs.splice(i, 1);

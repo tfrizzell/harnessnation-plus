@@ -1,9 +1,61 @@
 import { Timestamp } from '@firebase/firestore';
-import { downloadFile, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, sleep, toDate, toPercentage, toTimestamp } from '../../src/lib/utils';
+import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, sleep, toDate, toPercentage, toTimestamp } from '../../src/lib/utils';
+import { RaceList } from '../../src/lib/horses';
 
 afterAll(() => {
     jest.clearAllTimers();
     jest.clearAllMocks();
+});
+
+describe(`ageToText`, () => {
+    it(`exists`, () => {
+        expect(ageToText).not.toBeUndefined();
+    });
+
+    it(`is a function`, () => {
+        expect(typeof ageToText).toEqual('function');
+    });
+
+    it(`throws an exception when given null`, () => {
+        expect(() => ageToText(<any>null)).toThrow(TypeError);
+    });
+
+    it(`throws an exception when given undefined`, () => {
+        expect(() => ageToText(<any>undefined)).toThrow(TypeError);
+    });
+
+    (<[number, string][]>[
+        [0, 'Zero'],
+        [1, 'One'],
+        [2, 'Two'],
+        [3, 'Three'],
+        [4, 'Four'],
+        [5, 'Five'],
+        [6, 'Six'],
+        [7, 'Seven'],
+        [8, 'Eight'],
+        [9, 'Nine'],
+        [10, 'Ten'],
+        [11, 'Eleven'],
+        [12, 'Twelve'],
+        [13, 'Thirteen'],
+        [14, 'Fourteen'],
+        [15, 'Fifteen'],
+        [16, 'Sixteen'],
+        [17, 'Seventeen'],
+        [18, 'Eighteen'],
+        [19, 'Nineteen'],
+        [20, 'Twenty'],
+        [21, 'Twenty-One'],
+    ]).forEach(([value, expected]) => {
+        it(`returns ${expected} when given ${value}`, () => {
+            expect(ageToText(value)).toEqual(expected)
+        });
+    });
+
+    it(`returns its value as a string when given any other value`, () => {
+        expect(ageToText(74)).toEqual('74');
+    });
 });
 
 describe(`downloadFile`, () => {
@@ -41,6 +93,7 @@ describe(`downloadFile`, () => {
         ['csv', 'text/csv'],
         ['html', 'text/html'],
         ['json', 'application/json'],
+        ['pdf', 'application/pdf'],
         ['txt', 'text/plain'],
         ['xls', 'application/vnd.ms-excel'],
         ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
@@ -166,6 +219,159 @@ describe(`downloadFile`, () => {
                 (<jest.Mock>global.window.URL.createObjectURL).mockRestore();
             }
         });
+    });
+});
+
+describe(`formatMark`, () => {
+    it(`exists`, () => {
+        expect(formatMark).not.toBeUndefined();
+    });
+
+    it(`is a function`, () => {
+        expect(typeof formatMark).toEqual('function');
+    });
+
+    it(`returns an empty string when given null`, () => {
+        expect(formatMark(<any>null)).toEqual('');
+    });
+
+    it(`returns an empty string when given undefined`, () => {
+        expect(formatMark(<any>undefined)).toEqual('');
+    });
+
+    it(`returns the expected mark outputs`, () => {
+        expect(formatMark({
+            time: 120
+        })).toEqual('2:00.00');
+
+        expect(formatMark({
+            gait: 'pace',
+            time: 120
+        })).toEqual('p,2:00.00');
+
+        expect(formatMark({
+            gait: 'pace',
+            time: 120
+        }, 2)).toEqual('p,2,2:00.00');
+    });
+});
+
+describe(`formatOrdinal`, () => {
+    it(`exists`, () => {
+        expect(formatOrdinal).not.toBeUndefined();
+    });
+
+    it(`is a function`, () => {
+        expect(typeof formatOrdinal).toEqual('function');
+    });
+
+    (<[number, string][]>[
+        [0, '0th'],
+        [1, '1st'],
+        [2, '2nd'],
+        [3, '3rd'],
+        [4, '4th'],
+        [10, '10th'],
+        [11, '11th'],
+        [12, '12th'],
+        [13, '13th'],
+        [21, '21st'],
+        [22, '22nd'],
+        [23, '23rd'],
+        [25, '25th'],
+        [101, '101st'],
+        [102, '102nd'],
+        [111, '111th'],
+        [112, '112th'],
+        [113, '113th'],
+        [121, '121st'],
+    ]).forEach(([value, expected]) => {
+        it(`returns ${expected} when given ${value}`, () => {
+            expect(formatOrdinal(value)).toEqual(expected)
+        });
+    });
+});
+
+describe(`getCurrentSeason`, () => {
+    it(`exists`, () => {
+        expect(getCurrentSeason).not.toBeUndefined();
+    });
+
+    it(`is a function`, () => {
+        expect(typeof getCurrentSeason).toEqual('function');
+    });
+
+    const actual = new Date(1_735_689_600_000);
+
+    new Array(90).fill(0).forEach((_, offset) => {
+        const value = new Date(1_735_704_000_000 + offset * 86400000);
+
+        it(`returns the expected season start date for ${value.toJSON()}`, () => {
+            jest.useFakeTimers().setSystemTime(value);
+
+            try {
+                expect(getCurrentSeason()).toEqual(actual);
+            } finally {
+                jest.useRealTimers();
+            }
+        });
+    });
+});
+
+describe(`getLifetimeMark`, () => {
+    it(`exists`, () => {
+        expect(getLifetimeMark).not.toBeUndefined();
+    });
+
+    it(`is a function`, () => {
+        expect(typeof getLifetimeMark).toEqual('function');
+    });
+
+    it(`throws an exception when given null`, () => {
+        expect(() => getLifetimeMark(<any>null)).toThrow(TypeError);
+    });
+
+    it(`throws an exception when given undefined`, () => {
+        expect(() => getLifetimeMark(<any>undefined)).toThrow(TypeError);
+    });
+
+    it(`returns an empty string if no wins are found`, () => {
+        const races = new RaceList();
+
+        races.push({
+            finish: 2,
+            time: 120,
+        });
+
+        expect(getLifetimeMark(races)).toEqual('');
+        expect(getLifetimeMark(new RaceList())).toEqual('');
+    });
+
+    it(`returns the expected value`, () => {
+        const races = new RaceList();
+
+        races.push({
+            age: '3yo',
+            gait: 'trot',
+            finish: 1,
+            time: 122,
+        });
+
+        races.push({
+            age: '3yo',
+            gait: 'trot',
+            finish: 1,
+            time: 120,
+        });
+
+        races.push({
+            age: '3yo',
+            gait: 'trot',
+            finish: 1,
+            time: 121,
+        });
+
+        expect(getLifetimeMark(races)).toEqual('t,3,2:00.00');
     });
 });
 
@@ -345,6 +551,64 @@ describe(`removeAll`, () => {
     });
 });
 
+describe(`getCurrentSeason`, () => {
+    it(`exists`, () => {
+        expect(getCurrentSeason).not.toBeUndefined();
+    });
+
+    it(`is a function`, () => {
+        expect(typeof getCurrentSeason).toEqual('function');
+    });
+
+    const actual = new Date(1_735_689_600_000);
+
+    new Array(90).fill(0).forEach((_, offset) => {
+        const value = new Date(1_735_704_000_000 + offset * 86400000);
+
+        it(`returns the expected season start date for ${value.toJSON()}`, () => {
+            jest.useFakeTimers().setSystemTime(value);
+
+            try {
+                expect(getCurrentSeason()).toEqual(actual);
+            } finally {
+                jest.useRealTimers();
+            }
+        });
+    });
+});
+
+describe(`seasonsBetween`, () => {
+    const ref = new Date(1_735_689_600_000);
+
+    it(`exists`, () => {
+        expect(seasonsBetween).not.toBeUndefined();
+    });
+
+    it(`is a function`, () => {
+        expect(typeof seasonsBetween).toEqual('function');
+    });
+
+    it(`throws an exception when given null`, () => {
+        expect(() => seasonsBetween(<any>null, <any>null)).toThrow(TypeError);
+    });
+
+    it(`throws an exception when given undefined`, () => {
+        expect(() => seasonsBetween(<any>undefined, <any>undefined)).toThrow(TypeError);
+    });
+
+    [
+        [0, 0],
+        [1, 3],
+        [6, 18],
+    ].forEach(([expected, offset]) => {
+        it(`returns ${expected} for an offset of ${offset} months`, () => {
+            const value = new Date(ref.valueOf());
+            value.setMonth(value.getMonth() + offset);
+            expect(seasonsBetween(ref, value)).toEqual(expected)
+        });
+    });
+});
+
 describe(`sleep`, () => {
     it(`exists`, () => {
         expect(sleep).not.toBeUndefined();
@@ -429,7 +693,8 @@ describe(`toTimestamp`, () => {
     });
 
     it(`returns the current timestamp if no value is given`, () => {
-        jest.useFakeTimers('modern').setSystemTime(new Date(1_640_995_200_000))
+        jest.useFakeTimers().setSystemTime(new Date(1_640_995_200_000));
+
         try {
             expect(toTimestamp()).toEqual('2022-01-01T00:00:00');
         } finally {

@@ -48,13 +48,6 @@ export async function generateBreedingReport({ ids, headers }: BreedingReportDat
     while ((batch = _ids.splice(0, 10)) && batch.length > 0) {
         const rows = await Promise.all(batch.map(id => getBreedingReportRow(id)));
         report.push(...rows.map(row => row.slice(0, report[0].length)));
-
-        if (_ids.length > 0) {
-            await sleep(30000);
-
-            if ((report.length - 1) % 50 === 0)
-                await sleep(15000);
-        }
     }
 
     return `data:text/csv;base64,${window.btoa(
