@@ -137,11 +137,6 @@ export function formatOrdinal(value: number): string {
     }
 }
 
-export function getLifetimeMark(races: RaceList): string {
-    const race = races.findFastestWin();
-    return !race ? '' : formatMark(race, races.findAge(race));
-}
-
 export function getCurrentSeason(): Date {
     const value = new Date();
     value.setMonth(value.getMonth() - (value.getMonth() % 3));
@@ -151,6 +146,11 @@ export function getCurrentSeason(): Date {
     value.setSeconds(0);
     value.setMilliseconds(0);
     return value;
+}
+
+export function getLifetimeMark(races: RaceList): string {
+    const race = races.findFastestWin();
+    return !race ? '' : formatMark(race, races.findAge(race));
 }
 
 export async function isMobileOS(): Promise<boolean> {
