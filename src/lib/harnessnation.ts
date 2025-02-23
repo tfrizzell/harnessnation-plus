@@ -16,6 +16,17 @@ function cacheError(message: string, error?: Error): void {
         console.error(error);
 }
 
+const throttleConfig = {
+    resetThreshold: 15_000,
+    requestCount: 15,
+    timeout: 15_000
+};
+
+const global = {
+    requestCount: 0,
+    lastRequestAt: 0,
+};
+
 /**
  * Created an interface to request data from HarnessNation.
  * 
@@ -26,12 +37,6 @@ export class HarnessNationAPI {
     #cache?: IDBDatabase;
     #cacheTTL: number = 3_600_000;
     #startUp?: Promise<void>;
-
-    #requestThrottleThreshold: number = 15_000;
-    #requestThrottleCount: number = 15;
-    #requestThrottleTimeout: number = 15_000;
-    #requestCount: number = 0;
-    #lastRequestAt: number = 0
 
     constructor() {
         this.#startUp = (chrome?.runtime?.getPlatformInfo == null
@@ -137,15 +142,16 @@ export class HarnessNationAPI {
         if (cached != null)
             return cached;
 
-        if (Date.now() - this.#lastRequestAt > this.#requestThrottleThreshold)
-            this.#requestCount = 0
+        if (Date.now() - global.lastRequestAt >= throttleConfig.resetThreshold)
+            global.requestCount = 0;
 
-        if (this.#requestCount > 0 && this.#requestCount % this.#requestThrottleCount === 0)
-            await sleep(this.#requestThrottleTimeout)
+        const requestNumber = (global.requestCount += 1);
+
+        if (requestNumber % throttleConfig.requestCount === 0)
+            await sleep(throttleConfig.timeout);
 
         const res = await generator();
-        this.#lastRequestAt = Date.now()
-        this.#requestCount++;
+        global.lastRequestAt = Date.now();
 
         if (!res.ok)
             throw new Error(`${res.status} ${res.statusText}`);
