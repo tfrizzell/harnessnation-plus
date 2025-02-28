@@ -1,3 +1,4 @@
+import { chrome } from 'jest-chrome';
 import DataTables, { DataTablesMode, DataTablesOptions } from '../../src/lib/data-tables';
 import { DataTablesSettings } from '../../src/lib/settings';
 
@@ -139,10 +140,13 @@ describe(`DataTables`, () => {
         };
 
         beforeAll(() => {
-            global.chrome.storage.sync.get = <jest.Mock>jest.fn((
-                keys: string | string[] | { [key: string]: any } | null,
+            chrome.storage.sync.get.mockImplementation((
+                keys: string | Array<string> | Partial<{ [key: string]: any }> | null | ((items: { [key: string]: any }) => void),
                 callback?: (items: { [key: string]: any }) => void
-            ): Promise<{ [key: string]: any }> | void => {
+            ) => {
+                if (keys instanceof Function)
+                    return chrome.storage.sync.get(null, keys);
+
                 if (!callback)
                     return new Promise(resolve => chrome.storage.sync.get(keys, resolve));
 
@@ -160,7 +164,7 @@ describe(`DataTables`, () => {
         });
 
         afterAll(() => {
-            (<jest.Mock>global.chrome.storage.sync.get).mockRestore();
+            chrome.storage.sync.get.mockRestore();
         });
 
         it(`exists`, () => {

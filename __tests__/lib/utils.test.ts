@@ -1,4 +1,5 @@
 import { Timestamp } from '@firebase/firestore';
+import { chrome } from 'jest-chrome';
 import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, sleep, toDate, toPercentage, toTimestamp } from '../../src/lib/utils';
 import { RaceList } from '../../src/lib/horses';
 
@@ -66,15 +67,15 @@ describe(`downloadFile`, () => {
     const downloadedFiles: Map<string, chrome.downloads.DownloadOptions | null> = new Map();
 
     beforeAll(() => {
-        global.chrome.downloads.download = jest.fn((options: chrome.downloads.DownloadOptions): Promise<number> => {
+        chrome.downloads.download.mockImplementation((options) => {
             const id = downloadedFiles.size + 1;
             downloadedFiles.set(options.filename || `${Date.now()}.file`, options);
             return Promise.resolve(id);
-        })
+        });
     });
 
     afterAll(() => {
-        (<jest.Mock>global.chrome.downloads.download).mockRestore();
+        chrome.downloads.download.mockRestore();
     });
 
     it(`exists`, () => {
@@ -146,7 +147,7 @@ describe(`downloadFile`, () => {
     test(`downloads a ${Blob.name}`, async () => {
         const _FileReader = global.FileReader;
 
-        const mockFileReader = jest.spyOn(global, 'FileReader').mockImplementation((): FileReader => {
+        const mockFileReader = jest.spyOn(global, 'FileReader').mockImplementation(() => {
             const inst = new _FileReader();
 
             inst.readAsDataURL = (blob) => {

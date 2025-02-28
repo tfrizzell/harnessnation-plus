@@ -9,13 +9,13 @@ jest.mock('../../src/lib/utils.js', () => {
 
     return {
         ...originalModule,
-        sleep: jest.fn().mockImplementation((value: number, abortSignal: AbortSignal | null = null): Promise<void> => Promise.resolve()),
+        sleep: jest.fn().mockImplementation((value, abortSignal = null) => Promise.resolve()),
     };
 });
 
 beforeAll(() => {
-    global.fetch = <jest.Mock>jest.fn((input: RequestInfo, init?: RequestInit): Promise<{ ok: boolean, text: () => Promise<string> }> => {
-        const url = (input as Request).url ?? input;
+    global.fetch = <jest.Mock>jest.fn((input: string | URL | globalThis.Request, init?: RequestInit): Promise<{ ok: boolean, text: () => Promise<string> }> => {
+        const url = (input as Request)?.url ?? input?.toString();
         let file: fs.PathLike | undefined;
 
         if (url === 'https://www.harnessnation.com/api/progeny/report' && init?.method === 'POST') {
