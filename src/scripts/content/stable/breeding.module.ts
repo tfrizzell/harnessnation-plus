@@ -21,7 +21,7 @@ async function addExportButtons(): Promise<void> {
                 node.append(wrapper);
 
             const button = document.createElement('button');
-            button.classList.add('hn-plus-button');
+            button.classList.add('hn-plus-button', 'hn-plus-breeding-report-button');
             button.disabled = exportRunning;
             button.textContent = 'Report (CSV)';
             button.type = 'button';
@@ -49,9 +49,9 @@ async function addExportButtons(): Promise<void> {
                     return;
 
                 if (changes['running.exports.breeding']?.newValue)
-                    document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = true; });
+                    document.querySelectorAll<HTMLButtonElement>('.hn-plus-breeding-report-button').forEach(el => { el.disabled = true; });
                 else
-                    document.querySelectorAll<HTMLButtonElement>('.hn-plus-button').forEach(el => { el.disabled = false; });
+                    document.querySelectorAll<HTMLButtonElement>('.hn-plus-breeding-report-button').forEach(el => { el.disabled = false; });
             }
 
             chrome.storage.onChanged.addListener(handleStateChange);

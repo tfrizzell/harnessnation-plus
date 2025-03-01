@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "rootDir": "./src",
-        "outDir": "./dist",
+        "rootDir": "src",
+        "outDir": "dist",
         "strict": true,
         "target": "esnext",
         "module": "esnext",
@@ -10,12 +10,16 @@
         "types": ["node", "jest", "chrome"],
     },
     "include": [
-        "./src/**/*.ts",
-        "**/*.d.ts"
+        "**/*.d.ts",
+        "src/**/*.ts"
     ],
     "exclude": [
         "__tests__/**/*",
         "dist/**/*",
         "gulpfile.js"
-    ]
+    ],
+    "watchOptions": {
+        "watchFile": "DynamicPriorityPolling",
+        "watchDirectory": "DynamicPriorityPolling"
+    }
 }
