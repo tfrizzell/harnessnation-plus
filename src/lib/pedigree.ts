@@ -699,7 +699,7 @@ function getAwardText(data: string | Progeny): string {
  * @returns {Promise<number>} A `Promise` that resolves with the estimated runtime in milliseconds.
  */
 export async function getEstimatedRuntime(pageCount: number): Promise<number> {
-    const telemetry: Telemetry = (await chrome.storage.local.get('telemetry.pedigree'))?.['telemetry.pedigree'] ?? { totalRuns: 0, totalRunTime: 15000, pagesGenerated: 1 };
+    const telemetry: Telemetry = (await chrome.storage.local.get('telemetry.pedigree'))?.['telemetry.pedigree'] ?? { totalRuns: 0, totalRunTime: 120000, pagesGenerated: 1 };
     return pageCount * telemetry.totalRunTime / telemetry.pagesGenerated;
 }
 
