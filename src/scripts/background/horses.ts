@@ -14,8 +14,13 @@ let db = firestore.singleton();
 chrome.runtime.onConnect.addListener(port => {
     port.onMessage.addListener((action: Action<any>, port) => {
         // Firefox compatibility: `structuredClone` fails, so use `.toJSON()` to send a plain object
-        const sendResponse = (response: ActionResponse<any> | ActionError): void =>
-            port.postMessage(response.toJSON());
+        let portConnected = true;
+        port.onDisconnect.addListener(() => portConnected = false);
+
+        const sendResponse = (response: ActionResponse<any> | ActionError): void => {
+            if (portConnected)
+                port.postMessage(response.toJSON());
+        }
 
         switch (action?.type) {
             case ActionType.CalculateStudFee:
