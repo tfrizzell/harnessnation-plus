@@ -10,7 +10,7 @@ const copiedSettings: Map<TrainingGroup, Map<string, string>> = new Map();
 
 function addButtons(row: Element): void {
     const wrapper = document.createElement('div');
-    wrapper.classList.add('hn-plus-button-wrapper');
+    wrapper.classList.add('hn-plus-button-wrapper', 'hn-plus-training-buttons');
 
     const copyButton = document.createElement('button');
     copyButton.classList.add(...buttonClasses, 'hn-plus-copy-button');
@@ -51,10 +51,10 @@ function addButtons(row: Element): void {
 }
 
 function addPasteButton(row: Element): void {
-    if (row.querySelector('.hn-plus-button-wrapper .hn-plus-paste-button'))
+    if (row.querySelector('.hn-plus-training-buttons .hn-plus-paste-button'))
         return;
 
-    const wrapper = row.querySelector('.hn-plus-button-wrapper');
+    const wrapper = row.querySelector('.hn-plus-training-buttons');
 
     if (wrapper == null)
         return;
@@ -142,9 +142,9 @@ function pasteSettings(row: Element, settings: Map<string, string> | undefined |
 
 function removeButtons(row?: Element | undefined): void {
     if (row != null)
-        row.querySelectorAll('.hn-plus-button-wrapper, .hn-plus-button').forEach(el => el.remove());
+        row.querySelectorAll('.hn-plus-training-buttons').forEach(el => el.remove());
     else
-        removeAll('.hn-plus-button-wrapper', '.hn-plus-button');
+        removeAll('.hn-plus-training-buttons');
 }
 
 const observer = new MutationObserver(mutations => {
