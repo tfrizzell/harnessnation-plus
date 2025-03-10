@@ -1,4 +1,4 @@
-import { isMobileOS, sleep } from './utils.js';
+import { isMobileOS } from './utils.js';
 
 interface CacheEntry {
     response: string;
@@ -16,29 +16,47 @@ function cacheError(message: string, error?: Error): void {
         console.error(error);
 }
 
-const throttleConfig = {
-    resetThreshold: 15_000,
-    requestCount: 15,
-    timeout: 15_000
-};
-
-const global = {
-    requestCount: 0,
-    lastRequestAt: 0,
-};
-
 /**
- * Created an interface to request data from HarnessNation.
+ * Defines the options passed into the HarnessNationAPI constructor.
  * 
  * @param {number} cacheTTL The number of milliseconds to store responses in the cache. Must be at least 60_000 (1 minute),
- *                          anything under this will disable caching. Defaults to 3_600_000ms (1 hour).
+ *                          anything under this will disable caching. Defaults to 14_400_000ms (4 hours).
+ * @param {number} cooldownTimeout The number of milliseconds to cool down after receiving a `429 Too Many Requests`
+ *                                 response. Must be at least 5_000 (5 seconds). Defaults to 5_000 (5 seconds).
+ */
+export interface HarnessNationAPIOptions {
+    cacheTTL?: number;
+    cooldownTimeout?: number;
+}
+
+/**
+ * Creates an interface to request data from HarnessNation.
+ * 
+ * @param {number} cacheTTL The number of milliseconds to store responses in the cache. Must be at least 60_000 (1 minute),
+ *                          anything under this will disable caching. Defaults to 14_400_000ms (4 hours).
+ * @param {number} cooldownTimeout The number of milliseconds to cool down after receiving a `429 Too Many Requests`
+ *                                 response. Must be at least 5_000 (5 seconds). Defaults to 15_000 (15 seconds).
  */
 export class HarnessNationAPI {
+    #cacheTTL: number = 14_400_000;
+    #cooldownTimeout: number = 15_000;
+    #lastRequestAt?: Date;
+    #requestCount: number = 0
+
     #cache?: IDBDatabase;
-    #cacheTTL: number = 3_600_000;
+    #cooldown?: Promise<void>;
     #startUp?: Promise<void>;
 
-    constructor() {
+    constructor(options: HarnessNationAPIOptions = {}) {
+        this.#cacheTTL = options?.cacheTTL ?? this.#cacheTTL;
+        this.#cooldownTimeout = options?.cooldownTimeout ?? this.#cooldownTimeout;
+
+        if (this.#cacheTTL < 60_000)
+            console.warn(`%charnessnation.ts%c     cacheTTL=${this.#cooldownTimeout} is below minimum value of 60_000`, 'color:#406e8e;font-weight:bold;', '');
+
+        if (this.#cooldownTimeout < 5_000)
+            console.warn(`%charnessnation.ts%c     cooldownTimeout=${this.#cooldownTimeout} is below minimum value of 5_000`, 'color:#406e8e;font-weight:bold;', '');
+
         this.#startUp = (chrome?.runtime?.getPlatformInfo == null
             ? new Promise<void>(resolve => {
                 this.#cacheTTL = 0;
@@ -47,7 +65,11 @@ export class HarnessNationAPI {
             : isMobileOS().then(isMobile => {
                 if (isMobile) {
                     cacheError('Mobile OS Detected: disabling api cache');
-                    this.#cacheTTL = 0;
+                    return;
+                }
+
+                if (this.#cacheTTL < 60_000) {
+                    cacheDebug(`Setting cacheTTL=${this.#cacheTTL}: disabling api cache`);
                     return;
                 }
 
@@ -98,10 +120,41 @@ export class HarnessNationAPI {
         return this.#cacheTTL;
     }
 
+    get lastRequestAt(): Date | undefined {
+        return this.#lastRequestAt;
+    }
+
+    get requestCount(): number {
+        return this.#requestCount;
+    }
+
+    async #fetch(input: string | URL | globalThis.Request, init?: RequestInit): Promise<Response> {
+        await this.#cooldown;
+
+        const res = await fetch(input, init);
+
+        if (!res.ok) {
+            if (res.status !== 429)
+                throw new Error(`${res.status} ${res.statusText}`);
+
+            await this.#startCooldown();
+            return this.#fetch(input, init);
+        }
+
+        const _text = res.text;
+
+        res.text = (): Promise<string> => _text.call(res)
+            .then(text => text
+                ?.replace(/&nbsp;/g, ' ')
+                .replace(/&#039;/g, "'"));
+
+        return res;
+    }
+
     async #getFromCache(key: string): Promise<string | undefined> {
         await this.#startUp;
 
-        if (this.#cacheTTL === 0)
+        if (this.#cache == null || this.#cacheTTL === 0)
             return undefined;
 
         const transaction = this.#cache?.transaction(['responses'], 'readwrite');
@@ -136,29 +189,13 @@ export class HarnessNationAPI {
         return entry == null ? undefined : atob(entry.response);
     }
 
-    async #getOrCreateFromCache(key: string, generator: () => Promise<Response>): Promise<string> {
+    async #getOrCreateFromCache(key: string, input: string | URL | globalThis.Request, init?: RequestInit): Promise<string> {
         const cached = await this.#getFromCache(key);
 
         if (cached != null)
             return cached;
 
-        if (Date.now() - global.lastRequestAt >= throttleConfig.resetThreshold)
-            global.requestCount = 0;
-
-        const requestNumber = (global.requestCount += 1);
-
-        if (requestNumber % throttleConfig.requestCount === 0)
-            await sleep(throttleConfig.timeout);
-
-        const res = await generator();
-        global.lastRequestAt = Date.now();
-
-        if (!res.ok)
-            throw new Error(`${res.status} ${res.statusText}`);
-
-        const value = (await res.text())
-            ?.replace(/&nbsp;/g, ' ')
-            .replace(/&#039;/g, "'");
+        const value = await (await this.#fetch(input, init)).text();
 
         if (this.#cacheTTL > 0) {
             const transaction = this.#cache?.transaction(['responses'], 'readwrite');
@@ -176,6 +213,15 @@ export class HarnessNationAPI {
         }
 
         return value;
+    }
+
+    async #startCooldown(): Promise<void> {
+        if (this.#cooldown != null)
+            return await this.#cooldown;
+
+        this.#cooldown = new Promise(resolve => setTimeout(resolve, Math.max(this.#cooldownTimeout, 5_000)));
+        await this.#cooldown;
+        this.#cooldown = undefined;
     }
 
     /**
@@ -252,7 +298,9 @@ export class HarnessNationAPI {
             });
         });
 
-        html ??= await fetch(`https://www.harnessnation.com/stable/dashboard`).then(res => res.text());
+        if (html == null)
+            html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`).then(res => res.text());
+
         return html?.match(regex)?.[3];
     }
 
@@ -262,7 +310,7 @@ export class HarnessNationAPI {
      * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the info page.
      */
     async getHorse(id: number): Promise<string> {
-        return await this.#getOrCreateFromCache(`/horses/${id}`, () => fetch(`https://www.harnessnation.com/horse/${id}`));
+        return await this.#getOrCreateFromCache(`/horses/${id}`, `https://www.harnessnation.com/horse/${id}`);
     }
 
     /**
@@ -274,7 +322,7 @@ export class HarnessNationAPI {
     async getPedigree(id: number, csrfToken?: string): Promise<string> {
         csrfToken ||= await this.getCSRFToken() ?? '';
 
-        return await this.#getOrCreateFromCache(`/horses/${id}/pedigree`, () => fetch('https://www.harnessnation.com/horse/pedigree', {
+        return await this.#getOrCreateFromCache(`/horses/${id}/pedigree`, 'https://www.harnessnation.com/horse/pedigree', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -283,7 +331,7 @@ export class HarnessNationAPI {
                 'X-Requested-With': 'XMLHttpRequest',
             },
             body: new URLSearchParams({ _token: csrfToken!, horseId: id.toString() }),
-        }));
+        });
     }
 
     /**
@@ -295,7 +343,7 @@ export class HarnessNationAPI {
     async getProgenyList(id: number, csrfToken?: string): Promise<string> {
         csrfToken ||= await this.getCSRFToken() ?? '';
 
-        return await this.#getOrCreateFromCache(`/horses/${id}/progeny/list`, () => fetch('https://www.harnessnation.com/api/progeny/list', {
+        return await this.#getOrCreateFromCache(`/horses/${id}/progeny/list`, 'https://www.harnessnation.com/api/progeny/list', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -310,7 +358,7 @@ export class HarnessNationAPI {
                 filterGender: '',
                 filterStable: '',
             }),
-        }));
+        });
     }
 
     /**
@@ -319,14 +367,14 @@ export class HarnessNationAPI {
      * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the progeny report.
      */
     async getProgenyReport(id: number): Promise<string> {
-        return await this.#getOrCreateFromCache(`/horses/${id}/progeny/report`, () => fetch('https://www.harnessnation.com/api/progeny/report', {
+        return await this.#getOrCreateFromCache(`/horses/${id}/progeny/report`, 'https://www.harnessnation.com/api/progeny/report', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'Referer': 'https://www.harnessnation.com/',
             },
             body: new URLSearchParams({ horseId: id.toString() }),
-        }));
+        });
     }
 
     /**
@@ -338,7 +386,7 @@ export class HarnessNationAPI {
     async getRaceHistory(id: number, csrfToken?: string): Promise<string> {
         csrfToken ||= await this.getCSRFToken() ?? '';
 
-        return await this.#getOrCreateFromCache(`/horses/${id}/races`, () => fetch('https://www.harnessnation.com/horse/api/race-history', {
+        return await this.#getOrCreateFromCache(`/horses/${id}/races`, 'https://www.harnessnation.com/horse/api/race-history', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -347,7 +395,7 @@ export class HarnessNationAPI {
                 'X-Requested-With': 'XMLHttpRequest',
             },
             body: new URLSearchParams({ _token: csrfToken!, horseId: id.toString() }),
-        }));
+        });
     }
 
     /**
@@ -356,14 +404,14 @@ export class HarnessNationAPI {
      * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the sibling list.
      */
     async getSiblings(id: number): Promise<string> {
-        return await this.#getOrCreateFromCache(`/horses/${id}/siblings`, () => fetch('https://www.harnessnation.com/horse/api/siblings', {
+        return await this.#getOrCreateFromCache(`/horses/${id}/siblings`, 'https://www.harnessnation.com/horse/api/siblings', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'Referer': 'https://www.harnessnation.com/',
             },
             body: new URLSearchParams({ horseId: id.toString() }),
-        }));
+        });
     }
 
     /**
