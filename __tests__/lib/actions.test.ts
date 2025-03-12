@@ -354,59 +354,6 @@ describe(ActionResponse.name, () => {
 });
 
 describe(sendAction.name, () => {
-    interface MockedEvent<T extends Function> extends chrome.events.Event<T> {
-        addListener: jest.MockedFunction<(callback: T) => void>;
-        callListeners: jest.MockedFunction<(data?: any) => void>;
-        hasListener: jest.MockedFunction<(callback: T) => boolean>;
-        hasListeners: jest.MockedFunction<() => boolean>;
-        removeListener: jest.MockedFunction<(callback: T) => void>;
-    }
-
-    interface MockedPort extends chrome.runtime.Port {
-        postMessage: jest.MockedFunction<(message: any) => void>;
-        disconnect: jest.MockedFunction<() => void>;
-        onDisconnect: MockedEvent<() => void>;
-        onMessage: MockedEvent<(message: any, port: MockedPort) => void>;
-    }
-
-    const mockEventListener = <T extends Function>(): MockedEvent<T> => {
-        const listeners: Set<Function> = new Set();
-
-        return {
-            addListener: jest.fn((callback) => {
-                listeners.add(callback);
-            }),
-            callListeners: jest.fn((data) => {
-                for (const listener of listeners)
-                    listener(data);
-            }),
-            hasListener: jest.fn((callback) => listeners.has(callback)),
-            hasListeners: jest.fn(() => listeners.size > 0),
-            removeListener: jest.fn((callback) => {
-                listeners.delete(callback);
-            }),
-            addRules: jest.fn(),
-            getRules: jest.fn(),
-            removeRules: jest.fn(),
-        };
-    }
-
-    const mockPort: MockedPort = {
-        name: 'port',
-        postMessage: jest.fn(),
-        disconnect: jest.fn(),
-        onDisconnect: mockEventListener(),
-        onMessage: mockEventListener(),
-    };
-
-    beforeAll(() => {
-        chrome.runtime.connect.mockImplementation((extensionId, connectInfo) => mockPort);
-    });
-
-    afterAll(() => {
-        chrome.runtime.connect.mockRestore();
-    });
-
     it(`exists`, () => {
         expect(sendAction).not.toBeUndefined();
     });
@@ -420,26 +367,26 @@ describe(sendAction.name, () => {
     });
 
     it(`resolves with an ${ActionResponse.name}`, async () => {
-        mockPort.postMessage.mockImplementation((action: any): void => {
-            mockPort.onMessage.callListeners(new ActionResponse<RegExp | string>(Action.of<HorseSearchData>(action)!, 'Astronomical'));
+        chrome.runtime.sendMessage.mockImplementation((action: any): Promise<ActionResponse<RegExp | string>> => {
+            return Promise.resolve(new ActionResponse<RegExp | string>(Action.of<HorseSearchData>(action)!, 'Astronomical'));
         });
 
         try {
             await expect(sendAction(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 })).resolves.toBeInstanceOf(ActionResponse);
         } finally {
-            mockPort.postMessage.mockRestore();
+            chrome.runtime.sendMessage.mockRestore();
         }
     });
 
     it(`rejects with an ${ActionError.name}`, async () => {
-        mockPort.postMessage.mockImplementation((action: any): void => {
-            mockPort.onMessage.callListeners(new ActionError(Action.of<HorseSearchData>(action)!, 'Invalid action'));
+        chrome.runtime.sendMessage.mockImplementation((action: any): Promise<ActionError> => {
+            return Promise.resolve(new ActionError(Action.of<HorseSearchData>(action)!, 'Invalid action'));
         });
 
         try {
             await expect(sendAction(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 })).rejects.toBeInstanceOf(ActionError);
         } finally {
-            mockPort.postMessage.mockRestore();
+            chrome.runtime.sendMessage.mockRestore();
         }
     });
 });

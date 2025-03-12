@@ -68,8 +68,16 @@ export class Action<T> {
         return Action.fromObject(value);
     }
 
-    type: ActionType;
-    data: T;
+    #type: ActionType;
+    #data: T;
+
+    public get type(): ActionType {
+        return this.#type;
+    }
+
+    public get data(): T {
+        return this.#data;
+    }
 
     public constructor(type: ActionType.CalculateStudFee, data: CalculateStudFeeData);
     public constructor(type: ActionType.GenerateBroodmareReport, data: BreedingReportData);
@@ -83,8 +91,16 @@ export class Action<T> {
     public constructor(type: ActionType.UpdateStallionScores, data: void);
     public constructor(type: ActionType, data: T);
     public constructor(type: ActionType, data: T) {
-        this.type = type;
-        this.data = data;
+        this.#type = type;
+        this.#data = data;
+    }
+
+    public toJSON(): object {
+        return {
+            '__type': this.constructor.name,
+            'type': this.type,
+            'data': this.data,
+        };
     }
 }
 
@@ -116,7 +132,11 @@ export class ActionError extends Error {
         return ActionError.fromObject(value);
     }
 
-    action: Action<any>;
+    #action: Action<any>;
+
+    public get action(): Action<any> {
+        return this.#action;
+    }
 
     public constructor(action: Action<any>);
     public constructor(action: Action<any>, error: Error);
@@ -124,8 +144,17 @@ export class ActionError extends Error {
     public constructor(action: Action<any>, errorOrMessage?: Error | string);
     public constructor(action: Action<any>, errorOrMessage?: Error | string) {
         super((errorOrMessage instanceof Error) ? errorOrMessage.message : errorOrMessage);
-        this.action = action;
+        this.#action = action;
         this.name = ActionError.name;
+    }
+
+    public toJSON(): object {
+        return {
+            '__type': this.constructor.name,
+            'action': this.action,
+            'message': this.message,
+            'stack': this.stack,
+        };
     }
 }
 
@@ -152,12 +181,28 @@ export class ActionResponse<T> {
         return ActionResponse.fromObject(value);
     }
 
-    action: Action<any>;
-    data: T | undefined;
+    #action: Action<any>;
+    #data: T | undefined;
+
+    public get action(): Action<any> {
+        return this.#action;
+    }
+
+    public get data(): T | undefined {
+        return this.#data;
+    }
 
     public constructor(action: Action<any>, data?: T | undefined) {
-        this.action = Object.freeze(action);
-        this.data = data;
+        this.#action = action;
+        this.#data = data;
+    }
+
+    public toJSON(): object {
+        return {
+            '__type': this.constructor.name,
+            'action': this.action,
+            'data': this.data,
+        };
     }
 }
 
@@ -173,7 +218,7 @@ export async function sendAction(type: ActionType.SearchHorses, data: HorseSearc
 export async function sendAction(type: ActionType.UpdateStallionScores): Promise<ActionResponse<void>>;
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
 export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
-    const response = await chrome.runtime.sendMessage(new Action(type, data));
+    const response = await chrome.runtime.sendMessage(new Action(type, data).toJSON());
 
     if (response instanceof ActionError) {
         throw ActionError.of(response);

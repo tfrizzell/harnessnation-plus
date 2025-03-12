@@ -6,12 +6,15 @@ import { AlarmType } from '../../lib/alarms.js';
 import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, getHorse, Horse, StallionScore, calculateStallionScore } from '../../lib/horses.js';
 import { generatePedigreeCatalog as downloadPedigreeCatalog } from '../../lib/pedigree.js';
 import { generateBreedingReport as generateBreedingReportAsync } from '../../lib/reporting.js';
-import { downloadFile, isMobileOS, regexEscape, sleep, toTimestamp } from '../../lib/utils.js';
+import { downloadFile, isMobileOS, regexEscape, toTimestamp } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
 let db = firestore.singleton();
 
-chrome.runtime.onMessage.addListener((action: Action<any>, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((action: Action<any>, _sender, _sendResponse) => {
+    const sendResponse = (response: ActionResponse<any> | ActionError): void =>
+        _sendResponse(response.toJSON());
+
     switch (action?.type) {
         case ActionType.CalculateStudFee:
             calculateStudFee(action.data)
