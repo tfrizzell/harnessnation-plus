@@ -86,14 +86,6 @@ export class Action<T> {
         this.type = type;
         this.data = data;
     }
-
-    public toJSON(): object {
-        return {
-            '__type': this.constructor.name,
-            'type': this.type,
-            'data': this.data,
-        };
-    }
 }
 
 export class ActionError extends Error {
@@ -135,15 +127,6 @@ export class ActionError extends Error {
         this.action = action;
         this.name = ActionError.name;
     }
-
-    public toJSON(): object {
-        return {
-            '__type': this.constructor.name,
-            'action': this.action,
-            'message': this.message,
-            'stack': this.stack,
-        };
-    }
 }
 
 export class ActionResponse<T> {
@@ -175,14 +158,6 @@ export class ActionResponse<T> {
     public constructor(action: Action<any>, data?: T | undefined) {
         this.action = Object.freeze(action);
         this.data = data;
-    }
-
-    public toJSON(): object {
-        return {
-            '__type': this.constructor.name,
-            'action': this.action,
-            'data': this.data,
-        };
     }
 }
 
