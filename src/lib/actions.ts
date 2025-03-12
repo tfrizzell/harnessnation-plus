@@ -68,16 +68,8 @@ export class Action<T> {
         return Action.fromObject(value);
     }
 
-    #type: ActionType;
-    #data: T;
-
-    public get type(): ActionType {
-        return this.#type;
-    }
-
-    public get data(): T {
-        return this.#data;
-    }
+    type: ActionType;
+    data: T;
 
     public constructor(type: ActionType.CalculateStudFee, data: CalculateStudFeeData);
     public constructor(type: ActionType.GenerateBroodmareReport, data: BreedingReportData);
@@ -91,8 +83,8 @@ export class Action<T> {
     public constructor(type: ActionType.UpdateStallionScores, data: void);
     public constructor(type: ActionType, data: T);
     public constructor(type: ActionType, data: T) {
-        this.#type = type;
-        this.#data = data;
+        this.type = type;
+        this.data = data;
     }
 
     public toJSON(): object {
@@ -132,11 +124,7 @@ export class ActionError extends Error {
         return ActionError.fromObject(value);
     }
 
-    #action: Action<any>;
-
-    public get action(): Action<any> {
-        return this.#action;
-    }
+    action: Action<any>;
 
     public constructor(action: Action<any>);
     public constructor(action: Action<any>, error: Error);
@@ -144,7 +132,7 @@ export class ActionError extends Error {
     public constructor(action: Action<any>, errorOrMessage?: Error | string);
     public constructor(action: Action<any>, errorOrMessage?: Error | string) {
         super((errorOrMessage instanceof Error) ? errorOrMessage.message : errorOrMessage);
-        this.#action = action;
+        this.action = action;
         this.name = ActionError.name;
     }
 
@@ -181,20 +169,12 @@ export class ActionResponse<T> {
         return ActionResponse.fromObject(value);
     }
 
-    #action: Action<any>;
-    #data: T | undefined;
-
-    public get action(): Action<any> {
-        return this.#action;
-    }
-
-    public get data(): T | undefined {
-        return this.#data;
-    }
+    action: Action<any>;
+    data: T | undefined;
 
     public constructor(action: Action<any>, data?: T | undefined) {
-        this.#action = action;
-        this.#data = data;
+        this.action = Object.freeze(action);
+        this.data = data;
     }
 
     public toJSON(): object {
@@ -206,32 +186,23 @@ export class ActionResponse<T> {
     }
 }
 
-export function sendAction(type: ActionType.CalculateStudFee, data: CalculateStudFeeData): Promise<ActionResponse<number>>;
-export function sendAction(type: ActionType.GenerateBroodmareReport, data: BreedingReportData): Promise<ActionResponse<void>>;
-export function sendAction(type: ActionType.GeneratePedigreeCatalog, data: PedigreeCatalogData): Promise<ActionResponse<void>>;
-export function sendAction(type: ActionType.GenerateStallionReport, data: BreedingReportData): Promise<ActionResponse<void>>;
-export function sendAction(type: ActionType.GetHorse, data: HorseIdData): Promise<ActionResponse<Horse>>;
-export function sendAction(type: ActionType.GetHorses): Promise<ActionResponse<Horse[]>>;
-export function sendAction(type: ActionType.PreviewStallionScore, data: HorseIdData): Promise<ActionResponse<StallionScore | null>>;
-export function sendAction(type: ActionType.SaveHorses, data: Horse[]): Promise<ActionResponse<void>>;
-export function sendAction(type: ActionType.SearchHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;
-export function sendAction(type: ActionType.UpdateStallionScores): Promise<ActionResponse<void>>;
-export function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
-export function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
-    return new Promise<ActionResponse<T>>((resolve, reject) => {
-        const port = chrome.runtime.connect();
+export async function sendAction(type: ActionType.CalculateStudFee, data: CalculateStudFeeData): Promise<ActionResponse<number>>;
+export async function sendAction(type: ActionType.GenerateBroodmareReport, data: BreedingReportData): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.GeneratePedigreeCatalog, data: PedigreeCatalogData): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.GenerateStallionReport, data: BreedingReportData): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.GetHorse, data: HorseIdData): Promise<ActionResponse<Horse>>;
+export async function sendAction(type: ActionType.GetHorses): Promise<ActionResponse<Horse[]>>;
+export async function sendAction(type: ActionType.PreviewStallionScore, data: HorseIdData): Promise<ActionResponse<StallionScore | null>>;
+export async function sendAction(type: ActionType.SaveHorses, data: Horse[]): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.SearchHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;
+export async function sendAction(type: ActionType.UpdateStallionScores): Promise<ActionResponse<void>>;
+export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
+export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
+    const response = await chrome.runtime.sendMessage(new Action(type, data));
 
-        port.onMessage.addListener(response => {
-            port.disconnect();
+    if (response instanceof ActionError) {
+        throw ActionError.of(response);
+    }
 
-            if (response instanceof ActionError) {
-                reject(ActionError.of(response));
-            } else {
-                resolve(ActionResponse.of(response) ?? response);
-            }
-        });
-
-        // Firefox compatibility: `structuredClone` fails, so use `.toJSON()` to send a plain object
-        port.postMessage(new Action(type, data).toJSON());
-    });
+    return ActionResponse.of(response) ?? response;
 }
