@@ -206,32 +206,23 @@ export class ActionResponse<T> {
     }
 }
 
-export function sendAction(type: ActionType.CalculateStudFee, data: CalculateStudFeeData): Promise<ActionResponse<number>>;
-export function sendAction(type: ActionType.GenerateBroodmareReport, data: BreedingReportData): Promise<ActionResponse<void>>;
-export function sendAction(type: ActionType.GeneratePedigreeCatalog, data: PedigreeCatalogData): Promise<ActionResponse<void>>;
-export function sendAction(type: ActionType.GenerateStallionReport, data: BreedingReportData): Promise<ActionResponse<void>>;
-export function sendAction(type: ActionType.GetHorse, data: HorseIdData): Promise<ActionResponse<Horse>>;
-export function sendAction(type: ActionType.GetHorses): Promise<ActionResponse<Horse[]>>;
-export function sendAction(type: ActionType.PreviewStallionScore, data: HorseIdData): Promise<ActionResponse<StallionScore | null>>;
-export function sendAction(type: ActionType.SaveHorses, data: Horse[]): Promise<ActionResponse<void>>;
-export function sendAction(type: ActionType.SearchHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;
-export function sendAction(type: ActionType.UpdateStallionScores): Promise<ActionResponse<void>>;
-export function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
-export function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
-    return new Promise<ActionResponse<T>>((resolve, reject) => {
-        const port = chrome.runtime.connect();
+export async function sendAction(type: ActionType.CalculateStudFee, data: CalculateStudFeeData): Promise<ActionResponse<number>>;
+export async function sendAction(type: ActionType.GenerateBroodmareReport, data: BreedingReportData): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.GeneratePedigreeCatalog, data: PedigreeCatalogData): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.GenerateStallionReport, data: BreedingReportData): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.GetHorse, data: HorseIdData): Promise<ActionResponse<Horse>>;
+export async function sendAction(type: ActionType.GetHorses): Promise<ActionResponse<Horse[]>>;
+export async function sendAction(type: ActionType.PreviewStallionScore, data: HorseIdData): Promise<ActionResponse<StallionScore | null>>;
+export async function sendAction(type: ActionType.SaveHorses, data: Horse[]): Promise<ActionResponse<void>>;
+export async function sendAction(type: ActionType.SearchHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;
+export async function sendAction(type: ActionType.UpdateStallionScores): Promise<ActionResponse<void>>;
+export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
+export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
+    const response = await chrome.runtime.sendMessage(new Action(type, data).toJSON());
 
-        port.onMessage.addListener(response => {
-            port.disconnect();
+    if (response instanceof ActionError) {
+        throw ActionError.of(response);
+    }
 
-            if (response instanceof ActionError) {
-                reject(ActionError.of(response));
-            } else {
-                resolve(ActionResponse.of(response) ?? response);
-            }
-        });
-
-        // Firefox compatibility: `structuredClone` fails, so use `.toJSON()` to send a plain object
-        port.postMessage(new Action(type, data).toJSON());
-    });
+    return ActionResponse.of(response) ?? response;
 }

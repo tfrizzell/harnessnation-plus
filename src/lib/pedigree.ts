@@ -393,7 +393,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                         getNameFont(grandProgeny.races)
                     );
 
-                    paragraph.add(` ${getMarkString(grandProgeny.races!)}`);
+                    paragraph.add(` ${getMarkString(grandProgeny.races!.filter(r => r.finish === 1))}`);
                     count++;
                 }
 
@@ -416,7 +416,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                             getNameFont(greatGrandProgeny.races)
                         );
 
-                        paragraph.add(` ${getMarkString(greatGrandProgeny.races!)}`);
+                        paragraph.add(` ${getMarkString(greatGrandProgeny.races!.filter(r => r.finish === 1))}`);
                     }
 
                     paragraph.add('.');
@@ -539,14 +539,13 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         for (let i = paragraphs.length - 1; i >= 0; i--) {
             const paragraph = paragraphs[i];
 
-            if (paragraph.text.match(/^(\d+\w{2} Dam$|From \d+ starters)/i) && (i + 3 > paragraphs.length || paragraphs[i + 2]?.text.match(/^(Production Record$|From \d+ starters)/i))) {
+            if (paragraph.text.match(/^\d+\w{2} Dam$/i) && (i + 3 > paragraphs.length || paragraphs[i + 2]?.text.match(/^(Production Record$|From \d+ starters)/i))) {
                 totalHeight -= paragraphs.splice(i, 2).reduce((h, p) => h + p.getHeight() + 1, 0);
                 break;
             }
 
             if (paragraphs[i].priority === lowestPriority) {
-                paragraphs.splice(i, 1);
-                totalHeight -= paragraph.getHeight() + 1;
+                totalHeight -= paragraphs.splice(i, 1).reduce((h, p) => h + p.getHeight() + 1, 0);
                 break;
             }
         }

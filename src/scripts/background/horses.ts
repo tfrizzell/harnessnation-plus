@@ -6,93 +6,87 @@ import { AlarmType } from '../../lib/alarms.js';
 import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, getHorse, Horse, StallionScore, calculateStallionScore } from '../../lib/horses.js';
 import { generatePedigreeCatalog as downloadPedigreeCatalog } from '../../lib/pedigree.js';
 import { generateBreedingReport as generateBreedingReportAsync } from '../../lib/reporting.js';
-import { downloadFile, isMobileOS, regexEscape, sleep, toTimestamp } from '../../lib/utils.js';
+import { downloadFile, isMobileOS, regexEscape, toTimestamp } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
 let db = firestore.singleton();
 
-chrome.runtime.onConnect.addListener(port => {
-    port.onMessage.addListener((action: Action<any>, port) => {
-        // Firefox compatibility: `structuredClone` fails, so use `.toJSON()` to send a plain object
-        let portConnected = true;
-        port.onDisconnect.addListener(() => portConnected = false);
+chrome.runtime.onMessage.addListener((action: Action<any>, _sender, _sendResponse) => {
+    const sendResponse = (response: ActionResponse<any> | ActionError): void =>
+        _sendResponse(response.toJSON());
 
-        const sendResponse = (response: ActionResponse<any> | ActionError): void => {
-            if (portConnected)
-                port.postMessage(response.toJSON());
-        }
+    switch (action?.type) {
+        case ActionType.CalculateStudFee:
+            calculateStudFee(action.data)
+                .then((data: number) => sendResponse(new ActionResponse(action, data)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-        switch (action?.type) {
-            case ActionType.CalculateStudFee:
-                calculateStudFee(action.data)
-                    .then((data: number) => sendResponse(new ActionResponse(action, data)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.ClearHorseCache:
+            clearHorseCache()
+                .then(() => sendResponse(new ActionResponse(action)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.ClearHorseCache:
-                clearHorseCache()
-                    .then(() => sendResponse(new ActionResponse(action)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.GenerateBroodmareReport:
+            generateBroodmareReport(action.data)
+                .then(() => sendResponse(new ActionResponse(action)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.GenerateBroodmareReport:
-                generateBroodmareReport(action.data)
-                    .then(() => sendResponse(new ActionResponse(action)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.GeneratePedigreeCatalog:
+            generatePedigreeCatalog(action.data)
+                .then(() => sendResponse(new ActionResponse(action)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.GeneratePedigreeCatalog:
-                generatePedigreeCatalog(action.data)
-                    .then(() => sendResponse(new ActionResponse(action)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.GenerateStallionReport:
+            generateStallionReport(action.data)
+                .then(() => sendResponse(new ActionResponse(action)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.GenerateStallionReport:
-                generateStallionReport(action.data)
-                    .then(() => sendResponse(new ActionResponse(action)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.GetHorse:
+            getHorseById(action.data.id)
+                .then((data: Horse | undefined) => sendResponse(new ActionResponse(action, data)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.GetHorse:
-                getHorseById(action.data.id)
-                    .then((data: Horse | undefined) => sendResponse(new ActionResponse(action, data)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.GetHorses:
+            getHorses()
+                .then((data: Horse[]) => sendResponse(new ActionResponse(action, data)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.GetHorses:
-                getHorses()
-                    .then((data: Horse[]) => sendResponse(new ActionResponse(action, data)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.PreviewStallionScore:
+            previewStallionScore(action.data.id)
+                .then((data: StallionScore) => sendResponse(new ActionResponse(action, data)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.PreviewStallionScore:
-                previewStallionScore(action.data.id)
-                    .then((data: StallionScore) => sendResponse(new ActionResponse(action, data)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.SaveHorses:
+            saveHorses(action.data)
+                .then(() => sendResponse(new ActionResponse(action)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.SaveHorses:
-                saveHorses(action.data)
-                    .then(() => sendResponse(new ActionResponse(action)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.SearchHorses:
+            createSearchPattern(action.data)
+                .then((data: RegExp | string) => sendResponse(new ActionResponse(action, data)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.SearchHorses:
-                createSearchPattern(action.data)
-                    .then((data: RegExp | string) => sendResponse(new ActionResponse(action, data)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        case ActionType.UpdateStallionScores:
+            updateStallionScores()
+                .then(() => sendResponse(new ActionResponse(action)))
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
+            break;
 
-            case ActionType.UpdateStallionScores:
-                updateStallionScores()
-                    .then(() => sendResponse(new ActionResponse(action)))
-                    .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
-                break;
+        default:
+            return;
+    }
 
-            default:
-                return;
-        }
-    });
+    return true;
 });
 
 interface HorseWithGeneration extends Horse {
