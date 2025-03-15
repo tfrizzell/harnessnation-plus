@@ -453,10 +453,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                     indent / 4
                 ));
 
-                paragraph.add(`From ${starters} starters`);
+                paragraph.add(`From ${starters} ${starters === 1 ? 'starter' : 'starters'}`);
 
                 if (winners > 0)
-                    paragraph.add(`, sire of ${winners} winners`);
+                    paragraph.add(`, sire of ${winners} ${winners === 1 ? 'winner' : 'winners'}`);
 
                 if (earnings > 0)
                     paragraph.add(`, with earnings of ${earningsFormatter.format(earnings)}`);
@@ -466,7 +466,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
                     for (const progeny of notableProgeny) {
                         paragraphs.push(paragraph = new ParagraphBuilder(
-                            ParagraphPriority.High,
+                            ParagraphPriority.VeryHigh,
                             fonts.Normal,
                             8.5,
                             maxWidth,
@@ -515,7 +515,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                 birthSeason.setMonth(birthSeason.getMonth() - 3 * (prog.age - 1));
 
                 paragraphs.push(paragraph = new ParagraphBuilder(
-                    getParagraphPriority(horse, <DamLineAncestor>horse, prog) + 3,
+                    ParagraphPriority.High,
                     fonts.Normal,
                     8.5,
                     maxWidth,
