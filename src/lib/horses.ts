@@ -358,7 +358,7 @@ export async function getRaces(id: number, token?: string): Promise<RaceList> {
                             : /^Six-Year-Old &amp; Older$/i.test(data[4].trim())
                                 ? '6yo+'
                                 : undefined,
-            condition: data[5].replace(/\s+/, ' ')?.trim(),
+            condition: data[5]?.replace(/(\\[rn]|[\r\n\s])+/gs, ' ')?.trim(),
             gait: /^trot/i.test(data[6]) ? 'trot' : 'pace',
             trackCondition: data[7]?.trim()?.toLowerCase(),
             trackSize: /^half/i.test(data[8]) ? 'half' : 'full',
