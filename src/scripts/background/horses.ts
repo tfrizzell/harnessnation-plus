@@ -17,9 +17,9 @@ chrome.runtime.onMessage.addListener((action: Action<any>, _sender, _sendRespons
 
     switch (action?.type) {
         case ActionType.CalculateStudFee:
-            waitFor(calculateStudFee(action.data)
+            waitFor(calculateStudFee(action.data))
                 .then((data: number) => sendResponse(new ActionResponse(action, data)))
-                .catch((error: Error | string) => sendResponse(new ActionError(action, error))));
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
         case ActionType.ClearHorseCache:
@@ -29,21 +29,21 @@ chrome.runtime.onMessage.addListener((action: Action<any>, _sender, _sendRespons
             break;
 
         case ActionType.GenerateBroodmareReport:
-            waitFor(generateBroodmareReport(action.data)
+            waitFor(generateBroodmareReport(action.data))
                 .then(() => sendResponse(new ActionResponse(action)))
-                .catch((error: Error | string) => sendResponse(new ActionError(action, error))));
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
         case ActionType.GeneratePedigreeCatalog:
-            waitFor(generatePedigreeCatalog(action.data)
+            waitFor(generatePedigreeCatalog(action.data))
                 .then(() => sendResponse(new ActionResponse(action)))
-                .catch((error: Error | string) => sendResponse(new ActionError(action, error))));
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
         case ActionType.GenerateStallionReport:
-            waitFor(generateStallionReport(action.data)
+            waitFor(generateStallionReport(action.data))
                 .then(() => sendResponse(new ActionResponse(action)))
-                .catch((error: Error | string) => sendResponse(new ActionError(action, error))));
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
         case ActionType.GetHorse:
@@ -77,9 +77,9 @@ chrome.runtime.onMessage.addListener((action: Action<any>, _sender, _sendRespons
             break;
 
         case ActionType.UpdateStallionScores:
-            waitFor(updateStallionScores()
+            waitFor(updateStallionScores())
                 .then(() => sendResponse(new ActionResponse(action)))
-                .catch((error: Error | string) => sendResponse(new ActionError(action, error))));
+                .catch((error: Error | string) => sendResponse(new ActionError(action, error)));
             break;
 
         default:
