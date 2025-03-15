@@ -225,3 +225,14 @@ export function toTimestamp(value: Date | string | number = new Date()): string 
 
     return `${value.getFullYear()}-${(value.getMonth() + 1).toString().padStart(2, '0')}-${value.getDate().toString().padStart(2, '0')}T${value.getHours().toString().padStart(2, '0')}:${value.getMinutes().toString().padStart(2, '0')}:${value.getMinutes().toString().padStart(2, '0')}`;
 }
+
+export async function waitFor<T>(promise: Promise<T>): Promise<T> {
+    const keepAlive = setInterval(chrome.runtime.getPlatformInfo, 15000);
+
+    try {
+        return await promise;
+    } finally {
+        console.log('clear interval');
+        clearInterval(keepAlive);
+    }
+}
