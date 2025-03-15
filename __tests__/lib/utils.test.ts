@@ -1,7 +1,7 @@
 import { Timestamp } from '@firebase/firestore';
 import { chrome } from 'jest-chrome';
 import { RaceList } from '../../src/lib/horses';
-import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, sleep, toDate, toPercentage, toTimestamp, waitFor } from '../../src/lib/utils';
+import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, secondsToTime, sleep, toDate, toPercentage, toTimestamp, waitFor } from '../../src/lib/utils';
 
 afterAll(() => {
     jest.clearAllTimers();
@@ -147,7 +147,7 @@ describe(`downloadFile`, () => {
     test(`downloads a ${Blob.name}`, async () => {
         const _FileReader = global.FileReader;
 
-        const mockFileReader = jest.spyOn(global, 'FileReader').mockImplementation(() => {
+        jest.spyOn(global, 'FileReader').mockImplementation(() => {
             const inst = new _FileReader();
 
             inst.readAsDataURL = (blob) => {
@@ -172,7 +172,7 @@ describe(`downloadFile`, () => {
                 saveAs: false,
             });
         } finally {
-            mockFileReader.mockRestore();
+            jest.restoreAllMocks();
         }
     });
 
@@ -610,6 +610,26 @@ describe(`seasonsBetween`, () => {
     });
 });
 
+describe(`secondsToTime`, () => {
+    it(`exists`, () => {
+        expect(secondsToTime).not.toBeUndefined();
+    });
+
+    it(`is a function`, () => {
+        expect(typeof secondsToTime).toEqual('function');
+    });
+
+    (<[number, string][]>[
+        [114.25, '1:54.25'],
+        [120, '2:00.00'],
+        [126.1, '2:06.10'],
+    ]).forEach(([seconds, expected]) => {
+        it(`resolves with ${JSON.stringify(expected)} when given seconds=${seconds}`, () => {
+            expect(secondsToTime(seconds)).toEqual(expected);
+        });
+    });
+});
+
 describe(`sleep`, () => {
     it(`exists`, () => {
         expect(sleep).not.toBeUndefined();
@@ -726,11 +746,11 @@ describe(`waitFor`, () => {
     it(`creates an interval that calls chrome.runtime.getPlatformInfo every 15 seconds`, async () => {
         jest.useFakeTimers();
         const expectedValue = Date.now();
-        const setInterval = jest.spyOn(global, 'setInterval');
-        const clearInterval = jest.spyOn(global, 'clearInterval');
+        jest.spyOn(global, 'setInterval');
+        jest.spyOn(global, 'clearInterval');
 
         try {
-            await expect(waitFor(new Promise(resolve => setTimeout(resolve, 30000, expectedValue)))).resolves.toEqual(expectedValue);
+            await expect(waitFor(Promise.resolve(expectedValue))).resolves.toEqual(expectedValue);
             expect(setInterval).toHaveBeenCalledTimes(1)
             expect(setInterval).toHaveBeenCalledWith(chrome.runtime.getPlatformInfo, 15000);
             expect(clearInterval).toHaveBeenCalled();

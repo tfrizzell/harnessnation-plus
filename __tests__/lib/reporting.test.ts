@@ -1,56 +1,5 @@
-import fs from 'fs';
-import path from 'path';
-
 import { generateBreedingReport } from '../../src/lib/reporting.js';
-import { sleep } from '../../src/lib/utils.js';
-
-jest.mock('../../src/lib/utils.js', () => {
-    const originalModule = jest.requireActual('../../src/lib/utils.js');
-
-    return {
-        ...originalModule,
-        sleep: jest.fn().mockImplementation((value, abortSignal = null) => Promise.resolve()),
-    };
-});
-
-beforeAll(() => {
-    global.fetch = <jest.Mock>jest.fn((input: string | URL | globalThis.Request, init?: RequestInit): Promise<{ ok: boolean, text: () => Promise<string> }> => {
-        const url = (input as Request)?.url ?? input?.toString();
-        let file: fs.PathLike | undefined;
-
-        if (url === 'https://www.harnessnation.com/api/progeny/report' && init?.method === 'POST') {
-            const { horseId } = Object.fromEntries(new URLSearchParams(init!.body as string));
-            file = path.join(__dirname, '../__files__', `api_progeny_report-${horseId}.html`);
-        } else if (url.startsWith('https://www.harnessnation.com/horse/')) {
-            const horseId = url.split('/').pop()!;
-            file = path.join(__dirname, '../__files__', `horse_${horseId}.html`);
-        }
-
-        if (!file)
-            return Promise.reject(`${url} not found`);
-
-        return new Promise(resolve => {
-            fs.access(file!, undefined, (err) => {
-                if (err) {
-                    return resolve({
-                        ok: true,
-                        text: (): Promise<string> => Promise.resolve('')
-                    });
-                }
-
-                resolve({
-                    ok: true,
-                    text: (): Promise<string> => new Promise(resolve =>
-                        fs.readFile(file!, { encoding: 'utf-8' }, (err: any, data: string) => resolve(err ? '' : data))),
-                });
-            });
-        });
-    });
-});
-
-afterAll(() => {
-    jest.restoreAllMocks();
-});
+import '../fetch.mock';
 
 describe(`generateBreedingReport`, () => {
     it(`exists`, () => {

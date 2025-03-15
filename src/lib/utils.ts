@@ -232,7 +232,6 @@ export async function waitFor<T>(promise: Promise<T>): Promise<T> {
     try {
         return await promise;
     } finally {
-        console.log('clear interval');
         clearInterval(keepAlive);
     }
 }
