@@ -3,6 +3,9 @@ module.exports = {
     globalSetup: './global.setup.js',
     setupFilesAfterEnv: ['./jest.setup.js'],
     extensionsToTreatAsEsm: ['.ts'],
+    testPathIgnorePatterns: [
+        '\\.mock\\.[jt]sx?$',
+    ],
     collectCoverage: true,
     collectCoverageFrom: [
         './src/lib/*.ts',
@@ -16,7 +19,7 @@ module.exports = {
     ],
     maxWorkers: 1,
     transform: {
-        '^.+\\.(t|j)sx?$': '@swc/jest',
+        '^.+\\.[jt]sx?$': '@swc/jest',
     },
     transformIgnorePatterns: [
         'node_modules/(?!pdf-lib)'

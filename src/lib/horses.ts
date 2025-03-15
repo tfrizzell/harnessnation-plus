@@ -340,9 +340,10 @@ export async function getRaces(id: number, token?: string): Promise<RaceList> {
             continue;
 
         const isStake = !!data[3] && !/^(Maiden )?(Open|Preferred|Claiming \$[\d,]+)$/i.test(data[2].trim());
+        raceIds.push(raceId);
 
         races.push({
-            id: raceIds.push(raceId),
+            id: raceId,
             name: data[2].replace('Elim', '').trim(),
             stake: isStake,
             elim: isStake && / Elim$/i.test(data[2].trim()),
