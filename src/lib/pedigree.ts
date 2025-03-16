@@ -466,7 +466,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
                     for (const progeny of notableProgeny) {
                         paragraphs.push(paragraph = new ParagraphBuilder(
-                            ParagraphPriority.VeryHigh,
+                            Math.max(ParagraphPriority.VeryHigh, getParagraphPriority(horse, <DamLineAncestor>horse, progeny) + 3),
                             fonts.Normal,
                             8.5,
                             maxWidth,
@@ -515,7 +515,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                 birthSeason.setMonth(birthSeason.getMonth() - 3 * (prog.age - 1));
 
                 paragraphs.push(paragraph = new ParagraphBuilder(
-                    Math.min(ParagraphPriority.High, getParagraphPriority(horse, <DamLineAncestor>horse, prog)),
+                    Math.max(ParagraphPriority.High, getParagraphPriority(horse, <DamLineAncestor>horse, prog) + 3),
                     fonts.Normal,
                     8.5,
                     maxWidth,
