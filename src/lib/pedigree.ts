@@ -515,7 +515,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                 birthSeason.setMonth(birthSeason.getMonth() - 3 * (prog.age - 1));
 
                 paragraphs.push(paragraph = new ParagraphBuilder(
-                    ParagraphPriority.High,
+                    Math.min(ParagraphPriority.High, getParagraphPriority(horse, <DamLineAncestor>horse, prog)),
                     fonts.Normal,
                     8.5,
                     maxWidth,
