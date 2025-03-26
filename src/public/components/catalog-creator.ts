@@ -33,6 +33,7 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
     #root: ShadowRoot;
     #useHipNumbers: HTMLInputElement = null!;
     #useCustomHipNumbers: HTMLInputElement = null!;
+    #showFullPedigrees: HTMLInputElement = null!;
     #pages: HTMLElement = null!;
 
     constructor() {
@@ -197,6 +198,7 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
 
             #add-button {
                 all: unset;
+                align-self: flex-end;
                 color: #00aa00;
                 cursor: pointer;
                 font-size: 0.85em;
@@ -298,6 +300,20 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
         this.#useCustomHipNumbers.setAttribute('type', 'checkbox');
         this.#useCustomHipNumbers.toggleAttribute('disabled', true);
         row.append(this.#useCustomHipNumbers);
+
+        row = document.createElement('div');
+        row.classList.add('input-row', 'full-pedigree');
+        form.append(row);
+
+        label = document.createElement('strong');
+        label.textContent = 'Show Full Pedigrees';
+        row.append(label);
+
+        this.#showFullPedigrees = document.createElement('input');
+        this.#showFullPedigrees.setAttribute('name', 'showFullPedigrees');
+        this.#showFullPedigrees.setAttribute('role', 'toggle');
+        this.#showFullPedigrees.setAttribute('type', 'checkbox');
+        row.append(this.#showFullPedigrees);
 
         const addButton = document.createElement('button');
         addButton.setAttribute('id', 'add-button');
@@ -418,6 +434,8 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
 
     #enableAll(): void {
         this.#root.querySelectorAll<HTMLButtonElement | HTMLInputElement>('button, input, select').forEach(el => el.disabled = false);
+        this.#useCustomHipNumbers.checked = this.#useHipNumbers.checked && this.#useCustomHipNumbers.checked;
+        this.#useCustomHipNumbers.disabled = !this.#useHipNumbers.checked;
     }
 
     #getNextHipNumber(): string {
@@ -456,6 +474,7 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
         const form = <HTMLFormElement>e.target;
         const useHipNumbers = (<HTMLInputElement>form.elements.namedItem('useHipNumbers'))!.checked;
         const useCustomHipNumbers = (<HTMLInputElement>form.elements.namedItem('useCustomHipNumbers'))!.checked;
+        const fullPedigree = (<HTMLInputElement>form.elements.namedItem('showFullPedigrees'))!.checked;
 
         this.dispatchEvent(new CustomEvent<HNPlusCatalogData>('submit', {
             detail: {
@@ -470,6 +489,7 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
                         ]
                 ),
                 showHipNumbers: useHipNumbers,
+                fullPedigrees: fullPedigree,
             }
         }));
     }

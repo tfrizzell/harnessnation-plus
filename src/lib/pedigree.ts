@@ -108,11 +108,12 @@ class ParagraphBuilder extends PDFParagraphBuilder {
  * @param {PDFDocument} pdfDoc - the pdf document to add the page to.
  * @param {Horse} horse - the horse the page is being generated for.
  * @param {number} hipNumber - the hip number of the horse, if desired.
+ * @param {boolean} fullPedigree - if true, the page height will be extended as needed to fit the content.
  * @param {token} csrfToken - the CSRF token to sign requests.
  * @param {FontMap} fonts - the map of fonts to use in the pdf page.
  * @returns {Promise<void>} A `Promise` that resolves when the page has been added.
  */
-async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: string | number, csrfToken?: string, fonts?: FontMap): Promise<void> {
+async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: string | number, fullPedigree: boolean = false, csrfToken?: string, fonts?: FontMap): Promise<void> {
     fonts ??= await loadFonts(pdfDoc);
 
     async function addHorseInfo(paragraph: ParagraphBuilder, horse: Horse | Ancestor | Progeny, races: RaceList | undefined, context: Context = Context.Default): Promise<void> {
@@ -190,8 +191,8 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         return progeny.gender === 'female' && progeny.stable !== 'main' && progeny.id !== horse.id && !damIds.includes(progeny.id)
     }
 
-    const page = pdfDoc.addPage(window.PDFLib.PageSizes.Letter);
     const margin = { top: 34.87, right: 99, bottom: 34.87, left: 99 };
+    const page = pdfDoc.addPage(window.PDFLib.PageSizes.Letter);
 
     page.setBleedBox(margin.left, margin.bottom, page.getWidth() - margin.left - margin.right, page.getHeight() - margin.top - margin.bottom);
     page.moveTo(margin.left, page.getHeight() - margin.top);
@@ -533,8 +534,17 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     page.moveDown(5.25 * rowHeight);
     let totalHeight = paragraphs.reduce((total, paragraph) => total + paragraph.getHeight(), 0) + 1 * Math.max(0, paragraphs.length - 1);
 
+    if (fullPedigree) {
+        const addedHeight = Math.max(0, totalHeight - page.getY());
+        page.setHeight(page.getHeight() + addedHeight);
+        page.setBleedBox(margin.left, margin.bottom, page.getWidth() - margin.left - margin.right, page.getHeight() - margin.top - margin.bottom);
+        page.translateContent(0, addedHeight);
+        margin.bottom -= addedHeight + margin.bottom;
+    }
+
     while (page.getY() - totalHeight < margin.bottom) {
         const lowestPriority = Math.min(...paragraphs.map(paragraph => paragraph.priority));
+        console.log('remove', lowestPriority);
 
         for (let i = paragraphs.length - 1; i >= 0; i--) {
             const paragraph = paragraphs[i];
@@ -613,9 +623,10 @@ async function createPDF(): Promise<PDFDocument> {
  *                          `[id1, id2, ...]`  
  *                          `[[id1, hip1], [id2, hip2], ...]`
  * @param {boolean} showHipNumbers - if true, hip numbers will be displayed on each page.
+ * @param {boolean} fullPedigrees - if true, the page height will be extended as needed to fit the content.
  * @returns {Promise<Horse>} A `Promise` that resolves with the data-uri of the pdf file.
  */
-export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumbers: boolean = false): Promise<string> {
+export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumbers: boolean = false, fullPedigrees: boolean = false): Promise<string> {
     if (await isMobileOS()) {
         console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree catalog generation`, 'color:#406e8e;font-weight:bold;', '');
         throw new Error('Pedigree catalogs are not supported on mobile');
@@ -623,7 +634,7 @@ export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumb
 
     if (ids.length === 1) {
         const [id, hipNumber] = Array.isArray(ids[0]) ? ids[0] : [ids[0], 1];
-        return await generatePedigreePage(id, showHipNumbers ? hipNumber ?? true : false);
+        return await generatePedigreePage(id, showHipNumbers ? hipNumber ?? true : false, fullPedigrees);
     }
 
     const start = performance.now();
@@ -645,7 +656,7 @@ export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumb
     const fonts = await loadFonts(pdfDoc);
 
     while (horses.length > 0)
-        await Promise.all(horses.splice(0, 3).map(([horse, hipNumber]) => addPedigreePage(pdfDoc, horse, showHipNumbers ? hipNumber : undefined, csrfToken, fonts)));
+        await Promise.all(horses.splice(0, 3).map(([horse, hipNumber]) => addPedigreePage(pdfDoc, horse, showHipNumbers ? hipNumber : undefined, fullPedigrees, csrfToken, fonts)));
 
     await addWatermark(pdfDoc);
 
@@ -658,9 +669,10 @@ export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumb
  * Generates a sale catalog style pedigree page for the given horse.
  * @param {number} id - the id of the horse.
  * @param {string | number | boolean} hipNumber - if set, the hip number will be displayed on the pedigree page.
+ * @param {boolean} fullPedigree - if true, the page height will be extended as needed to fit the content.
  * @returns {Promise<Horse>} A `Promise` that resolves with the data-uri of the pdf file.
  */
-export async function generatePedigreePage(id: number, hipNumber?: HipNumberType): Promise<string> {
+export async function generatePedigreePage(id: number, hipNumber?: HipNumberType, fullPedigree: boolean = false): Promise<string> {
     if (await isMobileOS()) {
         console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree page generation`, 'color:#406e8e;font-weight:bold;', '');
         throw new Error('Pedigree catalogs are not supported on mobile');
@@ -675,7 +687,7 @@ export async function generatePedigreePage(id: number, hipNumber?: HipNumberType
 
 
     const pdfDoc = await createPDF();
-    await addPedigreePage(pdfDoc, horse, convertHipNumber(hipNumber), csrfToken);
+    await addPedigreePage(pdfDoc, horse, convertHipNumber(hipNumber), fullPedigree, csrfToken);
     await addWatermark(pdfDoc);
 
     const dataUri = await pdfDoc.saveAsBase64({ dataUri: true });

@@ -59,6 +59,7 @@ async function createPedigreePage(): Promise<void> {
     try {
         await sendAction(ActionType.GeneratePedigreeCatalog, {
             data: [id],
+            fullPedigrees: true,
             filename: !name ? undefined : `${name}.pdf`,
         });
     } catch (e: any) {
