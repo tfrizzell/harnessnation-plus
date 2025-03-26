@@ -106,7 +106,7 @@ function showCatalogDialog(optionsSelector?: string): Promise<void> {
         form.addEventListener('submit', async e => {
             e.preventDefault();
 
-            const { data, showHipNumbers } = e.detail;
+            const { data, showHipNumbers, fullPedigrees } = e.detail;
             const estimatedDuration = await getEstimatedRuntime(data.length);
 
             const estimateString = [
@@ -130,6 +130,7 @@ function showCatalogDialog(optionsSelector?: string): Promise<void> {
                 await sendAction(ActionType.GeneratePedigreeCatalog, {
                     data: data,
                     showHipNumbers: showHipNumbers,
+                    fullPedigrees: fullPedigrees,
                     filename: data.length !== 1 ? undefined : `${form.options!.find(([id]) => id === (Array.isArray(data[0]) ? data[0][0] : data[0]))![1]}.pdf`,
                 });
 

@@ -8,7 +8,7 @@ const form = document.querySelector<HNPlusCatalogCreatorElement>('hn-plus-catalo
 form.addEventListener('submit', async e => {
     e.preventDefault();
 
-    const { data, showHipNumbers } = e.detail;
+    const { data, showHipNumbers, fullPedigrees } = e.detail;
     const estimatedDuration = await getEstimatedRuntime(data.length);
 
     const estimateString = [
@@ -29,6 +29,7 @@ form.addEventListener('submit', async e => {
         await sendAction(ActionType.GeneratePedigreeCatalog, {
             data: data,
             showHipNumbers: showHipNumbers,
+            fullPedigrees: fullPedigrees,
         });
 
         dialog.innerHTML = '<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:green">check_circle</span> Your pedigree catalog has been created and downloaded successfully!</p>';

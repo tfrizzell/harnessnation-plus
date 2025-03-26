@@ -38,6 +38,7 @@ export interface HorseSearchData {
 export interface PedigreeCatalogData {
     data: number[] | [number, number][];
     showHipNumbers?: boolean;
+    fullPedigrees?: boolean;
     filename?: string;
 }
 

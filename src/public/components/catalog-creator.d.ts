@@ -1,6 +1,7 @@
 export interface HNPlusCatalogData {
     readonly data: (number | [number, string | number])[];
     readonly showHipNumbers: boolean;
+    readonly fullPedigrees: boolean;
 }
 
 export interface HNPlusCatalogCreatorCustomEventMap {

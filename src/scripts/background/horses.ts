@@ -183,7 +183,7 @@ async function generatePedigreeCatalog(data: PedigreeCatalogData): Promise<void>
     try {
         const telemetry: PedigreeTelemetry = (await chrome.storage.local.get('telemetry.pedigree'))?.['telemetry.pedigree'] ?? { totalRuns: 0, totalRunTime: 0, pagesGenerated: 0 };
         const start = performance.now();
-        const catalog = await downloadPedigreeCatalog(data.data, data.showHipNumbers);
+        const catalog = await downloadPedigreeCatalog(data.data, data.showHipNumbers, data.fullPedigrees);
 
         chrome.storage.local.set({
             'telemetry.pedigree': <PedigreeTelemetry>{
