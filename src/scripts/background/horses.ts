@@ -464,6 +464,8 @@ async function updateStallionScores(): Promise<void> {
 
         if (horse.stallionScore!.racing === undefined)
             horse.stallionScore!.racing = await calculateRacingScore(horse.id!);
+
+        updated.push(horse)
     }
 
     for (const horse of updated) {

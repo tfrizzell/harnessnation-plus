@@ -175,6 +175,7 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
                 grid-template-columns: minmax(0, 1fr) minmax(0, 0.65fr);
                 height: 100%;
                 overflow: hidden;
+                user-select: none;
             }
 
             #create-button {
