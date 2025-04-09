@@ -15,16 +15,16 @@
         if (!node?.textContent?.match(/\bfunction updateProgenyTableData\b/) || totalFoals < 600)
             return;
 
-        const delay = totalFoals >= 1800 ? 1500 : totalFoals >= 1200 ? 1000 : 500;
         const gaits = [null];
         const ageGroups = [0, 1, 2, 3, 4];
         const genders = [0, 1, 2, 3, 4];
         const stables = [null];
+        const delay = 500;
 
         node.textContent = node.textContent.replace(
             /(function updateProgenyTableData\(filterGait,filterAgeGroup,filterGender,filterStable, horseId\) \{)/,
             `
-    async function updateProgenyTableDataPaged(horseId) {
+async function updateProgenyTableDataPaged(horseId) {
         const loader = $('#progenyModalLoadingContainer');
         const container = $('#progenyModalContainer');
 
@@ -62,13 +62,23 @@
         });
 
         observer.observe(container.get(0), { childList: true });
-        filters.forEach((filters, index) => setTimeout(updateProgenyTableData, ${delay} * Math.floor(index / 4), ...filters, horseId));
+        const pages = [];
 
-        const pages = await Promise.all(promises);
+        for (let i = 0; i < filters.length; i += 4) {
+            const page = filters.slice(i, i + 4);
+            page.forEach(filters => setTimeout(updateProgenyTableData, 0, ...filters, horseId));
+            pages.push(...await Promise.all(promises.slice(0, page.length)));
+            await new Promise(resolve => setTimeout(resolve, ${delay}));
+        }
+
         observer.disconnect();
 
         const dt = $('#progenyListTable', container).DataTable();
-        pages.slice(0, pages.length - 1).forEach(page => page.forEach(row => dt.row.add(row).draw(false)));
+        dt.rows().remove().draw(false);
+
+        pages.reduce((rows, page) => [...rows, ...page], [])
+            .sort((a, b) => parseInt(b.children[2].textContent) - parseInt(a.children[2].textContent))
+            .forEach(row => dt.row.add(row).draw(false));
 
         setTimeout(() => {
             const form = container.get(0).querySelector('form');
@@ -84,7 +94,7 @@
     $1
         if ([filterGait, filterAgeGroup, filterGender, filterStable].every(filter => filter == null))
             return updateProgenyTableDataPaged(horseId);
-            `.replace(/^[\r\n]+/g, '')
+`.replace(/^[\r\n]+/g, '')
         );
     }
 
