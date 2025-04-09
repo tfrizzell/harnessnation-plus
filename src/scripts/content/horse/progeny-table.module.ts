@@ -3,7 +3,7 @@ import { onInstalled } from '../../../lib/events.js';
 
 const settings = await DataTables.getSettings('progeny');
 
-function addPaginatedProgenyLoader(node: Node): void {
+function addPagedProgenyLoader(node: Node): void {
     const totalFoals = parseInt(document.body.textContent?.match(/Total\s*Foals\s*:\s*([\d,]+)/)?.[1]?.replace(/\D/g, '') ?? '0');
 
     if (!node?.textContent?.match(/\bfunction updateProgenyTableData\b/) || totalFoals < 600)
@@ -114,7 +114,7 @@ const observer = new MutationObserver(mutations => {
 
         mutation.addedNodes?.forEach(async node => {
             await updateDataTablesSettings(node);
-            await addPaginatedProgenyLoader(node);
+            await addPagedProgenyLoader(node);
         });
     });
 });
