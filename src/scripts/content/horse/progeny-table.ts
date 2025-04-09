@@ -52,12 +52,20 @@ async function updateProgenyTableDataPaged(horseId) {
                     return;
                 }
 
-                const rows = Array.from(mutation.addedNodes ?? [])
-                    .find(node => node.classList?.contains('table-responsive'))
-                    ?.querySelectorAll('tbody>tr:has(.horseLink)');
+                const table = Array.from(mutation.addedNodes ?? [])
+                    .find(node => node?.id === 'progenyListTable' || node?.querySelector?.('#progenyListTable'))
+                    ?.closest('.table-responsive')
+                    ?.querySelector('#progenyListTable');
 
-                if (rows)
-                    promises.shift().resolve(rows);
+                if (table) {
+                    const promise = promises.shift();
+
+                    if (promises.length > 0) {
+                        $(table).DataTable().destroy();
+                        promise.resolve(table?.querySelectorAll('tbody>tr:has(.horseLink)'));
+                    } else
+                        promise.resolve([]);
+                }
             });
         });
 
@@ -72,9 +80,7 @@ async function updateProgenyTableDataPaged(horseId) {
         }
 
         observer.disconnect();
-
         const dt = $('#progenyListTable', container).DataTable();
-        dt.rows().remove().draw(false);
 
         pages.reduce((rows, page) => [...rows, ...page], [])
             .sort((a, b) => parseInt(b.children[2].textContent) - parseInt(a.children[2].textContent))
