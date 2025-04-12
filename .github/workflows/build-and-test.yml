@@ -1,15 +1,6 @@
 name: build and test
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "__tests__/**"
-      - "src/**"
-      - "*.config.ts"
-      - "*.setup.ts"
-      - "*.json"
-      - "*.lock"
   pull_request:
     branches: [main, release/*]
     paths:
@@ -19,6 +10,17 @@ on:
       - "*.setup.ts"
       - "*.json"
       - "*.lock"
+  push:
+    branches: [main, release/*]
+    paths:
+      - "__tests__/**"
+      - "src/**"
+      - "*.config.ts"
+      - "*.setup.ts"
+      - "*.json"
+      - "*.lock"
+  release:
+    types: [created, published]
 
 jobs:
   build:
