@@ -1,7 +1,7 @@
 module.exports = {
     testEnvironment: 'jsdom',
-    globalSetup: './global.setup.js',
-    setupFilesAfterEnv: ['./jest.setup.js'],
+    globalSetup: './global.setup.ts',
+    setupFilesAfterEnv: ['./jest.setup.ts'],
     extensionsToTreatAsEsm: ['.ts'],
     testPathIgnorePatterns: [
         '\\.mock\\.[jt]sx?$',

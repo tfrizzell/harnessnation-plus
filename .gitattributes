@@ -1,4 +1,4 @@
-__tests__/__files__/**/ linguist-vendored
+__tests__/__files__/** linguist-vendored
 *.js.map linguist-vendored
 src/lib/firebasejs/*.js linguist-vendored
 src/lib/pdf-lib/*.js linguist-vendored

@@ -14,7 +14,6 @@
         "src/**/*.ts"
     ],
     "exclude": [
-        "__tests__/**/*",
         "dist/**/*",
         "gulpfile.js"
     ],
