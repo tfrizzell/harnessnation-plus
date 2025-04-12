@@ -4,11 +4,21 @@ on:
   push:
     branches: [main]
     paths:
+      - "__tests__/**"
       - "src/**"
+      - "*.config.ts"
+      - "*.setup.ts"
+      - "*.json"
+      - "*.lock"
   pull_request:
     branches: [main, release/*]
     paths:
+      - "__tests__/**"
       - "src/**"
+      - "*.config.ts"
+      - "*.setup.ts"
+      - "*.json"
+      - "*.lock"
 
 jobs:
   build:
