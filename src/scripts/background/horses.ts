@@ -327,6 +327,15 @@ async function previewStallionScore(id: number): Promise<StallionScore> {
     return getStallionScore(await getHorse(id));
 }
 
+export function shouldUpdateStallionScore(horse: HorseWithLastModified): boolean {
+    const lastModified = horse?.stallionScore?.lastModified?.toDate?.()?? new Date(horse.retired === true ? Date.now() : 0);
+    const daysSinceLastModified = (Date.now() - lastModified.valueOf()) / 86400000;
+
+    return horse.retired === true
+        ? (daysSinceLastModified < 365)
+        : (daysSinceLastModified > 28);
+}
+
 async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<number | undefined> {
     if (!horse?.id)
         return;
@@ -444,9 +453,7 @@ async function updateStallionScores(): Promise<void> {
     let chunk: HorseWithLastModified[];
 
     for (const horse of horses) {
-        const lastModified = horse?.stallionScore?.lastModified?.toDate?.() ?? new Date(0);
-
-        if (Date.now() - lastModified.valueOf() < 2419200000)
+        if (!shouldUpdateStallionScore(horse))
             continue;
 
         if (!horse.retired || (!!horse.sireId !== !!horse.damId)) {
