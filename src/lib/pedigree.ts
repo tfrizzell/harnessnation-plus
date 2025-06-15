@@ -128,7 +128,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
             paragraph.add(' (M)');
 
         const ageRef = races.findAgeRef();
-        paragraph.add(` ${getMarkString(races, ageRef)}`.replace(/^\s+$/, ''));
+        const markString = getMarkString(races, ageRef);
+
+        if (markString.trim() != '')
+            paragraph.add(` ${markString}`);
 
         const sireName = (<Progeny>horse).sireName ?? ancestors.get(horse.sireId!)?.name;
 
@@ -147,7 +150,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                 races.findAge(races[0], ageRef),
             );
 
-            if (winText != '')
+            if (winText.trim() != '')
                 paragraph.add(` ${winText}.`);
 
             const awardText = getAwardText(
@@ -156,10 +159,13 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                     : await api.getHorse(horse.id!)
             );
 
-            if (awardText != '')
+            if (awardText.trim() != '')
                 paragraph.add(` ${awardText}.`, fonts!.Bold);
 
-            paragraph.add(` ${getKeyRaceString(races, ageRef, context === Context.Create)}`.replace(/^\s+\.?$/, ''));
+            const keyRaceText = getKeyRaceString(races, ageRef, context === Context.Create);
+
+            if (keyRaceText.trim() != '')
+                paragraph.add(` ${getKeyRaceString(races, ageRef, context === Context.Create)}`.replace(/^\s+\.?$/, ''));
 
             if ((context & Context.Production) === Context.Production && (<Progeny>horse).age === 1)
                 paragraph.add(' (Yearling)');
@@ -387,14 +393,18 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                     if (!isNotable(grandProgeny))
                         continue;
 
-                    paragraph.add(count === 0 ? ` Dam of` : ',');
+                    paragraph.add(count === 0 ? ' Dam of' : ',');
 
                     paragraph.add(
                         ` ${formatName(grandProgeny.name!, grandProgeny.races)}`,
                         getNameFont(grandProgeny.races)
                     );
 
-                    paragraph.add(` ${getMarkString(grandProgeny.races!.filter(r => r.finish === 1))}`);
+                    const markString = getMarkString(grandProgeny.races!.filter(r => r.finish === 1));
+
+                    if (markString.trim() != '')
+                        paragraph.add(` ${markString}`);
+
                     count++;
                 }
 
@@ -417,7 +427,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                             getNameFont(greatGrandProgeny.races)
                         );
 
-                        paragraph.add(` ${getMarkString(greatGrandProgeny.races!.filter(r => r.finish === 1))}`);
+                        const markString = getMarkString(greatGrandProgeny.races!.filter(r => r.finish === 1));
+
+                        if (markString.trim() != '')
+                            paragraph.add(` ${markString}`);
                     }
 
                     paragraph.add('.');
@@ -483,7 +496,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                         if (progeny.gender === 'female')
                             paragraph.add(' (M)');
 
-                        paragraph.add(` ${getMarkString(progeny.races!)}`);
+                        const markString = getMarkString(progeny.races!);
+
+                        if (markString.trim() != '')
+                            paragraph.add(` ${markString}`);
                     }
                 } else
                     paragraph.add('.');
@@ -535,16 +551,21 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     let totalHeight = paragraphs.reduce((total, paragraph) => total + paragraph.getHeight(), 0) + 1 * Math.max(0, paragraphs.length - 1);
 
     if (fullPedigree) {
-        const addedHeight = Math.max(0, totalHeight - page.getY());
+        const { x, y } = page.getPosition();
+        const addedHeight = Math.max(0, totalHeight - page.getY() + margin.bottom);
         page.setHeight(page.getHeight() + addedHeight);
-        page.setBleedBox(margin.left, margin.bottom, page.getWidth() - margin.left - margin.right, page.getHeight() - margin.top - margin.bottom);
         page.translateContent(0, addedHeight);
-        margin.bottom -= addedHeight + margin.bottom;
+        page.resetPosition();
+
+        page.setBleedBox(margin.left, margin.bottom, page.getWidth() - margin.left - margin.right, page.getHeight() - margin.top - margin.bottom);
+        page.moveTo(x, y + addedHeight);
     }
 
     while (page.getY() - totalHeight < margin.bottom) {
         const lowestPriority = Math.min(...paragraphs.map(paragraph => paragraph.priority));
-        console.log('remove', lowestPriority);
+
+        if (lowestPriority === ParagraphPriority.Required)
+            break;
 
         for (let i = paragraphs.length - 1; i >= 0; i--) {
             const paragraph = paragraphs[i];
@@ -611,7 +632,7 @@ function convertHipNumber(hipNumber?: HipNumberType, index: number = 0): string 
 
 async function createPDF(): Promise<PDFDocument> {
     const pdfDoc = await window.PDFLib.PDFDocument.create();
-    pdfDoc.setTitle('HarnessNation Pedigree Catalog');
+    pdfDoc.setTitle('HarnessNation+ Pedigree Catalog');
     pdfDoc.setCreationDate(new Date());
     pdfDoc.setCreator('HarnessNation+ (https://github.com/tfrizzell/harnessnation-plus)');
     return pdfDoc;
