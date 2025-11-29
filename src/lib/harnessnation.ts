@@ -19,43 +19,44 @@ function cacheError(message: string, error?: Error): void {
 /**
  * Defines the options passed into the HarnessNationAPI constructor.
  * 
+ * @param {number} backoffTimeout The number of milliseconds to cool down after receiving a `429 Too Many Requests`
+ *                                 response. Must be at least 5_000 (5 seconds). Defaults to 5_000 (5 seconds).
  * @param {number} cacheTTL The number of milliseconds to store responses in the cache. Must be at least 60_000 (1 minute),
  *                          anything under this will disable caching. Defaults to 14_400_000ms (4 hours).
- * @param {number} cooldownTimeout The number of milliseconds to cool down after receiving a `429 Too Many Requests`
- *                                 response. Must be at least 5_000 (5 seconds). Defaults to 5_000 (5 seconds).
  */
 export interface HarnessNationAPIOptions {
+    backoffTimeout?: number;
     cacheTTL?: number;
-    cooldownTimeout?: number;
 }
 
 /**
  * Creates an interface to request data from HarnessNation.
  * 
+ * @param {number} backoffTimeout The number of milliseconds to cool down after receiving a `429 Too Many Requests`
+ *                                 response. Must be at least 5_000 (5 seconds). Defaults to 15_000 (15 seconds).
  * @param {number} cacheTTL The number of milliseconds to store responses in the cache. Must be at least 60_000 (1 minute),
  *                          anything under this will disable caching. Defaults to 14_400_000ms (4 hours).
- * @param {number} cooldownTimeout The number of milliseconds to cool down after receiving a `429 Too Many Requests`
- *                                 response. Must be at least 5_000 (5 seconds). Defaults to 15_000 (15 seconds).
  */
 export class HarnessNationAPI {
+    #backoffTimeout: number = 15_000;
     #cacheTTL: number = 14_400_000;
-    #cooldownTimeout: number = 15_000;
     #lastRequestAt?: Date;
     #requestCount: number = 0
 
+    #backoff?: Promise<void>;
     #cache?: IDBDatabase;
-    #cooldown?: Promise<void>;
+    #retryCount: number = 0;
     #startUp?: Promise<void>;
 
     constructor(options: HarnessNationAPIOptions = {}) {
         this.#cacheTTL = options?.cacheTTL ?? this.#cacheTTL;
-        this.#cooldownTimeout = options?.cooldownTimeout ?? this.#cooldownTimeout;
+        this.#backoffTimeout = options?.backoffTimeout ?? this.#backoffTimeout;
 
         if (this.#cacheTTL < 60_000)
-            console.warn(`%charnessnation.ts%c     cacheTTL=${this.#cooldownTimeout} is below minimum value of 60_000`, 'color:#406e8e;font-weight:bold;', '');
+            console.warn(`%charnessnation.ts%c     cacheTTL=${this.#backoffTimeout} is below minimum value of 60_000`, 'color:#406e8e;font-weight:bold;', '');
 
-        if (this.#cooldownTimeout < 5_000)
-            console.warn(`%charnessnation.ts%c     cooldownTimeout=${this.#cooldownTimeout} is below minimum value of 5_000`, 'color:#406e8e;font-weight:bold;', '');
+        if (this.#backoffTimeout < 5_000)
+            console.warn(`%charnessnation.ts%c     backoffTimeout=${this.#backoffTimeout} is below minimum value of 5_000`, 'color:#406e8e;font-weight:bold;', '');
 
         this.#startUp = (chrome?.runtime?.getPlatformInfo == null
             ? new Promise<void>(resolve => {
@@ -129,18 +130,19 @@ export class HarnessNationAPI {
     }
 
     async #fetch(input: string | URL | globalThis.Request, init?: RequestInit): Promise<Response> {
-        await this.#cooldown;
+        await this.#backoff;
 
         const res = await fetch(input, init);
 
         if (!res.ok) {
-            if (res.status !== 429)
+            if (res.status !== 429 && res.status !== 503)
                 throw new Error(`${res.status} ${res.statusText}`);
 
-            await this.#startCooldown();
+            await this.#startBackoff(res);
             return this.#fetch(input, init);
         }
 
+        this.#retryCount = 0;
         const _text = res.text;
 
         res.text = (): Promise<string> => _text.call(res)
@@ -215,13 +217,26 @@ export class HarnessNationAPI {
         return value;
     }
 
-    async #startCooldown(): Promise<void> {
-        if (this.#cooldown != null)
-            return await this.#cooldown;
+    async #startBackoff(res: Response): Promise<void> {
+        if (res.headers.has('Retry-After')) {
+            const timeout = (parseFloat(res.headers.get('Retry-After')!) + 1) * 1000;
+            console.debug(`%charnessnation.ts%c     'Retry-After' header detected; retrying in ${Number(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
+            return new Promise(resolve => setTimeout(resolve, timeout));
+        }
 
-        this.#cooldown = new Promise(resolve => setTimeout(resolve, Math.max(this.#cooldownTimeout, 5_000)));
-        await this.#cooldown;
-        this.#cooldown = undefined;
+        if (this.#backoff != null)
+            return await this.#backoff;
+
+        if (this.#retryCount >= 5)
+            throw new Error('Unable to communicate with HarnessNation. Please wait a few minutes and try again.')
+
+        const timeout = this.#backoffTimeout * Math.pow(2, this.#retryCount);
+        this.#retryCount += 1;
+
+        console.debug(`%charnessnation.ts%c     Backing off; retry #${this.#retryCount} in ${Number(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
+        this.#backoff = new Promise(resolve => setTimeout(resolve, timeout));
+        await this.#backoff;
+        this.#backoff = undefined;
     }
 
     /**
