@@ -61,7 +61,7 @@ async function handleButtonClick(button: HTMLButtonElement, e: MouseEvent): Prom
         }
     } catch (e: any) {
         if (e) {
-            console.error(`%cpopup.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+            console.error(`%csettings.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
             dialog.innerHTML = `<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ${e.message}</p>`;
             closeTimeout = 10000;
         }

@@ -3,6 +3,7 @@ import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, g
 
 import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, HorseSearchData, PedigreeCatalogData } from '../../lib/actions.js';
 import { AlarmType } from '../../lib/alarms.js';
+import { HNPlusRuntimeError } from '../../lib/errors.js';
 import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, getHorse, Horse, StallionScore, calculateStallionScore } from '../../lib/horses.js';
 import { generatePedigreeCatalog as downloadPedigreeCatalog } from '../../lib/pedigree.js';
 import { generateBreedingReport as generateBreedingReportAsync } from '../../lib/reporting.js';
@@ -148,7 +149,7 @@ async function generateBreedingReport(data: BreedingReportData): Promise<string>
     const isRunning = (await chrome.storage.local.get('running.exports.breeding'))?.['running.exports.breeding'] ?? false;
 
     if (isRunning)
-        throw 'A breeding report is already running. Please wait for it to finish before starting a new one. If you are certain there is not one running, or you want to cancel it, try restarting your browser.';
+        throw new HNPlusRuntimeError('A breeding report is already running. Please wait for it to finish before starting a new one. If you are certain there is not one running, or you want to cancel it, try restarting your browser.');
 
     await chrome.storage.local.set({ 'running.exports.breeding': true });
 
@@ -169,6 +170,15 @@ async function generateBroodmareReport(data: BreedingReportData): Promise<void> 
     } catch (e: any) {
         console.error(`%chorses.ts%c     Failed to generate broodmare report: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
         console.error(e);
+
+        if (!(e instanceof HNPlusRuntimeError))
+            await chrome.notifications.create({
+                iconUrl: 'icons/hn-plus48.png',
+                title: 'HarnessNation+ Error',
+                message: `An unexpected error occurred while generating your broodmare report: ${e?.message ?? e}`,
+                type: 'basic',
+                eventTime: Date.now(),
+            });
     }
 }
 
@@ -176,7 +186,7 @@ async function generatePedigreeCatalog(data: PedigreeCatalogData): Promise<void>
     const isRunning = (await chrome.storage.local.get('running.catalogs.pedigree'))?.['running.catalogs.pedigree'] ?? false;
 
     if (isRunning)
-        throw 'A pedigree catalog is already being generated. Please wait for it to finish before starting a new one. If you are certain there is not one running, or you want to cancel it, try restarting your browser.';
+        throw new HNPlusRuntimeError('A pedigree catalog is already being generated. Please wait for it to finish before starting a new one. If you are certain there is not one running, or you want to cancel it, try restarting your browser.');
 
     await chrome.storage.local.set({ 'running.catalogs.pedigree': true });
 
@@ -197,6 +207,18 @@ async function generatePedigreeCatalog(data: PedigreeCatalogData): Promise<void>
             catalog,
             data.filename?.trim() || `hnplus-pedigree-catalog-${toTimestamp().replace(/\D/g, '')}.pdf`
         );
+    } catch (e: any) {
+        console.error(`%chorses.ts%c     Failed to generate pedigree catalog: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+        console.error(e);
+
+        if (!(e instanceof HNPlusRuntimeError))
+            await chrome.notifications.create({
+                iconUrl: 'icons/hn-plus48.png',
+                title: 'HarnessNation+ Error',
+                message: `An unexpected error occurred while generating your pedigree catalog: ${e?.message ?? e}`,
+                type: 'basic',
+                eventTime: Date.now(),
+            });
     } finally {
         console.debug(`%chorses.ts%c     Clearing pedigree catalog flag`, 'color:#406e8e;font-weight:bold;', '');
         await chrome.storage.local.remove('running.catalogs.pedigree');
@@ -204,33 +226,33 @@ async function generatePedigreeCatalog(data: PedigreeCatalogData): Promise<void>
 }
 
 async function generateStallionReport(data: BreedingReportData): Promise<void> {
-    let report = await generateBreedingReport(data);
-    const rows = window.atob(report.slice(21)).split('\n');
-
-    if (rows.length > 1) {
-        const horses = await getHorses();
-
-        if (horses != null) {
-            report = report.slice(0, 21) +
-                window.btoa(rows.map((row, i) => {
-                    if (i === 0)
-                        return `${row},"Stallion Score"`;
-
-                    const id = row.match(/^"(\d+)"/)?.slice(1)?.map(parseInt)?.[0] ?? 0;
-
-                    if (id > 0) {
-                        const horse = horses.find(horse => horse.id === id);
-
-                        if (horse?.stallionScore?.value != null)
-                            return `${row},"${Math.floor(horse.stallionScore.value)}"`;
-                    }
-
-                    return `${row},""`;
-                }).join('\n'));
-        }
-    }
-
     try {
+        let report = await generateBreedingReport(data);
+        const rows = window.atob(report.slice(21)).split('\n');
+
+        if (rows.length > 1) {
+            const horses = await getHorses();
+
+            if (horses != null) {
+                report = report.slice(0, 21) +
+                    window.btoa(rows.map((row, i) => {
+                        if (i === 0)
+                            return `${row},"Stallion Score"`;
+
+                        const id = row.match(/^"(\d+)"/)?.slice(1)?.map(parseInt)?.[0] ?? 0;
+
+                        if (id > 0) {
+                            const horse = horses.find(horse => horse.id === id);
+
+                            if (horse?.stallionScore?.value != null)
+                                return `${row},"${Math.floor(horse.stallionScore.value)}"`;
+                        }
+
+                        return `${row},""`;
+                    }).join('\n'));
+            }
+        }
+
         await downloadFile(
             report,
             data.filename?.trim() || `hn-plus-stallion-report-${toTimestamp().replace(/\D/g, '')}.csv`
@@ -238,6 +260,14 @@ async function generateStallionReport(data: BreedingReportData): Promise<void> {
     } catch (e: any) {
         console.error(`%chorses.ts%c     Failed to generate stallion report: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
         console.error(e);
+
+        await chrome.notifications.create({
+            iconUrl: 'icons/hn-plus48.png',
+            title: 'HarnessNation+ Error',
+            message: `An unexpected error occurred while generating your stallion report: ${e?.message ?? e}`,
+            type: 'basic',
+            eventTime: Date.now(),
+        });
     }
 }
 
@@ -328,7 +358,7 @@ async function previewStallionScore(id: number): Promise<StallionScore> {
 }
 
 export function shouldUpdateStallionScore(horse: HorseWithLastModified): boolean {
-    const lastModified = horse?.stallionScore?.lastModified?.toDate?.()?? new Date(horse.retired === true ? Date.now() : 0);
+    const lastModified = horse?.stallionScore?.lastModified?.toDate?.() ?? new Date(horse.retired === true ? Date.now() : 0);
     const daysSinceLastModified = (Date.now() - lastModified.valueOf()) / 86400000;
 
     return horse.retired === true

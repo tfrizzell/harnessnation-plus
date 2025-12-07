@@ -137,7 +137,7 @@ function showCatalogDialog(optionsSelector?: string): Promise<void> {
                 message.innerHTML = '<span class="material-symbols-outlined" style="color:green">check_circle</span> Your pedigree catalog has been created and downloaded successfully!';
             } catch (e: any) {
                 if (e) {
-                    console.error(`%cpopup.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+                    console.error(`%cpedigree-catalog.module.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
                     message.innerHTML = `<span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ${e.message}`;
                     closeTimeout = 10000;
                 }
