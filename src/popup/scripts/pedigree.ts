@@ -35,7 +35,7 @@ form.addEventListener('submit', async e => {
         dialog.innerHTML = '<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:green">check_circle</span> Your pedigree catalog has been created and downloaded successfully!</p>';
     } catch (e: any) {
         if (e) {
-            console.error(`%cpopup.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
+            console.error(`%cpedigree.ts%c     ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
             dialog.innerHTML = `<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ${e.message}</p>`;
             closeTimeout = 10000;
         }
