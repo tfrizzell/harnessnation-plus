@@ -96,8 +96,8 @@ describe(`calculateBreedingScore`, () => {
     (<[number, BreedingScore][]>[
         [14, { score: 129.068075, confidence: 1 }],
         [10474, { score: 109.584346, confidence: 1 }],
-        [15729, { score: 114.63548, confidence: 0.535714 }],
-        [26326, { score: 9.713204, confidence: 0.507143 }],
+        [15729, { score: 114.63548, confidence: 0.375 }],
+        [26326, { score: 9.713204, confidence: 0.355 }],
         [75756, { score: null, confidence: 0 }],
     ]).forEach(([id, expected]) => {
         it(`resolves with ${JSON.stringify(expected)} when given id=${id}`, async () => {
@@ -234,36 +234,36 @@ describe(`createStallionScoreBadge`, () => {
             ['199', 'Elite', 'grade-a-plus', '44']
         ],
         [
-            { value: 100, confidence: 0.005122 },
-            ['100', 'Elite', 'grade-a-plus', '1']
+            { value: 110, confidence: 0.005122 },
+            ['110', 'Elite', 'grade-a-plus', '1']
         ],
         [
-            { value: 99.999999, confidence: 0.770726 },
-            ['99', 'Good', 'grade-b-plus', '77']
+            { value: 109.999999, confidence: 0.770726 },
+            ['109', 'Good', 'grade-b-plus', '77']
         ],
         [
-            { value: 75, confidence: 0.240673 },
-            ['75', 'Good', 'grade-b-plus', '24']
+            { value: 70, confidence: 0.240673 },
+            ['70', 'Good', 'grade-b-plus', '24']
         ],
         [
-            { value: 74.999999, confidence: 0 },
-            ['74', 'Average', 'grade-c-plus', '0']
+            { value: 69.999999, confidence: 0 },
+            ['69', 'Average', 'grade-c-plus', '0']
         ],
         [
-            { value: 50, confidence: 0.574268 },
-            ['50', 'Average', 'grade-c-plus', '57']
+            { value: 40, confidence: 0.574268 },
+            ['40', 'Average', 'grade-c-plus', '57']
         ],
         [
-            { value: 49.999999, confidence: 0.816838 },
-            ['49', 'Weak', 'grade-d-plus', '82']
+            { value: 39.999999, confidence: 0.816838 },
+            ['39', 'Weak', 'grade-d-plus', '82']
         ],
         [
-            { value: 30, confidence: 0.156131 },
-            ['30', 'Weak', 'grade-d-plus', '16']
+            { value: 20, confidence: 0.156131 },
+            ['20', 'Weak', 'grade-d-plus', '16']
         ],
         [
-            { value: 29.999999, confidence: 0.423113 },
-            ['29', 'Poor', 'grade-e-plus', '42']
+            { value: 19.999999, confidence: 0.423113 },
+            ['19', 'Poor', 'grade-e-plus', '42']
         ],
         [
             { value: 0, confidence: 0.682004 },

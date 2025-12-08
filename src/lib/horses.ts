@@ -134,7 +134,15 @@ export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<nu
     if (horse?.sireId == null)
         return Promise.resolve(null);
 
-    const filteredHorses = horses.filter(h => (h.stallionScore?.breeding != null) && (h.id === horse.sireId || h.sireId === horse.sireId));
+    const filteredHorses = horses
+        .filter(h => (h.stallionScore?.breeding != null) && (h.id === horse.sireId || h.sireId === horse.sireId))
+        .sort((a, b) => a.stallionScore!.breeding! - b.stallionScore!.breeding!);
+
+    if (filteredHorses.length >= 10) {
+        const trim = Math.floor(filteredHorses.length / 10);
+        filteredHorses.splice(filteredHorses.length - trim);
+        filteredHorses.splice(0, trim);
+    }
 
     return Promise.resolve(parseFloat(Number(
         filteredHorses.length < 1
@@ -167,7 +175,7 @@ export async function calculateBreedingScore(id: number): Promise<BreedingScore>
                 + totalEarnings / totalStarters / 20000
             ).toFixed(6)),
         confidence: parseFloat(Number(
-            Math.max(0, Math.min(1, totalStarters / 140))
+            Math.max(0, Math.min(1, totalStarters / 200))
         ).toFixed(6)),
     };
 }
@@ -278,16 +286,16 @@ export function createStallionScoreBadge(data: StallionScore | null | undefined)
         score.innerHTML = `<b>${stallionScore.toString()}</b>`;
         tooltip.innerHTML = `<p>The HarnessNation+ stallion score reflects the estimated breeding ability of a stallion.</p><p class="hn-plus-stallion-score-confidence"><b>Confidence:</b> ${Math.round(100 * data.confidence!)}%</p>`;
 
-        if (stallionScore >= 100) {
+        if (stallionScore >= 110) {
             level.textContent = 'Elite';
             badge.classList.add('grade-a-plus');
-        } else if (stallionScore >= 75) {
+        } else if (stallionScore >= 70) {
             level.textContent = 'Good';
             badge.classList.add('grade-b-plus');
-        } else if (stallionScore >= 50) {
+        } else if (stallionScore >= 40) {
             level.textContent = 'Average';
             badge.classList.add('grade-c-plus');
-        } else if (stallionScore >= 30) {
+        } else if (stallionScore >= 20) {
             level.textContent = 'Weak';
             badge.classList.add('grade-d-plus');
         } else if (stallionScore >= 0) {
