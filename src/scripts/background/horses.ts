@@ -503,6 +503,7 @@ async function updateStallionScores(): Promise<void> {
             } catch (e: any) {
                 console.warn(`%chorses.ts%c     Failed to fetch info for horse ${horse.id}: ${e.message ?? e}`, 'color:#406e8e;font-weight:bold;', '');
                 console.error(e);
+                continue;
             }
         }
 
