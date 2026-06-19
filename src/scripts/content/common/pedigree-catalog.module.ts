@@ -19,7 +19,9 @@ function addCatalogCreator(): void {
 }
 
 export async function createCatalogButton(optionsSelector?: string): Promise<HTMLButtonElement> {
-    const running = (await chrome.storage.local.get('running.catalogs.pedigree'))?.['running.catalogs.pedigree'] ?? false;
+    const running = (await chrome.storage.local.get({
+        'running.catalogs.pedigree': false,
+    }))['running.catalogs.pedigree'] as boolean;
 
     const button = document.createElement('button');
     button.classList.add('hn-plus-button', 'hn-plus-catalog-button');
@@ -40,7 +42,9 @@ export async function createCatalogButton(optionsSelector?: string): Promise<HTM
             button.disabled = true;
             await showCatalogDialog(optionsSelector);
         } finally {
-            button.disabled = (await chrome.storage.local.get('running.catalogs.pedigree'))?.['running.catalogs.pedigree'] ?? false;
+            button.disabled = (await chrome.storage.local.get({
+                'running.catalogs.pedigree': false,
+            }))['running.catalogs.pedigree'] as boolean;
         }
     });
 

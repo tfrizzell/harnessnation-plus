@@ -5,20 +5,25 @@
         "strict": true,
         "target": "esnext",
         "module": "esnext",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "esModuleInterop": true,
         "types": ["node", "jest", "chrome"],
+        "paths": {
+            "firebase/app": ["./node_modules/@firebase/app/dist/app-public.d.ts"],
+            "firebase/firestore": ["./node_modules/@firebase/firestore/dist/index.d.ts"],
+            "@firebase/*": ["./node_modules/@firebase/*"],
+        },
     },
     "include": [
-        "**/*.d.ts",
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "types/**/*.d.ts",
     ],
     "exclude": [
         "dist/**/*",
-        "gulpfile.js"
+        "gulpfile.mjs",
     ],
     "watchOptions": {
         "watchFile": "DynamicPriorityPolling",
-        "watchDirectory": "DynamicPriorityPolling"
-    }
+        "watchDirectory": "DynamicPriorityPolling",
+    },
 }

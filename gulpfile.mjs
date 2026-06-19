@@ -1,9 +1,9 @@
-const gulp = require('gulp');
+import gulp from 'gulp';
 
-const del = require('del');
-const rename = require('gulp-rename');
-const ts = require('gulp-typescript');
-const zip = require('gulp-zip');
+import { deleteAsync } from 'del';
+import rename from 'gulp-rename';
+import ts from 'gulp-typescript';
+import zip from 'gulp-zip';
 
 /***********************
  **                   **
@@ -25,7 +25,7 @@ const FILES = [
  ***********************/
 
 gulp.task('clean', () =>
-    del(DIR_DIST, { force: true }));
+    deleteAsync(DIR_DIST, { force: true }));
 
 gulp.task('copy:icons', () =>
     gulp.src(['./icons/**/*.png'])
@@ -78,9 +78,9 @@ gulp.task('build:firefox', gulp.series('build', copyManifest('firefox')));
  **                   **
  ***********************/
 
-const package = browser => () => {
+const bundle = browser => () => {
     const zipFile = `hn-plus-${browser}.zip`;
-    del(zipFile);
+    deleteAsync(zipFile);
 
     return gulp.src([...FILES, `manifests/manifest-${browser}.json`], { base: './' })
         .pipe(rename(path => {
@@ -95,11 +95,11 @@ const package = browser => () => {
         .pipe(gulp.dest('./'));
 }
 
-gulp.task('package:chrome', gulp.series('build', package('chrome')));
-gulp.task('package:edge', gulp.series('build', package('edge')));
-gulp.task('package:firefox', gulp.series('build', package('firefox')));
+gulp.task('package:chrome', gulp.series('build', bundle('chrome')));
+gulp.task('package:edge', gulp.series('build', bundle('edge')));
+gulp.task('package:firefox', gulp.series('build', bundle('firefox')));
 
-gulp.task('package:all', gulp.series('build', gulp.parallel(package('chrome'), package('edge'), package('firefox'))));
+gulp.task('package:all', gulp.series('build', gulp.parallel(bundle('chrome'), bundle('edge'), bundle('firefox'))));
 gulp.task('package', gulp.parallel('package:all'));
 
 /***********************

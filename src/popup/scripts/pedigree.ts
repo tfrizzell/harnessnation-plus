@@ -54,7 +54,9 @@ chrome.storage.onChanged.addListener((changes: { [key: string]: chrome.storage.S
     if (areaName !== 'local' || !changes['running.catalogs.pedigree'])
         return;
 
-    form.disabled = changes['running.catalogs.pedigree']?.newValue ?? false;
+    form.disabled = !!(changes['running.catalogs.pedigree']?.newValue ?? false);
 });
 
-form.disabled = (await chrome.storage.local.get('running.catalogs.pedigree'))['running.catalogs.pedigree'] ?? false;
+form.disabled = (await chrome.storage.local.get({
+    'running.catalogs.pedigree': false,
+}))['running.catalogs.pedigree'] as boolean;
