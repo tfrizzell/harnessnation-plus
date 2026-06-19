@@ -197,7 +197,7 @@ async function generatePedigreeCatalog(data: PedigreeCatalogData): Promise<void>
                 totalRunTime: 0,
                 pagesGenerated: 0,
             },
-        }))?.['telemetry.pedigree'] as PedigreeTelemetry;
+        }))['telemetry.pedigree'] as PedigreeTelemetry;
 
         const start = performance.now();
         const catalog = await downloadPedigreeCatalog(data.data, data.showHipNumbers, data.fullPedigrees);

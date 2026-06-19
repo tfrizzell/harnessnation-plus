@@ -24,8 +24,8 @@ const FILES = [
  **                   **
  ***********************/
 
-gulp.task('clean', () =>
-    deleteAsync(DIR_DIST, { force: true }));
+gulp.task('clean', async () =>
+    await deleteAsync(DIR_DIST, { force: true }));
 
 gulp.task('copy:icons', () =>
     gulp.src(['./icons/**/*.png'])
@@ -78,9 +78,9 @@ gulp.task('build:firefox', gulp.series('build', copyManifest('firefox')));
  **                   **
  ***********************/
 
-const bundle = browser => () => {
+const bundle = browser => async () => {
     const zipFile = `hn-plus-${browser}.zip`;
-    deleteAsync(zipFile);
+    await deleteAsync(zipFile);
 
     return gulp.src([...FILES, `manifests/manifest-${browser}.json`], { base: './' })
         .pipe(rename(path => {
