@@ -31,7 +31,7 @@ function addCalculateButtons(): void {
                 input.classList.add('hn-plus-calculating');
                 calculating = true;
 
-                const formula: StudFeeFormula = (await chrome.storage.sync.get('stallions.management.formula'))?.['stallions.management.formula'];
+                const formula = (await chrome.storage.sync.get('stallions.management.formula'))?.['stallions.management.formula'] as StudFeeFormula | undefined;
                 input.value = (await sendAction(ActionType.CalculateStudFee, { id, formula }))?.data?.toString() ?? input.value;
             } catch (e: any) {
                 console.error(`%cmanage-stallions.module.ts%c     Error while calculating stud fee: ${e?.message || e}`, 'color:#406e8e;font-weight:bold;', '');

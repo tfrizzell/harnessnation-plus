@@ -5,35 +5,42 @@ chrome.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName !== 'sync')
         return;
 
+    const typedChanges = changes as {
+        [K in keyof Settings]?: Omit<chrome.storage.StorageChange, 'newValue' | 'oldValue'> & {
+            oldValue?: Settings[K];
+            newValue?: Settings[K];
+        };
+    };
+
     await chrome.storage.sync.set(<Settings>{
         ...settings,
         ...Object.entries(changes).reduce(reduceChanges, {}),
         dt: {
             ...settings.dt,
-            ...changes?.dt?.newValue,
+            ...typedChanges?.dt?.newValue,
             breeding: {
                 ...settings.dt.breeding,
-                ...changes?.dt?.newValue?.breeding,
+                ...typedChanges?.dt?.newValue?.breeding,
             },
             main: {
                 ...settings.dt.main,
-                ...changes?.dt?.newValue?.main,
+                ...typedChanges?.dt?.newValue?.main,
             },
             progeny: {
                 ...settings.dt.progeny,
-                ...changes?.dt?.newValue?.progeny,
+                ...typedChanges?.dt?.newValue?.progeny,
             }
         },
         stallions: {
             ...settings.stallions,
-            ...changes?.stallions?.newValue,
+            ...typedChanges?.stallions?.newValue,
             management: {
                 ...settings.stallions.management,
-                ...changes?.stallions?.newValue?.management,
+                ...typedChanges?.stallions?.newValue?.management,
             },
             registry: {
                 ...settings.stallions.registry,
-                ...changes?.stallions?.newValue?.registry,
+                ...typedChanges?.stallions?.newValue?.registry,
             },
         },
     });

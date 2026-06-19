@@ -1,5 +1,5 @@
-import { initializeApp } from './firebasejs/firebase-app.js';
-import { clearIndexedDbPersistence, enableIndexedDbPersistence, Firestore, getFirestore as initFirestore, terminate } from './firebasejs/firebase-firestore.js';
+import { initializeApp } from '../vendor/firebasejs/firebase-app.js';
+import { clearIndexedDbPersistence, enableIndexedDbPersistence, Firestore, getFirestore as initFirestore, terminate } from '../vendor/firebasejs/firebase-firestore.js';
 try { self.window = self; } catch (e: any) {}
 
 const firebase = initializeApp({

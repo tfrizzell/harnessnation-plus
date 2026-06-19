@@ -1,7 +1,7 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { EventType, onInstalled, onLoad } from '../../../lib/events.js';
 import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
-import { StallionRegistrySettings } from '../../../lib/settings.js';
+import { Settings, StallionRegistrySettings } from '../../../lib/settings.js';
 import { removeAll, sleep } from '../../../lib/utils.js';
 import '../common/tooltip.js';
 
@@ -9,7 +9,9 @@ const searchScriptUrl = chrome.runtime.getURL('/scripts/content/breeding/stallio
 let controller: AbortController;
 
 async function addExportButtons(): Promise<void> {
-    const exportRunning = (await chrome.storage.local.get('running.exports.breeding'))?.['running.exports.breeding'] ?? false;
+    const exportRunning = (await chrome.storage.local.get({
+        'running.exports.breeding': false,
+    }))['running.exports.breeding'] as boolean;
 
     document.querySelectorAll('.buyHorsePagination .pagination').forEach(el => {
         const wrapper = document.createElement('div');
@@ -107,7 +109,7 @@ async function handleSearch(e: Event): Promise<void> {
         controller = new AbortController();
 
         await sleep(200, controller.signal);
-        const settings: StallionRegistrySettings = (await chrome.storage.sync.get('stallions'))?.stallions?.registry ?? {};
+        const settings = (await chrome.storage.sync.get('stallions') as Partial<Settings>)?.stallions?.registry ?? {} as StallionRegistrySettings;
 
         window.dispatchEvent(new CustomEvent(EventType.BloodlineSearch, {
             detail: settings.bloodlineSearch

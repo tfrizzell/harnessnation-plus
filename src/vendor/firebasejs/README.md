@@ -3,7 +3,9 @@ firebasejs
 
 firebase v9.6.1 libraries downloaded from https://www.gstatic.com/firebasejs/9.6.1/. See: https://firebase.google.com/docs/web/setup
 
-**Local**                   | **Google CDN**
+Official Documentation: https://firebase.google.com/docs/web/setup
+
+**Local**                   | **Upstream CDN URL**
 ----------------------------|-------------------------------------------------------------------
 `firebase-app.js`           | https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js
 `firebase-app.js.map`       | https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js.map

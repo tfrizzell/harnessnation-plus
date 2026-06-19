@@ -1,11 +1,16 @@
 // jest.setup.ts
 require('fake-indexeddb/auto');
 
+import { TextDecoder, TextEncoder } from 'util';
+
 Object.assign(global, require('jest-chrome'));
 global.Blob = require('node:buffer').Blob;
 global.chrome.runtime.getPlatformInfo = getPlatformInfo;
 global.console.debug = () => { }
 global.structuredClone = value => JSON.parse(JSON.stringify(value));
+global.TextDecoder = TextDecoder
+global.TextEncoder = TextEncoder
+
 
 function getPlatformInfo(callback: (platformInfo: chrome.runtime.PlatformInfo) => void): void;
 function getPlatformInfo(): Promise<chrome.runtime.PlatformInfo>;

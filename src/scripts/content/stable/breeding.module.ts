@@ -1,11 +1,11 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onInstalled, onLoad } from '../../../lib/events.js';
-import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
+import { createStallionScoreBadge } from '../../../lib/horses.js';
 import { removeAll } from '../../../lib/utils.js';
 import '../common/tooltip.js';
 
 async function addExportButtons(): Promise<void> {
-    const exportRunning = (await chrome.storage.local.get('running.exports.breeding'))?.['running.exports.breeding'] ?? false;
+    const exportRunning = (await chrome.storage.local.get({ 'running.exports.breeding': false }))['running.exports.breeding'] as boolean;
 
     document.querySelectorAll('#breedingHorseTable_3_wrapper').forEach(el => {
         [el.parentNode, el.parentNode?.parentNode].forEach(node => {

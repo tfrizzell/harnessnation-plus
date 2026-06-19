@@ -1,8 +1,8 @@
-import './pdf-lib/pdf-lib.min.js';
+import '../vendor/pdf-lib/pdf-lib.min.js';
 import { PDFDocument, PDFFont } from 'pdf-lib/ts3.4/es';
 
-import { PDFParagraphBuilder } from './pdf-lib/builder.js';
-import { drawTextCentered } from './pdf-lib/utils.js';
+import { PDFParagraphBuilder } from './pdf/builder.js';
+import { drawTextCentered } from './pdf/utils.js';
 
 import { api } from './harnessnation.js'
 import { getHorse, getRaces, Horse, Race, RaceList } from './horses.js';
@@ -731,7 +731,14 @@ function getAwardText(data: string | Progeny): string {
  * @returns {Promise<number>} A `Promise` that resolves with the estimated runtime in milliseconds.
  */
 export async function getEstimatedRuntime(pageCount: number): Promise<number> {
-    const telemetry: Telemetry = (await chrome.storage.local.get('telemetry.pedigree'))?.['telemetry.pedigree'] ?? { totalRuns: 0, totalRunTime: 45000, pagesGenerated: 1 };
+    const telemetry = (await chrome.storage.local.get({
+        'telemetry.pedigree': {
+            totalRuns: 0,
+            totalRunTime: 45000,
+            pagesGenerated: 1,
+        },
+    }))['telemetry.pedigree'] as Telemetry;
+
     return pageCount * telemetry.totalRunTime / telemetry.pagesGenerated;
 }
 
@@ -978,7 +985,11 @@ async function recordTelemetry(start: number, pageCount: number): Promise<void> 
     const runtime = performance.now() - start;
 
     chrome.storage.local.get('telemetry.pedigree').then(data => {
-        const telemetry: Telemetry = data['telemetry.pedigree'] ?? { totalRuns: 0, totalRunTime: 0, pagesGenerated: 0 };
+        const telemetry = (data['telemetry.pedigree'] ?? {
+            totalRuns: 0,
+            totalRunTime: 0,
+            pagesGenerated: 0,
+        }) as Telemetry;
 
         chrome.storage.local.set({
             'telemetry.pedigree': <Telemetry>{

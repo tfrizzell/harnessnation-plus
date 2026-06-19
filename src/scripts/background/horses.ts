@@ -1,5 +1,5 @@
 import { DocumentData, DocumentSnapshot, WriteBatch } from 'firebase/firestore';
-import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocsFromServer, limit, orderBy, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from '../../lib/firebasejs/firebase-firestore.js';
+import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocsFromServer, limit, orderBy, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from '../../vendor/firebasejs/firebase-firestore.js';
 
 import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, HorseSearchData, PedigreeCatalogData } from '../../lib/actions.js';
 import { AlarmType } from '../../lib/alarms.js';
@@ -191,7 +191,14 @@ async function generatePedigreeCatalog(data: PedigreeCatalogData): Promise<void>
     await chrome.storage.local.set({ 'running.catalogs.pedigree': true });
 
     try {
-        const telemetry: PedigreeTelemetry = (await chrome.storage.local.get('telemetry.pedigree'))?.['telemetry.pedigree'] ?? { totalRuns: 0, totalRunTime: 0, pagesGenerated: 0 };
+        const telemetry = (await chrome.storage.local.get({
+            'telemetry.pedigree': {
+                totalRuns: 0,
+                totalRunTime: 0,
+                pagesGenerated: 0,
+            },
+        }))['telemetry.pedigree'] as PedigreeTelemetry;
+
         const start = performance.now();
         const catalog = await downloadPedigreeCatalog(data.data, data.showHipNumbers, data.fullPedigrees);
 
@@ -487,11 +494,17 @@ async function updateStallionScores(): Promise<void> {
             continue;
 
         if (!horse.retired || (!!horse.sireId !== !!horse.damId)) {
-            const info = await getHorse(horse.id!);
-            horse.name = info.name;
-            horse.sireId = info.sireId;
-            horse.damId = info.damId;
-            horse.retired = info.retired;
+            try {
+                const info = await getHorse(horse.id!);
+                horse.name = info.name;
+                horse.sireId = info.sireId;
+                horse.damId = info.damId;
+                horse.retired = info.retired;
+            } catch (e: any) {
+                console.warn(`%chorses.ts%c     Failed to fetch info for horse ${horse.id}: ${e.message ?? e}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(e);
+                continue;
+            }
         }
 
         const { score: breedingScore, confidence } = await calculateBreedingScore(horse.id!);

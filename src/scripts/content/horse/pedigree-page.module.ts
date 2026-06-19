@@ -10,12 +10,12 @@ async function addPedigreeButton(): Promise<void> {
     if (id < 1)
         return;
 
-    const running = (await chrome.storage.local.get('running.catalogs.pedigree'))?.['running.catalogs.pedigree'] ?? false;
+    const running = (await chrome.storage.local.get({ 'running.catalogs.pedigree': false }))['running.catalogs.pedigree'] as boolean;
 
     const button = document.createElement('button');
     button.classList.add('hn-plus-button', 'hn-plus-pedigree-button');
-    button.setAttribute('title', 'HN+ : Create Pedigree Page'),
-        button.setAttribute('type', 'button');
+    button.setAttribute('title', 'HN+ : Create Pedigree Page');
+    button.setAttribute('type', 'button');
     button.toggleAttribute('disabled', running);
 
     const icon = document.createElement('span');
