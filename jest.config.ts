@@ -1,4 +1,7 @@
-module.exports = {
+// jest.config.ts
+import type { Config } from 'jest';
+
+const config: Config = {
     testEnvironment: 'jsdom',
     globalSetup: './global.setup.ts',
     setupFilesAfterEnv: ['./jest.setup.ts'],
@@ -27,5 +30,7 @@ module.exports = {
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
         '([a-zA-Z_ ]+\\.html)\\?raw$': '$1.ts',
-    }
+    },
 };
+
+export default config;

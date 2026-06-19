@@ -1,5 +1,4 @@
 // types/global.d.ts
-
 interface MapConstructor {
     /**
      * Groups members of an iterable according to the return value of the passed callback.

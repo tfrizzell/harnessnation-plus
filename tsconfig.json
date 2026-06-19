@@ -15,8 +15,10 @@
         },
     },
     "include": [
+        "__tests__/**/*.ts",
         "src/**/*.ts",
         "types/**/*.d.ts",
+        "jest.*.ts",
     ],
     "exclude": [
         "dist/**/*",
