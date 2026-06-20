@@ -35,15 +35,17 @@ jobs:
         node-version: [22.x, 24.x, 26.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-      - name: Install Modules
+      - name: Install dependencies
         run: yarn install
 
-      - name: Run Tests
+      - name: Run Jest
         run: yarn test
