@@ -24,7 +24,7 @@ let firestoreInstance: Firestore | null;
 export async function clearCache(): Promise<void> {
     if (firestoreInstance) {
         const firestore = firestoreInstance;
-        firestoreInstance=null;
+        firestoreInstance = null;
         await terminate(firestore);
     }
 }
@@ -36,7 +36,8 @@ export function reinitializeFirestore(): Firestore {
                 tabManager: persistentMultipleTabManager(),
             }),
         });
-    } catch {
+    } catch (error: unknown) {
+        console.warn(`%cfirestore.ts%c     Failed to initialize Firestore, falling back to existing instance`, 'color:#406e8e;font-weight:bold;', '');
         firestoreInstance = getFirestore(firebase);
     }
 
