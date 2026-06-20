@@ -34,7 +34,7 @@
     "blob-polyfill": "^9.0.20240710",
     "del": "^8.0.1",
     "fake-indexeddb": "^6.0.0",
-    "firebase": "9.6.1",
+    "firebase": "12.15.0",
     "fs": "^0.0.1-security",
     "gulp": "^5.0.1",
     "gulp-rename": "^2.0.0",
