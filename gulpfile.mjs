@@ -28,11 +28,11 @@ gulp.task('clean', async () =>
     await deleteAsync(DIR_DIST, { force: true }));
 
 gulp.task('copy:icons', () =>
-    gulp.src(['./icons/**/*.png'])
+    gulp.src(['./icons/**/*.png'], { encoding: false })
         .pipe(gulp.dest(`${DIR_DIST}/icons`)));
 
 gulp.task('copy:public', () =>
-    gulp.src(['./public/**/*'])
+    gulp.src(['./public/**/*'], { encoding: false })
         .pipe(gulp.dest(`${DIR_DIST}/public`)));
 
 gulp.task('copy:src', () =>

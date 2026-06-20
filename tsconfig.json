@@ -8,20 +8,9 @@
         "moduleResolution": "bundler",
         "esModuleInterop": true,
         "types": ["node", "jest", "chrome"],
-        "paths": {
-            "firebase/app": ["./node_modules/@firebase/app/dist/app-public.d.ts"],
-            "firebase/firestore": ["./node_modules/@firebase/firestore/dist/index.d.ts"],
-            "@firebase/*": ["./node_modules/@firebase/*"],
-        },
     },
-    "include": [
-        "src/**/*.ts",
-        "types/**/*.ts",
-    ],
-    "exclude": [
-        "dist",
-        "node_modules",
-    ],
+    "include": [ "src/**/*.ts" ],
+    "exclude": [ "dist", "node_modules" ],
     "watchOptions": {
         "watchFile": "DynamicPriorityPolling",
         "watchDirectory": "DynamicPriorityPolling",

@@ -1,7 +1,7 @@
-// types/web.d.ts
-import DataTables, { DataTablesMode } from '../src/lib/data-tables';
-import Events, { EventType } from '../src/lib/events';
-import { regexEscape } from '../src/lib/utils';
+// src/types/web.d.ts
+import DataTables, { DataTablesMode } from '../lib/data-tables';
+import Events, { EventType } from '../lib/events';
+import { regexEscape } from '../lib/utils';
 
 export { }
 
