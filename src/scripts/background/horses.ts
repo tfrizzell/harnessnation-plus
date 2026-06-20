@@ -115,8 +115,8 @@ function addGeneration(horse: Horse | HorseWithGeneration, generation: number = 
 }
 
 async function clearHorseCache(): Promise<void> {
-    await firestore.clearCache(db);
-    db = await firestore.connect();
+    await firestore.clearCache();
+    db = firestore.reinitializeFirestore();
 }
 
 async function createSearchPattern({ term, maxGenerations = 4 }: HorseSearchData): Promise<RegExp | string> {
@@ -280,7 +280,7 @@ async function generateStallionReport(data: BreedingReportData): Promise<void> {
 
 async function getHorseById(id: number): Promise<Horse | undefined> {
     const colRef = collection(db, 'horses');
-    const querySnapshot = await getDocsFromCache<HorseWithLastModified>(colRef);
+    const querySnapshot = await getDocsFromCache<HorseWithLastModified, DocumentData>(colRef);
 
     if (querySnapshot.docs.length < 1)
         await getDocsFromServer(colRef);
@@ -289,7 +289,7 @@ async function getHorseById(id: number): Promise<Horse | undefined> {
     let _doc: DocumentSnapshot<HorseWithLastModified> | null;
 
     try {
-        _doc = await getDocFromCache<HorseWithLastModified>(docRef);
+        _doc = await getDocFromCache<HorseWithLastModified, DocumentData>(docRef);
     } catch (e: any) {
         if (!e.message.includes('Failed to get document from cache.')) {
             console.error(`%chorses.ts%c     Failed to load horse ${id}: ${e.message}`, 'color:#406e8e;font-weight:bold;', '');
@@ -325,14 +325,14 @@ async function getHorses(): Promise<Horse[]> {
 async function getHorsesWithLastModified(): Promise<HorseWithLastModified[]> {
     const colRef = collection(db, 'horses');
     const qLastModified = query(colRef, orderBy('lastModified', 'desc'), limit(1));
-    const qsLastModified = await getDocsFromCache<HorseWithLastModified>(qLastModified);
+    const qsLastModified = await getDocsFromCache<HorseWithLastModified, DocumentData>(qLastModified);
     const lastModified = qsLastModified?.docs?.[0]?.data()?.lastModified?.toDate?.() ?? new Date(0);
 
     const qRemote = query(colRef, where('lastModified', '>', lastModified));
-    const qsRemote = await getDocsFromServer<HorseWithLastModified>(qRemote);
+    const qsRemote = await getDocsFromServer<HorseWithLastModified, DocumentData>(qRemote);
     qsRemote.size && console.debug(`%chorses.ts%c     Fetched ${qsRemote.size} new horse record${qsRemote.size === 1 ? '' : 's'} from firestore`, 'color:#406e8e;font-weight:bold;', '');
 
-    const querySnapshot = await getDocsFromCache<HorseWithLastModified>(colRef);
+    const querySnapshot = await getDocsFromCache<HorseWithLastModified, DocumentData>(colRef);
     const horses: HorseWithLastModified[] = [];
 
     querySnapshot.forEach(doc => {

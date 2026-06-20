@@ -1,9 +1,17 @@
 import { initializeApp } from '../vendor/firebasejs/firebase-app.js';
-import { clearIndexedDbPersistence, enableIndexedDbPersistence, Firestore, getFirestore as initFirestore, terminate } from '../vendor/firebasejs/firebase-firestore.js';
-try { self.window = self; } catch (e: any) {}
+import {
+    Firestore,
+    getFirestore,
+    initializeFirestore,
+    persistentLocalCache,
+    persistentMultipleTabManager,
+    terminate,
+} from '../vendor/firebasejs/firebase-firestore.js';
+
+try { self.window = self; } catch { }
 
 const firebase = initializeApp({
-    apiKey: 'AIzaSyDKTO4YNgByizsu7px3a81-F-1BKkHoXYY',
+    apiKey: '',
     authDomain: 'harnessnation-plus.firebaseapp.com',
     projectId: 'harnessnation-plus',
     storageBucket: 'harnessnation-plus.appspot.com',
@@ -11,20 +19,34 @@ const firebase = initializeApp({
     appId: '1:361661653814:web:75feba30eb32b86f0d8997'
 });
 
-export async function clearCache(firestore: Firestore): Promise<void> {
-    await terminate(firestore);
-    await clearIndexedDbPersistence(firestore);
+let firestoreInstance: Firestore | null;
+
+export async function clearCache(): Promise<void> {
+    if (firestoreInstance) {
+        const firestore = firestoreInstance;
+        firestoreInstance = null;
+        await terminate(firestore);
+    }
 }
 
-export async function connect(): Promise<Firestore> {
-    const firestore = initFirestore(firebase);
-    await enableIndexedDbPersistence(firestore, { forceOwnership: true });
-    return firestore;
-}
+export function reinitializeFirestore(): Firestore {
+    try {
+        firestoreInstance = initializeFirestore(firebase, {
+            localCache: persistentLocalCache({
+                tabManager: persistentMultipleTabManager(),
+            }),
+        });
+    } catch (error: unknown) {
+        console.warn(`%cfirestore.ts%c     Failed to initialize Firestore, falling back to existing instance`, 'color:#406e8e;font-weight:bold;', '');
+        firestoreInstance = getFirestore(firebase);
+    }
 
-const firestore = initFirestore(firebase);
-enableIndexedDbPersistence(firestore, { forceOwnership: true });
+    return firestoreInstance;
+}
 
 export function singleton(): Firestore {
-    return firestore;
+    if (!firestoreInstance)
+        return reinitializeFirestore();
+
+    return firestoreInstance;
 }

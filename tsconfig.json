@@ -15,14 +15,12 @@
         },
     },
     "include": [
-        "__tests__/**/*.ts",
         "src/**/*.ts",
-        "types/**/*.d.ts",
-        "jest.*.ts",
+        "types/**/*.ts",
     ],
     "exclude": [
-        "dist/**/*",
-        "gulpfile.mjs",
+        "dist",
+        "node_modules",
     ],
     "watchOptions": {
         "watchFile": "DynamicPriorityPolling",
