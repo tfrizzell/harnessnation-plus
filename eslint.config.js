@@ -4,14 +4,16 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
 import unusedImports from 'eslint-plugin-unused-imports';
+import stylistic from '@stylistic/eslint-plugin';
 
 export default defineConfig(
     js.configs.recommended,
     ...tseslint.configs.recommended,
-    ...tseslint.configs.strictTypeChecked, 
+    ...tseslint.configs.strictTypeChecked,
     {
-        files: [ '**/*.{js,mjs,mts,ts}' ],
+        files: ['**/*.{js,mjs,mts,ts}'],
         plugins: {
+            '@stylistic': stylistic,
             'unused-imports': unusedImports,
         },
         languageOptions: {
@@ -26,6 +28,7 @@ export default defineConfig(
             },
         },
         rules: {
+            '@stylistic/arrow-parens': ['error', 'as-needed'],
             '@typescript-eslint/no-explicit-any': 'error',
             '@typescript-eslint/no-unused-vars': [
                 'error',
