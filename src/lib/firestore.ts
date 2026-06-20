@@ -23,8 +23,9 @@ let firestoreInstance: Firestore | null;
 
 export async function clearCache(): Promise<void> {
     if (firestoreInstance) {
-        await terminate(firestoreInstance);
-        firestoreInstance = null;
+        const firestore = firestoreInstance;
+        firestoreInstance=null;
+        await terminate(firestore);
     }
 }
 
