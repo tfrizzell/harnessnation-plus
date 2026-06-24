@@ -1473,6 +1473,13 @@
     "@types/filesystem" "*"
     "@types/har-format" "*"
 
+"@types/datatables.net@1.10.18":
+  version "1.10.18"
+  resolved "https://registry.yarnpkg.com/@types/datatables.net/-/datatables.net-1.10.18.tgz#620c318cdd4a4a11b2e1c619b6747745a25c1d8d"
+  integrity sha512-uz80YsSHTLGd14/A3P4+EIp4n5SqBIbjtd2Hl7SwsXl/9zpsXzE2OY+sz0Gm8TF2jPfsKl0+9yB7/8RtoD3qoA==
+  dependencies:
+    "@types/jquery" "*"
+
 "@types/esrecurse@^4.3.1":
   version "4.3.1"
   resolved "https://registry.yarnpkg.com/@types/esrecurse/-/esrecurse-4.3.1.tgz#6f636af962fbe6191b830bd676ba5986926bccec"
@@ -1531,6 +1538,16 @@
   dependencies:
     expect "^30.0.0"
     pretty-format "^30.0.0"
+
+"@types/jquery@*":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-4.0.1.tgz#7c08ca6492876b70e11e4724af35b347069038cd"
+  integrity sha512-9a59A/tycXgYuPABcp6/3spSShn0NT2UOM4EfHvMumjYi4lJWTsK5SZWjhx3yRm9IHGCeWXdV2YfNsrWrft/CA==
+
+"@types/jquery@3.3.1":
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.1.tgz#55758d44d422756d6329cbf54e6d41931d7ba28f"
+  integrity sha512-N3h+rzN518yl2xKrW0o6KKdNmWZ+OwG6SoM5TBEQFF0tTv5wXPEsoOuYQ2Kt3/89XbcSZUJLdjiT/2c3BR/ApQ==
 
 "@types/jsdom@^21.1.7":
   version "21.1.7"
@@ -2327,6 +2344,13 @@ data-urls@^5.0.0:
   dependencies:
     whatwg-mimetype "^4.0.0"
     whatwg-url "^14.0.0"
+
+datatables.net@1.10.18:
+  version "1.10.18"
+  resolved "https://registry.yarnpkg.com/datatables.net/-/datatables.net-1.10.18.tgz#b6f045aa533101bcd33714e5338da8f905d3ef09"
+  integrity sha512-YrrMTqtPkTpY/cbSjJ31qDuyABXbXnS/rtHArUTWIpSymmGpizRN8XdCQTMH2QWlFPqA3RWxrHEcElOQzSWlaw==
+  dependencies:
+    jquery ">=1.7"
 
 debug@4, debug@^4.1.0, debug@^4.1.1, debug@^4.3.1, debug@^4.3.2, debug@^4.3.4, debug@^4.4.3:
   version "4.4.3"
@@ -3896,6 +3920,11 @@ jest@^30.4.2:
     "@jest/types" "30.4.1"
     import-local "^3.2.0"
     jest-cli "30.4.2"
+
+jquery@>=1.7:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-4.0.0.tgz#95c33ac29005ff72ec444c5ba1cf457e61404fbb"
+  integrity sha512-TXCHVR3Lb6TZdtw1l3RTLf8RBWVGexdxL6AC8/e0xZKEpBflBsjh9/8LXw+dkNFuOyW9B7iB3O1sP7hS0Kiacg==
 
 js-tokens@^4.0.0:
   version "4.0.0"
