@@ -43,7 +43,6 @@
     "jest": "^30.4.2",
     "jest-chrome": "^0.8.0",
     "jest-environment-jsdom": "^30.4.1",
-    "node-html-parser": "7.1.0",
     "path": "^0.12.7",
     "pdf-lib": "1.17.1",
     "ts-node": "^10.9.2",

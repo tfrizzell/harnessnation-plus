@@ -1,7 +1,7 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { pastels as palette } from '../../../lib/colors.js';
 import { onInstalled, onLoad } from '../../../lib/events.js';
-import { createStallionScoreBadge, Horse, StallionScore } from '../../../lib/horses.js';
+import { createStallionScoreBadge } from '../../../lib/stallion-scores.js';
 import { removeAll } from '../../../lib/utils.js';
 
 async function addStallionScores(container?: Element | null): Promise<void> {

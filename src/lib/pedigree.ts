@@ -5,7 +5,8 @@ import { PDFParagraphBuilder } from './pdf/builder.js';
 import { drawTextCentered } from './pdf/utils.js';
 
 import { api } from './harnessnation.js'
-import { getHorse, getRaces, Horse, Race, RaceList } from './horses.js';
+import { getHorse, Horse } from './horses.js';
+import { getRaces, Race, RaceList } from './races.js';
 import { ageToText, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, isMobileOS, parseCurrency, parseInt, secondsToTime } from './utils.js';
 
 interface Ancestor {

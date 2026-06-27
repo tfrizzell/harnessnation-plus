@@ -1,10 +1,10 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onLoad } from '../../../lib/events.js';
-import { createStallionScoreBadge } from '../../../lib/horses.js';
+import { createStallionScoreBadge } from '../../../lib/stallion-scores.js';
 import { removeAll } from '../../../lib/utils.js';
 
 async function addStallionScore(): Promise<void> {
-    const id = document.body.innerHTML.match(/<b[^>]*>\s*ID\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.slice(1)?.map(parseInt)?.[0] ?? 0;
+    const id = document.body.innerHTML.match(/<b[^>]*>\s*ID\s*:\s*<\/b[^>]*>\s*(\d+)/i)?.slice(1).map(parseInt)[0] ?? 0;
     const gender = document.body.innerHTML.match(/<b[^>]*>\s*Gender\s*:\s*<\/b[^>]*>\s*(\S+)/i)?.[1]?.toLowerCase();
     const breeding = /<b[^>]*>\s*Location\s*:\s*<\/b[^>]*>\s*Breeding\s+Stable/i.test(document.body.innerHTML);
     const retired = /<br[^>]*>\s*Retired\s*<br[^>]*>/i.test(document.body.innerHTML);
