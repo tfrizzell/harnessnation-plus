@@ -29,7 +29,7 @@ function cacheDebug(message: string): void {
 function cacheError(message: string, error?: Error | null): void {
     console.error(`%charnessnation.ts%c     ${message}`, 'color:#406e8e;font-weight:bold;', '');
 
-    if (error) 
+    if (error)
         console.error(error);
 }
 

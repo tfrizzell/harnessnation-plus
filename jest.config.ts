@@ -1,36 +1,45 @@
 // jest.config.ts
 import type { Config } from 'jest';
 
-const config: Config = {
+export default <Config>{
     testEnvironment: 'jsdom',
-    globalSetup: './global.setup.ts',
-    setupFilesAfterEnv: ['./jest.setup.ts'],
+    globalSetup: '<rootDir>/global.setup.ts',
+    setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     extensionsToTreatAsEsm: ['.ts'],
     testPathIgnorePatterns: [
-        '\\.mock\\.[jt]sx?$',
+        '<rootDir>/tests/mocks/',
     ],
     collectCoverage: true,
     collectCoverageFrom: [
-        './src/lib/*.ts',
-        '!./src/lib/pdf-lib/*.ts',
-        '!./src/lib/*.web.ts',
-        '!./src/lib/alarms.ts',
-        '!./src/lib/colors.ts',
-        '!./src/lib/firestore.ts',
-        '!./src/lib/harnessnation.ts',
-        '!./src/lib/pedigree.ts',
+        '<rootDir>/src/lib/*.ts',
+        '!<rootDir>/src/lib/pdf-lib/*.ts',
+        '!<rootDir>/src/lib/*.web.ts',
+        '!<rootDir>/src/lib/alarms.ts',
+        '!<rootDir>/src/lib/colors.ts',
+        '!<rootDir>/src/lib/firestore.ts',
+        '!<rootDir>/src/lib/harnessnation.ts',
+        '!<rootDir>/src/lib/pedigree.ts',
     ],
     maxWorkers: 1,
     transform: {
-        '^.+\\.[jt]sx?$': '@swc/jest',
+        '^.+\\.[jt]sx?$': ['@swc/jest', {
+            jsc: {
+                parser: {
+                    syntax: 'typescript',
+                    tsx: false,
+                    decorators: true,
+                },
+                target: 'es2020',
+            },
+        }],
     },
     transformIgnorePatterns: [
         'node_modules/(?!pdf-lib)'
     ],
     moduleNameMapper: {
+        '^@mocks/(.*)$': '<rootDir>/tests/mocks/$1',
+        '^@src/(.*)$': '<rootDir>/src/$1',
         '^(\\.{1,2}/.*)\\.js$': '$1',
         '([a-zA-Z_ ]+\\.html)\\?raw$': '$1.ts',
     },
 };
-
-export default config;

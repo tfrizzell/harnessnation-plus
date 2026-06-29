@@ -6,15 +6,18 @@ beforeAll(() => {
         const url = (input as Request).url ?? input;
         let file: fs.PathLike | undefined;
 
-        if (url === 'https://www.harnessnation.com/api/progeny/report' && init?.method === 'POST') {
+        if (url === 'https://www.harnessnation.com/api/progeny/list' && init?.method === 'POST') {
+            // TODO: Add some progeny lists to test new reporting
+            return Promise.resolve({ ok: true, text: () => Promise.resolve('') })
+        } else if (url === 'https://www.harnessnation.com/api/progeny/report' && init?.method === 'POST') {
             const { horseId } = Object.fromEntries(new URLSearchParams(init!.body as string));
-            file = path.join(__dirname, '__files__', 'api', 'progeny', 'report', `${horseId}.html`);
+            file = path.join(__dirname, '..', 'fixtures', 'api', 'progeny', 'report', `${horseId}.html`);
         } else if (url === 'https://www.harnessnation.com/horse/api/race-history' && init?.method === 'POST') {
             const { horseId } = Object.fromEntries(new URLSearchParams(init!.body as string));
-            file = path.join(__dirname, '__files__', 'horse', 'api', 'race-history', `${horseId}.html`);
+            file = path.join(__dirname, '..', 'fixtures', 'horse', 'api', 'race-history', `${horseId}.html`);
         } else if (url.startsWith('https://www.harnessnation.com/horse/')) {
             const horseId = url.split('/').pop()!;
-            file = path.join(__dirname, '__files__', 'horse', `${horseId}.html`);
+            file = path.join(__dirname, '..', 'fixtures', 'horse', `${horseId}.html`);
         }
 
         if (!file)
@@ -25,13 +28,13 @@ beforeAll(() => {
                 if (err) {
                     return resolve({
                         ok: true,
-                        text: (): Promise<string> => Promise.resolve('')
+                        text: () => Promise.resolve('')
                     });
                 }
 
                 resolve({
                     ok: true,
-                    text: (): Promise<string> => new Promise(resolve =>
+                    text: () => new Promise(resolve =>
                         fs.readFile(file!, { encoding: 'utf-8' }, (err: any, data: string) => resolve(err ? '' : data))),
                 });
             });

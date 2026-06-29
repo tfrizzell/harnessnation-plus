@@ -4456,6 +4456,11 @@ strip-json-comments@^3.1.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.1.1.tgz#31f1281b3832630434831c310c01cccda8cbe006"
   integrity sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==
 
+structured-clone@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/structured-clone/-/structured-clone-0.2.2.tgz#ac92b6be31958a643db30f1335abc6a1b02dfdc2"
+  integrity sha512-SucNWVxwmfAjWrzQ9Xsuv4JIDtS/Qpx+MwZD2NEx2CeMpf3hgqvWKssll34trTu6M7ywd7WZDDKO8hhq0SZiAA==
+
 supports-color@^7.1.0:
   version "7.2.0"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-7.2.0.tgz#1b7dcdcb32b8138801b3e478ba6a51caa89648da"

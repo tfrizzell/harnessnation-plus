@@ -1,13 +1,15 @@
 // jest.setup.ts
-require('fake-indexeddb/auto');
-
+import 'fake-indexeddb/auto';
+import * as jestChrome from 'jest-chrome';
+import { Blob } from 'node:buffer';
+import { deserialize, serialize } from 'node:v8';
 import { TextDecoder, TextEncoder } from 'util';
 
-Object.assign(global, require('jest-chrome'));
-global.Blob = require('node:buffer').Blob;
+Object.assign(global, jestChrome);
+global.Blob = Blob as any;
 global.chrome.runtime.getPlatformInfo = getPlatformInfo;
 global.console.debug = () => { }
-global.structuredClone = value => JSON.parse(JSON.stringify(value));
+global.structuredClone = (obj: any) => deserialize(serialize(obj));
 global.TextDecoder = TextDecoder
 global.TextEncoder = TextEncoder
 

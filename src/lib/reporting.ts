@@ -67,8 +67,8 @@ export async function generateBreedingReport({ ids, headers, mode }: BreedingRep
 
     return `data:text/csv;base64,${window.btoa(
         report.filter(row => Array.isArray(row))
-            .map(row => row.map(col => `"${(col?.toString() ?? '')
-                .replace('"', '\\"')}"`)
+            .map(row => row
+                .map(col => `"${(col?.toString() ?? '').replace(/"/g, '""')}"`)
                 .join(','))
             .join('\n'))}`;
 }
@@ -79,7 +79,7 @@ export async function generateBreedingReport({ ids, headers, mode }: BreedingRep
  * @param {BreedingReportMode} mode - the lookup mode use for generating the report.
  * @returns {Promise<BreedingReport>} A `Promise` that resolves with the breeding report data.
  */
-async function getBreedingReport(id: number, mode?: BreedingReportMode): Promise<BreedingReport> {
+export async function getBreedingReport(id: number, mode?: BreedingReportMode): Promise<BreedingReport> {
     const [profile, report] = await Promise.all([
         api.getHorse(id),
         api.getProgenyReport(id),
@@ -88,7 +88,7 @@ async function getBreedingReport(id: number, mode?: BreedingReportMode): Promise
     const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings] = (
         report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(\$([\d,]+(?:\.\d+)?)\)/is)?.slice(1)
         ?? ['0', '0', '0', '0', '0']
-    ).map(val => parseInt(val.replace(/,/g, '')));
+    ).map(parseInt);
 
     const data: BreedingReport = {
         totalFoals: parseInt(profile.match(/<b[^>]*>\s*Total\s+Foals\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0'),
@@ -187,110 +187,4 @@ async function getBreedingReportRow(id: number, mode?: BreedingReportMode): Prom
         report.stakeShows,
         formatEarnings(report.stakeEarnings),
     ];
-}
-
-async function getProgenyIds(id: number): Promise<Set<number>> {
-    return new Set(await api.getProgenyList(id).then(html =>
-        html.matchAll(/<td[^>]*>\s*<a[^>]*\/horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>/).map(([match, id]) => parseInt(id))
-    ));
-}
-
-async function summarizeBrokenProgeny(ids: Array<number>): Promise<{
-    totalStarters: number;
-    totalWinners: number;
-    totalEarnings: number;
-    stakeStarters: number;
-    stakeWinners: number;
-    stakeStarts: number;
-    stakeWins: number;
-    stakePlaces: number;
-    stakeShows: number;
-    stakeEarnings: number;
-}> {
-    const token = ids.length > 0 ? await api.getCSRFToken() : '';
-
-    let totalStarters: number = 0,
-        totalWinners: number = 0,
-        totalEarnings: number = 0,
-        stakeStarters: number = 0,
-        stakeWinners: number = 0,
-        stakeStarts: number = 0,
-        stakeWins: number = 0,
-        stakePlaces: number = 0,
-        stakeShows: number = 0,
-        stakeEarnings: number = 0;
-
-    for (const races of await Promise.all(ids.map(id => getRaces(parseInt(id), token)))) {
-        if (races.length < 1)
-            continue;
-
-        totalStarters++;
-        totalEarnings += races.getEarnings();
-
-        if (races.some(r => r.finish === 1))
-            totalWinners++;
-
-        const [starts, wins, places, shows] = races.getSummary(r => r.stake === true && r.elim === false);
-        stakeStarters += (starts > 0 ? 1 : 0);
-        stakeWinners += (wins > 0 ? 1 : 0);
-        stakeStarts += starts;
-        stakeWins += wins;
-        stakePlaces += places;
-        stakeShows += shows;
-        stakeEarnings += races.getEarnings(r => r.stake === true && r.elim === false);
-    }
-
-    return {
-        totalStarters,
-        totalWinners,
-        totalEarnings,
-        stakeStarters,
-        stakeWinners,
-        stakeStarts,
-        stakeWins,
-        stakePlaces,
-        stakeShows,
-        stakeEarnings,
-    };
-}
-
-async function summarizeProgenyReport(id: number): Promise<{
-    totalFoals: number;
-    totalStarters: number;
-    totalWinners: number;
-    totalEarnings: number;
-    stakeStarters: number;
-    stakeWinners: number;
-    stakeStarts: number;
-    stakeWins: number;
-    stakePlaces: number;
-    stakeShows: number;
-    stakeEarnings: number;
-}> {
-    const report = await api.getProgenyReport(id);
-
-    const [
-        stakeStarts = 0,
-        stakeWins = 0,
-        stakePlaces = 0,
-        stakeShows = 0,
-        stakeEarnings = 0,
-    ] = (
-        report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(\$([\d,]+(?:\.\d+)?)\)/is)?.slice(1)
-        ?? []
-    ).map(val => parseInt(val));
-
-    return {
-        totalFoals: parseInt(report.match(/<b[^>]*>\s*Total\s+Foals\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0'),
-        totalStarters: parseInt(report.match(/<b[^>]*>\s*Total\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0'),
-        totalWinners: parseInt(report.match(/<b[^>]*>\s*Total\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0'),
-        totalEarnings: parseInt(report.match(/<b[^>]*>\s*Total\s+Earnings\s*:\s*<\/b[^>]*>\s*\$([\d,]+(?:\.\d+)?)/is)?.[1] ?? '0'),
-        stakeStarters: parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0'),
-        stakeWinners: parseInt(report.match(/<b[^>]*>\s*Stake\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0'),
-        stakeStarts,
-        stakeWins,
-        stakePlaces,
-        stakeShows,
-        stakeEarnings,
-    }
 }

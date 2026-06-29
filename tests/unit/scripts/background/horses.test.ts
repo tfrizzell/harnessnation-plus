@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
-import { Horse, StallionScore } from '../../../src/lib/horses.js';
-import { shouldUpdateStallionScore } from '../../../src/scripts/background/horses.js';
+import { Horse } from '@src/lib/horses';
+import { shouldUpdateStallionScore } from '@src/scripts/background/horses';
+import { StallionScore } from '@src/lib/stallion-scores';
 
 interface HorseWithLastModified extends Horse {
     stallionScore?: StallionScoreWithLastModified;

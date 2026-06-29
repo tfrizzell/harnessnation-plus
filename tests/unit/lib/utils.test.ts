@@ -1,7 +1,7 @@
 import { Timestamp } from '@firebase/firestore';
 import { chrome } from 'jest-chrome';
-import { RaceList } from '../../src/lib/horses';
-import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, secondsToTime, sleep, toDate, toPercentage, toTimestamp, waitFor } from '../../src/lib/utils';
+import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, secondsToTime, sleep, toDate, toPercentage, toTimestamp, waitFor } from '@src/lib/utils';
+import { RaceList } from '@src/lib/races';
 
 afterAll(() => {
     jest.clearAllTimers();

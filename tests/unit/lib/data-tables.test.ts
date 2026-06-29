@@ -1,6 +1,6 @@
 import { chrome } from 'jest-chrome';
-import DataTables, { DataTablesMode, DataTablesOptions } from '../../src/lib/data-tables';
-import { DataTablesSettings } from '../../src/lib/settings';
+import DataTables, { DataTablesMode, DataTablesOptions } from '@src/lib/data-tables';
+import { DataTablesSettings } from '@src/lib/settings';
 
 describe(`DataTables`, () => {
     it(`exists`, () => {

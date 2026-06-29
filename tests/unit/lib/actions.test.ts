@@ -1,5 +1,5 @@
 import { chrome } from 'jest-chrome';
-import { Action, ActionError, ActionResponse, ActionType, HorseSearchData, sendAction } from '../../src/lib/actions';
+import { Action, ActionError, ActionResponse, ActionType, HorseSearchData, sendAction } from '@src/lib/actions';
 
 afterAll(() => {
     jest.clearAllTimers();
