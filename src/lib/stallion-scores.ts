@@ -1,5 +1,6 @@
 import { api } from './harnessnation.js';
 import { Horse } from './horses.js';
+import { getBreedingReport } from './reporting.js';
 import { parseCurrency } from './utils.js';
 
 export interface BreedingScore {
@@ -54,25 +55,19 @@ export function calculateBloodlineScore(id: number, horses: Horse[]): Promise<nu
  * @returns {Promise<BreedingScore>} A `Promise` resolving with the breeding score and its confidence level.
  */
 export async function calculateBreedingScore(id: number): Promise<BreedingScore> {
-    const report = await api.getProgenyReport(id);
-    const totalStarters = parseInt(report.match(/<b[^>]*>\s*Total\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const totalEarnings = parseCurrency(report.match(/<b[^>]*>\s*Total\s+Earnings\s*:\s*<\/b[^>]*>\s*([$\d,]+(?:\.\d+)?)/is)?.[1] ?? '$0');
-    const stakeStarters = parseInt(report.match(/<b[^>]*>\s*Stake\s+Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const stakeWinners = parseInt(report.match(/<b[^>]*>\s*Stake\s+Winners\s*:\s*<\/b[^>]*>\s*([\d,]+)/is)?.[1] ?? '0');
-    const [stakeStarts, stakePlaces] = (report.match(/<b[^>]*>\s*Stake\s+Results\s*:\s*<\/b[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\([$\d,]+(?:\.\d+)?\)/is)?.slice(1).map(parseCurrency)
-        ?? [0, 0, 0, 0]).reduce(([starts, places], value, index) => [starts + +(index === 0) * value, places + +(index !== 0) * value], [0, 0]);
+    const report = await getBreedingReport(id, 'enhanced');
 
     return {
-        score: totalStarters < 1
+        score: report.totalStarters < 1
             ? null
             : parseFloat(Number(
-                1250 * stakeWinners / totalStarters
-                + (stakeStarts < 1 ? 0 : 100 * stakePlaces / stakeStarts)
-                + 50 * stakeStarters / totalStarters
-                + totalEarnings / totalStarters / 20000
+                1250 * report.stakeWinners / report.totalStarters
+                + (report.stakeStarts < 1 ? 0 : 100 * (report.stakeWins + report.stakePlaces + report.stakeShows) / report.stakeStarts)
+                + 50 * report.stakeStarters / report.totalStarters
+                + report.totalEarnings / report.totalStarters / 20000
             ).toFixed(6)),
         confidence: parseFloat(Number(
-            Math.max(0, Math.min(1, totalStarters / 200))
+            Math.max(0, Math.min(1, report.totalStarters / 200))
         ).toFixed(6)),
     };
 }
