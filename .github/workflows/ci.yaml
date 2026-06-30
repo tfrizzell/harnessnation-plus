@@ -8,6 +8,7 @@ on:
       - "src/**"
       - "tests/**"
       - ".nvmrc"
+      - "eslint.config.js"
       - "global.setup.ts"
       - "gulpfile.mjs"
       - "jest.config.ts"
@@ -22,6 +23,7 @@ on:
       - "src/**"
       - "tests/**"
       - ".nvmrc"
+      - "eslint.config.js"
       - "global.setup.ts"
       - "gulpfile.mjs"
       - "jest.config.ts"
@@ -62,6 +64,9 @@ jobs:
 
       - name: Type check
         run: yarn typecheck
+
+      - name: Lint code
+        run: yarn lint
 
       - name: Run unit tests
         run: yarn test
