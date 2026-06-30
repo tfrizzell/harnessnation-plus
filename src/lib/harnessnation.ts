@@ -79,7 +79,7 @@ export class HarnessNationAPI {
         if (this.#backoffTimeout < 5_000)
             console.warn(`%charnessnation.ts%c     backoffTimeout=${this.#backoffTimeout} is below minimum value of 5_000`, 'color:#406e8e;font-weight:bold;', '');
 
-        this.#startUp = (chrome?.runtime?.getPlatformInfo == null
+        this.#startUp = (typeof chrome === 'undefined' || chrome.runtime?.getPlatformInfo == null
             ? new Promise(resolve => {
                 this.#cacheTTL = 0;
                 resolve();
@@ -101,7 +101,7 @@ export class HarnessNationAPI {
                         resolve();
                     }, 5000);
 
-                    const req = indexedDB.open('cache:api', 1);
+                    const req = indexedDB.open('cache:api', 2);
 
                     req.addEventListener('error', e => {
                         clearTimeout(timeout);
@@ -127,6 +127,9 @@ export class HarnessNationAPI {
                             cacheError(`Failed to update api cache: ${error?.message}`, error);
                             resolve();
                         });
+
+                        if (db.objectStoreNames.contains('responses'))
+                            db.deleteObjectStore('responses');
 
                         db.createObjectStore('responses', { keyPath: 'key' })
                             .createIndex('expiresAt', 'expiresAt', { unique: false });
@@ -212,10 +215,11 @@ export class HarnessNationAPI {
             req.addEventListener('success', e => {
                 const entry = (e.target as IDBRequest<CacheEntry>).result;
 
-                if (entry && entry.expiresAt < Date.now())
+                if (entry && entry.expiresAt < Date.now()) {
                     transaction?.objectStore('responses').delete(key);
-
-                resolve(entry)
+                    resolve(undefined);
+                } else
+                    resolve(entry)
             });
         });
 

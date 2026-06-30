@@ -82,13 +82,17 @@ export async function calculateRacingScore(id: number): Promise<number | null> {
     const [starts, wins, places, shows, earnings] = info.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0];
     const [stakeStarts, stakeWins, stakePlaces, stakeShows, stakeEarnings] = info.match(/<b[^>]*>\s*Stake\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*-\s*([\d,]+)\s*\(([$\d,]+(?:\.\d+)?)\)/is)?.slice(1).map(parseCurrency) ?? [0, 0, 0, 0, 0];
 
+    const nonStakeStarts = starts - stakeStarts;
+    const nonStakeWins = wins - stakeWins;
+    const nonStakeEarnings = earnings - stakeEarnings;
+
     return starts < 1
         ? null
         : parseFloat(Number(
             0.3 * (
-                (starts < 1 ? 0 : 100 * (wins - stakeWins) / (starts - stakeStarts))
-                + Math.max(0, Math.log(earnings - stakeEarnings) || 0)
-                + Math.max(0, Math.log((earnings - stakeEarnings) / (starts - stakeStarts)) || 0)
+                (nonStakeStarts < 1 ? 0 : 100 * nonStakeWins / nonStakeStarts)
+                + Math.max(0, Math.log(nonStakeEarnings) || 0)
+                + (nonStakeStarts < 1 ? 0 : Math.max(0, Math.log(nonStakeEarnings / nonStakeStarts) || 0))
             ) + 0.85 * (
                 Math.max(0, Math.sqrt(stakeStarts) || 0)
                 + (stakeStarts < 1 ? 0 : 100 * (stakeWins + stakePlaces + stakeShows) / stakeStarts)
@@ -106,6 +110,10 @@ export async function calculateRacingScore(id: number): Promise<number | null> {
 export function calculateStallionScore({ confidence, racing: racingScore, breeding: breedingScore, bloodline: bloodlineScore }: StallionScore): Promise<number | null> {
     if (confidence == null || (breedingScore == null && racingScore == null && bloodlineScore == null))
         return Promise.resolve(null);
+
+    racingScore ??= 0;
+    racingScore ??= 0;
+    bloodlineScore ??= 0;
 
     return Promise.resolve(parseFloat(Number(
         ((1 - +confidence) * (+racingScore! + +bloodlineScore!) / Math.max(1, +(racingScore != null) + +(bloodlineScore != null)))

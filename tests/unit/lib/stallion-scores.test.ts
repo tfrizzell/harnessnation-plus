@@ -19,6 +19,12 @@ describe(`calculateBloodlineScore`, () => {
         await expect(calculateBloodlineScore(75756, [{ id: 75756, sireId: 53494, stallionScore: { breeding: null } }])).resolves.toBe(0);
     });
 
+    it(`resolves with null the horse has no sire`, async () => {
+        await expect(calculateBloodlineScore(14, [
+            { id: 14, sireId: null, stallionScore: { breeding: 128.929962 } }
+        ])).resolves.toBeNull();
+    });
+
     (<[Horse[], number | null][]>[
         [
             [
@@ -67,11 +73,8 @@ describe(`calculateBloodlineScore`, () => {
         ],
     ]).forEach(([horses, expected]) => {
         horses.forEach(horse => {
-            if (horse.sireId != null && horse.sireId !== horses[0].sireId)
+            if (horse.sireId == null || horse.sireId !== horses[0].sireId)
                 return;
-
-            if (horse.sireId == null)
-                expected = null;
 
             it(`resolves with ${expected} when given id=${horse.id}`, async () => {
                 await expect(calculateBloodlineScore(horse.id!, horses)).resolves.toBe(expected);

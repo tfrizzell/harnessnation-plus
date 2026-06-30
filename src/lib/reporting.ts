@@ -19,6 +19,8 @@ export interface BreedingReport {
 
 type BreedingReportRow = (string | number | undefined)[];
 
+const encoder = new TextEncoder();
+
 /**
  * Generates a breeding report for the provided list of horses.
  * @param {BreedingReportData} data - an object containing the ids of the horses and any header override.
@@ -66,11 +68,16 @@ export async function generateBreedingReport({ ids, headers, mode }: BreedingRep
     }
 
     return `data:text/csv;base64,${window.btoa(
-        report.filter(row => Array.isArray(row))
-            .map(row => row
-                .map(col => `"${(col?.toString() ?? '').replace(/"/g, '""')}"`)
-                .join(','))
-            .join('\n'))}`;
+        Array.from(
+            encoder.encode(report.filter(row => Array.isArray(row))
+                .map(row => row
+                    .map(col => `"${(col?.toString() ?? '').replace(/"/g, '""')}"`)
+                    .join(','))
+                .join('\n')
+            ),
+            b => String.fromCharCode(b)
+        ).join('')
+    )}`;
 }
 
 /**
@@ -121,7 +128,12 @@ export async function getBreedingReport(id: number, mode?: BreedingReportMode): 
         for (let i = 0; i < candidates.length; i += chunkSize) {
             const chunk = candidates.slice(i, i + chunkSize);
 
-            for (const races of await Promise.all(chunk.map(id => getRaces(id)))) {
+            for (const result of await Promise.allSettled(chunk.map(id => getRaces(id)))) {
+                if (result.status !== 'fulfilled')
+                    continue;
+
+                const races = result.value;
+
                 if (races.length < 1)
                     continue;
 
@@ -153,10 +165,8 @@ export async function getBreedingReport(id: number, mode?: BreedingReportMode): 
  * @returns {Promise<BreedingReportRow>} A `Promise` that resolves with an array of row data values.
  */
 async function getBreedingReportRow(id: number, mode?: BreedingReportMode): Promise<BreedingReportRow> {
-    const [profile, report] = await Promise.all([
-        api.getHorse(id),
-        getBreedingReport(id, mode),
-    ]);
+    const report = await getBreedingReport(id, mode);
+    const profile = await api.getHorse(id);
 
     return [
         +id,

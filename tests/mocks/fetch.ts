@@ -1,14 +1,24 @@
 import fs from 'fs';
 import path from 'path';
 
+const originalFetch = global.fetch;
+
 beforeAll(() => {
-    global.fetch = <jest.Mock>jest.fn((input: RequestInfo, init?: RequestInit): Promise<{ ok: boolean, text: () => Promise<string> }> => {
-        const url = (input as Request).url ?? input;
+    global.fetch = jest.fn((input: string | URL | Request, init?: RequestInit | undefined): Promise<Response> => {
+        const url = typeof input === 'string'
+            ? input
+            : input instanceof URL
+                ? input.toString()
+                : input.url;
+
         let file: fs.PathLike | undefined;
 
         if (url === 'https://www.harnessnation.com/api/progeny/list' && init?.method === 'POST') {
             // TODO: Add some progeny lists to test new reporting
-            return Promise.resolve({ ok: true, text: () => Promise.resolve('') })
+            return Promise.resolve({
+                ok: true,
+                text: () => Promise.resolve(''),
+            } as Response)
         } else if (url === 'https://www.harnessnation.com/api/progeny/report' && init?.method === 'POST') {
             const { horseId } = Object.fromEntries(new URLSearchParams(init!.body as string));
             file = path.join(__dirname, '..', 'fixtures', 'api', 'progeny', 'report', `${horseId}.html`);
@@ -29,19 +39,19 @@ beforeAll(() => {
                     return resolve({
                         ok: true,
                         text: () => Promise.resolve('')
-                    });
+                    } as Response);
                 }
 
                 resolve({
                     ok: true,
                     text: () => new Promise(resolve =>
                         fs.readFile(file!, { encoding: 'utf-8' }, (err: any, data: string) => resolve(err ? '' : data))),
-                });
+                } as Response);
             });
         });
     });
 });
 
 afterAll(() => {
-    (<jest.Mock>global.fetch).mockRestore();
+    global.fetch = originalFetch;
 });

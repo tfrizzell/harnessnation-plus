@@ -1,10 +1,13 @@
 import { HarnessNationAPI } from '@src/lib/harnessnation';
 import '@mocks/fetch';
 
+let getCSRFTokenSpy: jest.SpyInstance;
+
 beforeAll(() => {
-    HarnessNationAPI.prototype.getCSRFToken = jest.fn((): Promise<string | undefined> => Promise.resolve('csrf-token'));
+    getCSRFTokenSpy = jest.spyOn(HarnessNationAPI.prototype, "getCSRFToken")
+        .mockResolvedValue('csrf-token');
 });
 
 afterAll(() => {
-    (<jest.Mock>HarnessNationAPI.prototype.getCSRFToken).mockRestore();
+    getCSRFTokenSpy.mockRestore();
 });

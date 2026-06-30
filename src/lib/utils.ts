@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import { Race, RaceList } from './races';
+import { Race, RaceList } from './races.js';
 
 export interface DownloadOptions {
     contentType?: string;

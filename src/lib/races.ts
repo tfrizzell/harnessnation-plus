@@ -38,7 +38,11 @@ export class RaceList extends Array<Race> {
     }
 
     splice(start: number, deleteCount?: number, ...items: Race[]): RaceList {
-        return new RaceList(...super.splice(start, deleteCount!, ...items));
+        const removed = deleteCount == null && items.length === 0
+            ? super.splice(start)
+            : super.splice(start, deleteCount ?? 0, ...items);
+
+        return new RaceList(...removed);
     }
 
     findAge(race: Race, ageRef?: Race): number | undefined {
@@ -115,20 +119,22 @@ export async function getRaces(id: number, token?: string): Promise<RaceList> {
         const isStake = !!data[3] && !/^(Maiden )?(Open|Preferred|Claiming \$[\d,]+)$/i.test(data[2].trim());
         raceIds.push(raceId);
 
+        const age = data[4].trim().replace(/&amp;/gi, '&');
+
         races.push({
             id: raceId,
             name: data[2].replace('Elim', '').trim(),
             stake: isStake,
             elim: isStake && / Elim$/i.test(data[2].trim()),
-            age: /^Two-Year-Old$/i.test(data[4].trim())
+            age: /^Two-Year-Old$/i.test(age)
                 ? '2yo'
-                : /^Three-Year-Old$/i.test(data[4].trim())
+                : /^Three-Year-Old$/i.test(age)
                     ? '3yo'
-                    : /^Four-Year-Old &amp; Younger$/i.test(data[4].trim())
+                    : /^Four-Year-Old & Younger$/i.test(age)
                         ? '2-4yo'
-                        : /^Five-Year-Old &amp; Older$/i.test(data[4].trim())
+                        : /^Five-Year-Old & Older$/i.test(age)
                             ? '5yo+'
-                            : /^Six-Year-Old &amp; Older$/i.test(data[4].trim())
+                            : /^Six-Year-Old & Older$/i.test(age)
                                 ? '6yo+'
                                 : undefined,
             condition: data[5]?.replace(/(\\[rn]|[\r\n\s])+/gs, ' ')?.trim(),
