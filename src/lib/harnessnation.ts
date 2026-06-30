@@ -1,15 +1,32 @@
 import { isMobileOS } from './utils.js';
 
+/** Shared `TextEncoder` and `TextDecoder` instances used for encoding and decoding cached responses. */
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+/** Cache entry data structure. */
 interface CacheEntry {
-    response: string;
+    key: string;
+    response: Uint8Array;
     expiresAt: number;
 }
 
-function cacheDebug(message: string, error?: Error): void {
+/**
+ * Logs a styled debug message to the console.
+ * 
+ * @param message -The message to output.
+ */
+function cacheDebug(message: string): void {
     console.debug(`%charnessnation.ts%c     ${message}`, 'color:#406e8e;font-weight:bold;', '');
 }
 
-function cacheError(message: string, error?: Error): void {
+/**
+ * Logs a styled error message to the console.
+ * 
+ * @param message -The message to output.
+ * @param error - An optional error object to provide extra context.
+ */
+function cacheError(message: string, error?: Error | null): void {
     console.error(`%charnessnation.ts%c     ${message}`, 'color:#406e8e;font-weight:bold;', '');
 
     if (error)
@@ -17,49 +34,53 @@ function cacheError(message: string, error?: Error): void {
 }
 
 /**
- * Defines the options passed into the HarnessNationAPI constructor.
- * 
- * @param {number} backoffTimeout The number of milliseconds to cool down after receiving a `429 Too Many Requests`
- *                                 response. Must be at least 5_000 (5 seconds). Defaults to 5_000 (5 seconds).
- * @param {number} cacheTTL The number of milliseconds to store responses in the cache. Must be at least 60_000 (1 minute),
- *                          anything under this will disable caching. Defaults to 14_400_000ms (4 hours).
+ * Configuration options for the HarnessNationAPI client instance.
  */
 export interface HarnessNationAPIOptions {
+    /** 
+     * The cooling period in milliseconds after hitting a `429 Too Many Requests` state. 
+     * Must be >= 5,000ms. Defaults to 15,000ms.
+     */
     backoffTimeout?: number;
+    /** 
+     * Cache retention length in milliseconds. Values under 60,000ms disable caching. 
+     * Defaults to 14,400,000ms (4 hours).
+     */
     cacheTTL?: number;
 }
 
 /**
- * Creates an interface to request data from HarnessNation.
- * 
- * @param {number} backoffTimeout The number of milliseconds to cool down after receiving a `429 Too Many Requests`
- *                                 response. Must be at least 5_000 (5 seconds). Defaults to 15_000 (15 seconds).
- * @param {number} cacheTTL The number of milliseconds to store responses in the cache. Must be at least 60_000 (1 minute),
- *                          anything under this will disable caching. Defaults to 14_400_000ms (4 hours).
+ * Client interface for managing, routing, and caching HTTP requests to HarnessNation.
  */
 export class HarnessNationAPI {
     #backoffTimeout: number = 15_000;
     #cacheTTL: number = 14_400_000;
     #lastRequestAt?: Date;
-    #requestCount: number = 0
+    #requestCount: number = 0;
 
     #backoff?: Promise<void>;
     #cache?: IDBDatabase;
+    #csrfRequest?: Promise<string | undefined>;
     #retryCount: number = 0;
     #startUp?: Promise<void>;
 
+    /**
+     * Initializes a new HarnessNation API client instance.
+     * 
+     * @param options - Configuration overrides for cache life and backoff behaviors.
+     */
     constructor(options: HarnessNationAPIOptions = {}) {
         this.#cacheTTL = options?.cacheTTL ?? this.#cacheTTL;
         this.#backoffTimeout = options?.backoffTimeout ?? this.#backoffTimeout;
 
         if (this.#cacheTTL < 60_000)
-            console.warn(`%charnessnation.ts%c     cacheTTL=${this.#backoffTimeout} is below minimum value of 60_000`, 'color:#406e8e;font-weight:bold;', '');
+            console.warn(`%charnessnation.ts%c     cacheTTL=${this.#cacheTTL} is below minimum value of 60_000`, 'color:#406e8e;font-weight:bold;', '');
 
         if (this.#backoffTimeout < 5_000)
             console.warn(`%charnessnation.ts%c     backoffTimeout=${this.#backoffTimeout} is below minimum value of 5_000`, 'color:#406e8e;font-weight:bold;', '');
 
-        this.#startUp = (chrome?.runtime?.getPlatformInfo == null
-            ? new Promise<void>(resolve => {
+        this.#startUp = (typeof chrome === 'undefined' || chrome.runtime?.getPlatformInfo == null
+            ? new Promise(resolve => {
                 this.#cacheTTL = 0;
                 resolve();
             })
@@ -74,18 +95,18 @@ export class HarnessNationAPI {
                     return;
                 }
 
-                return new Promise<void>(resolve => {
+                return new Promise((resolve, reject) => {
                     const timeout = setTimeout(() => {
                         cacheError('Failed to open api cache: timed out');
                         resolve();
                     }, 5000);
 
-                    const req = indexedDB.open('cache:api', 1);
+                    const req = indexedDB.open('cache:api', 2);
 
                     req.addEventListener('error', e => {
                         clearTimeout(timeout);
-                        const error = <Error>(e.target as any).error;
-                        cacheError(`Failed to open api cache: ${error.message}`, error);
+                        const error = (e.target as IDBOpenDBRequest).error;
+                        cacheError(`Failed to open api cache: ${error?.message}`, error);
                         resolve();
                     });
 
@@ -99,60 +120,71 @@ export class HarnessNationAPI {
                         clearTimeout(timeout);
                         cacheDebug('Updating api cache');
 
-                        const db: IDBDatabase = (e.target as any).result;
+                        const db: IDBDatabase = (e.target as IDBOpenDBRequest).result;
 
                         db.addEventListener('error', e => {
-                            const error = <Error>(e.target as any).error;
-                            cacheError(`Failed to update api cache: ${error.message}`, error);
+                            const error = (e.target as IDBRequest).error;
+                            cacheError(`Failed to update api cache: ${error?.message}`, error);
                             resolve();
                         });
 
-                        const store = db.createObjectStore('responses', { keyPath: 'key' });
-                        store.createIndex('response', 'response', { unique: false });
-                        store.createIndex('expiresAt', 'expiresAt', { unique: false });
-                        resolve();
+                        if (db.objectStoreNames.contains('responses'))
+                            db.deleteObjectStore('responses');
+
+                        db.createObjectStore('responses', { keyPath: 'key' })
+                            .createIndex('expiresAt', 'expiresAt', { unique: false });
                     });
                 });
             })
-        ).then(() => this.#startUp = undefined);
+        );
     }
 
+    /** @returns The current cache time-to-live settings in milliseconds. */
     get cacheTTL(): number {
         return this.#cacheTTL;
     }
 
+    /** @returns Timestamp of the last outbound request dispatch, if any. */
     get lastRequestAt(): Date | undefined {
         return this.#lastRequestAt;
     }
 
+    /** @returns Total accumulation of requests executed during this instantiation lifecycle. */
     get requestCount(): number {
         return this.#requestCount;
     }
 
-    async #fetch(input: string | URL | globalThis.Request, init?: RequestInit): Promise<Response> {
+    /**
+     * A wrapper around the native fetch API that intercepts retriable response codes to trigger automatic exponential backoff retries.
+     * 
+     * Response text is mutated to normalize some HTML entities such as `&nbsp;` and `&#039;`.
+
+     * @param input - The URL or request to fetch.
+     * @param init - The fetch request options.
+     * @returns A promise that resolves with the normalized HTML string.
+     */
+    async #fetch(input: string | URL | globalThis.Request, init?: RequestInit): Promise<string> {
         await this.#backoff;
 
         const res = await fetch(input, init);
+        this.#lastRequestAt = new Date();
+        this.#requestCount++;
 
         if (!res.ok) {
-            if (res.status !== 429 && res.status !== 503)
+            if (![408, 425, 429, 500, 502, 503, 504].includes(res.status))
                 throw new Error(`${res.status} ${res.statusText}`);
 
             await this.#startBackoff(res);
             return this.#fetch(input, init);
         }
 
-        this.#retryCount = 0;
-        const _text = res.text;
+        if (this.#backoff == null)
+            this.#retryCount = 0;
 
-        res.text = (): Promise<string> => _text.call(res)
-            .then(text => text
-                ?.replace(/&nbsp;/g, ' ')
-                .replace(/&#039;/g, "'"));
-
-        return res;
+        return this.#normalizeHTML(await res.text());
     }
 
+    /** Retrieves page content from the IndexedDB store. */
     async #getFromCache(key: string): Promise<string | undefined> {
         await this.#startUp;
 
@@ -162,8 +194,8 @@ export class HarnessNationAPI {
         const transaction = this.#cache?.transaction(['responses'], 'readwrite');
 
         transaction?.addEventListener('error', e => {
-            const error = <Error>(e.target as any).error;
-            cacheError(`Failed to open api response cache transaction: ${error.message}`, error);
+            const error = (e.target as IDBTransaction).error;
+            cacheError(`Failed to open api response cache transaction: ${error?.message}`, error);
         });
 
         const entry = await new Promise<CacheEntry | undefined>(resolve => {
@@ -175,94 +207,153 @@ export class HarnessNationAPI {
             const req = transaction.objectStore('responses').get(key);
 
             req.addEventListener('error', e => {
-                const error = <Error>(e.target as any).error;
-                cacheError(`Failed to read from api response cache: ${error.message}`, error);
+                const error = (e.target as IDBRequest).error;
+                cacheError(`Failed to read from api response cache: ${error?.message}`, error);
                 resolve(undefined);
             });
 
-            req.addEventListener('success', e => resolve((e.target as any).result));
+            req.addEventListener('success', e => {
+                const entry = (e.target as IDBRequest<CacheEntry>).result;
+
+                if (entry && entry.expiresAt < Date.now()) {
+                    transaction?.objectStore('responses').delete(key);
+                    resolve(undefined);
+                } else
+                    resolve(entry)
+            });
         });
 
-        if (entry && entry.expiresAt < Date.now()) {
-            transaction?.objectStore('responses').delete(key);
-            return undefined;
-        }
-
-        return entry == null ? undefined : atob(entry.response);
+        return entry == null ? undefined : decoder.decode(entry.response);
     }
 
+    /** Provides a cache-first read method falling back to a network fetch on a cache miss. */
     async #getOrCreateFromCache(key: string, input: string | URL | globalThis.Request, init?: RequestInit): Promise<string> {
+        await this.#startUp;
         const cached = await this.#getFromCache(key);
 
         if (cached != null)
             return cached;
 
-        const value = await (await this.#fetch(input, init)).text();
+        const value = await this.#fetch(input, init);
 
-        if (this.#cacheTTL > 0) {
-            const transaction = this.#cache?.transaction(['responses'], 'readwrite');
-
-            transaction?.addEventListener('error', e => {
-                const error = <Error>(e.target as any).error;
-                cacheError(`Failed to write to api response cache: ${error.message}`, error);
-            });
-
-            transaction?.objectStore('responses')?.put(<CacheEntry>{
+        if (this.#cache != null && this.#cacheTTL > 0) {
+            const entry: CacheEntry = {
                 key,
-                response: btoa(value),
+                response: encoder.encode(value),
                 expiresAt: Date.now() + this.#cacheTTL,
+            };
+
+            const transaction = this.#cache.transaction(['responses'], 'readwrite');
+
+            transaction.addEventListener('error', e => {
+                const error = (e.target as IDBTransaction).error;
+                cacheError(`Failed to write to api response cache: ${error?.message}`, error);
             });
+
+            transaction.objectStore('responses').put(entry);
         }
 
         return value;
     }
 
-    async #startBackoff(res: Response): Promise<void> {
-        if (res.headers.has('Retry-After')) {
-            const timeout = (parseFloat(res.headers.get('Retry-After')!) + 1) * 1000;
-            console.debug(`%charnessnation.ts%c     'Retry-After' header detected; retrying in ${Number(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
-            return new Promise(resolve => setTimeout(resolve, timeout));
-        }
+    /** Normalizes HTML content. */
+    #normalizeHTML(html: string): string {
+        return html?.replace(/&nbsp;/g, ' ').replace(/&#039;/g, "'");
+    }
 
-        if (this.#backoff != null)
-            return await this.#backoff;
+    /** Removes a specific entry from the IndexedDB store. */
+    async #removeFromCache(key: string): Promise<void> {
+        await this.#startUp;
 
-        if (this.#retryCount >= 5)
-            throw new Error('Unable to communicate with HarnessNation. Please wait a few minutes and try again.')
+        if (this.#cache == null || this.#cacheTTL === 0)
+            return;
 
-        const timeout = this.#backoffTimeout * Math.pow(2, this.#retryCount);
-        this.#retryCount += 1;
+        const transaction = this.#cache?.transaction(['responses'], 'readwrite');
 
-        console.debug(`%charnessnation.ts%c     Backing off; retry #${this.#retryCount} in ${Number(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
-        this.#backoff = new Promise(resolve => setTimeout(resolve, timeout));
-        await this.#backoff;
-        this.#backoff = undefined;
+        transaction?.addEventListener('error', e => {
+            const error = (e.target as IDBTransaction).error;
+            cacheError(`Failed to open api response cache transaction: ${error?.message}`, error);
+        });
+
+        return new Promise(resolve => {
+            if (!transaction)
+                return resolve();
+
+            transaction.addEventListener('error', () => resolve());
+
+            const req = transaction.objectStore('responses').delete(key);
+
+            req.addEventListener('error', e => {
+                const error = (e.target as IDBRequest).error;
+                cacheError(`Failed to read from api response cache: ${error?.message}`, error);
+                resolve();
+            });
+
+            req.addEventListener('success', e => resolve());
+        });
     }
 
     /**
-     * Clears the response cache.
-     * @returns {Promise<void>} A `Promise` that resolves once the cache has been cleared.
+     * Initiates an exponential backoff cooling period after a retriable response status code.
+     * 
+     * Multiplies the baseline time by 2^retryCount.
+     * 
+     * @param res - The request response.
+     * @throws {Error} If the maximum retry threshold is exceeded.
+     */
+    #startBackoff(res: Response): Promise<void> {
+        if (this.#backoff != null)
+            return this.#backoff;
+
+        if (this.#retryCount >= 5) {
+            this.#retryCount = 0;
+            throw new Error('Unable to communicate with HarnessNation. Please wait a few minutes and try again.')
+        }
+
+        return this.#backoff = new Promise(resolve => {
+            this.#retryCount++;
+            let timeout: number;
+
+            if (res.headers.has('Retry-After')) {
+                timeout = (parseFloat(res.headers.get('Retry-After')!) + 1) * 1000;
+                console.debug(`%charnessnation.ts%c     'Retry-After' header detected; retrying in ${Number(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
+            } else {
+                timeout = this.#backoffTimeout * Math.pow(2, this.#retryCount - 1);
+                console.debug(`%charnessnation.ts%c     Backing off; retry #${this.#retryCount} in ${Number(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
+            }
+
+            setTimeout(() => {
+                this.#backoff = undefined;
+                resolve();
+            }, timeout);
+        });
+    }
+
+    /**
+     * Clears all entries from the api response cache.
+     * 
+     * @returns A promise that resolves once the cache has been cleared.
      */
     async clearCache(): Promise<void> {
         await this.#startUp;
 
-        await new Promise<void>(resolve => {
+        return new Promise(resolve => {
             const transaction = this.#cache?.transaction(['responses'], 'readwrite');
 
             if (!transaction)
                 return resolve();
 
             transaction.addEventListener('error', e => {
-                const error = <Error>(e.target as any).error;
-                cacheError(`Failed to open api response cache transaction: ${error.message}`, error);
+                const error = (e.target as IDBTransaction).error;
+                cacheError(`Failed to open api response cache transaction: ${error?.message}`, error);
                 resolve();
             });
 
             const req = transaction.objectStore('responses').clear();
 
             req.addEventListener('error', e => {
-                const error = <Error>(e.target as any).error;
-                cacheError(`Failed to clear api response cache: ${error.message}`, error);
+                const error = (e.target as IDBRequest).error;
+                cacheError(`Failed to clear api response cache: ${error?.message}`, error);
                 resolve();
             });
 
@@ -272,98 +363,118 @@ export class HarnessNationAPI {
 
     /**
      * Fetches the session's CSRF token.
-     * @returns {Promise<string>} A `Promise` that resolves with the CSRF token.
+     * 
+     * @returns A promise that resolves with the CSRF token.
      */
     async getCSRFToken(): Promise<string | undefined> {
-        const regex = /setRequestHeader\((["'])X-CSRF-TOKEN\1,\s*(["'])(.*?)\2\)/i;
+        if (this.#csrfRequest)
+            return this.#csrfRequest;
 
-        let html: string | undefined = await new Promise<string | undefined>(resolve => {
-            const transaction = this.#cache?.transaction(['responses']);
+        let csrfToken = await this.#getFromCache('__x-csrf-token__')
 
-            if (!transaction)
-                return resolve(undefined);
+        if (csrfToken == null) {
+            this.#csrfRequest = (async () => {
+                try {
+                    const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
+                    const csrfToken = html?.match(/setRequestHeader\((["'])X-CSRF-TOKEN\1,\s*(["'])(.*?)\2\)/i)?.[3];
 
-            transaction.addEventListener('error', e => {
-                const error = <Error>(e.target as any).error;
-                cacheError(`Failed to open api response cache transaction: ${error.message}`, error);
-                resolve(undefined);
-            });
+                    if (csrfToken != null && this.#cache != null && this.#cacheTTL > 0) {
+                        const transaction = this.#cache?.transaction(['responses'], 'readwrite');
 
-            const store = transaction.objectStore('responses');
-            const req = store.openCursor();
+                        if (transaction) {
+                            const entry: CacheEntry = {
+                                key: '__x-csrf-token__',
+                                response: encoder.encode(csrfToken),
+                                expiresAt: Date.now() + this.#cacheTTL,
+                            };
 
-            req.addEventListener('error', e => {
-                const error = <Error>(e.target as any).error;
-                cacheError(`Failed to open api response cache cursor: ${error.message}`, error);
-                resolve(undefined);
-            });
+                            transaction.addEventListener('error', e => {
+                                const error = (e.target as IDBTransaction).error;
+                                cacheError(`Failed to open api response cache transaction: ${error?.message}`, error);
+                            });
 
-            req.addEventListener('success', e => {
-                const cursor: IDBCursorWithValue | null = (e.target as any).result;
+                            transaction.objectStore('responses').put(entry);
+                        }
+                    }
 
-                if (!cursor)
-                    return resolve(undefined);
+                    return csrfToken;
+                } catch (err: any) {
+                    console.error(`%charnessnation.ts%c     Failed to fetch CSRF token: ${err?.message}`, 'color:#406e8e;font-weight:bold;', '');
 
-                const html = atob(cursor.value.response);
+                    if (err)
+                        console.error(err)
 
-                if (regex.test(html))
-                    return resolve(html);
+                    return undefined;
+                }
+            })();
 
-                cursor.continue();
-            });
-        });
+            csrfToken = await this.#csrfRequest;
+            this.#csrfRequest = undefined;
+        }
 
-        if (html == null)
-            html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`).then(res => res.text());
-
-        return html?.match(regex)?.[3];
+        return csrfToken;
     }
 
     /**
      * Fetches a horse's info page.
-     * @param {number} id - the id of the horse.
-     * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the info page.
+     * 
+     * @param id - The id of the horse.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the info page.
      */
-    async getHorse(id: number): Promise<string> {
-        return await this.#getOrCreateFromCache(`/horses/${id}`, `https://www.harnessnation.com/horse/${id}`);
+    async getHorse(id: number, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}`);
+
+        return this.#getOrCreateFromCache(`/horses/${id}`, `https://www.harnessnation.com/horse/${id}`);
     }
 
     /**
      * Fetches a horse's pedigree.
-     * @param {number} id - the id of the horse.
-     * @param {string} csrfToken - the token used to sign the request.
-     * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the pedigree.
+     * 
+     * @param id - The id of the horse.
+     * @param csrfToken - The token used to sign the request.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the pedigree page.
      */
-    async getPedigree(id: number, csrfToken?: string): Promise<string> {
+    async getPedigree(id: number, csrfToken?: string, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/pedigree`);
+
         csrfToken ||= await this.getCSRFToken() ?? '';
 
-        return await this.#getOrCreateFromCache(`/horses/${id}/pedigree`, 'https://www.harnessnation.com/horse/pedigree', {
+        return this.#getOrCreateFromCache(`/horses/${id}/pedigree`, 'https://www.harnessnation.com/horse/pedigree', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'Referer': 'https://www.harnessnation.com/',
-                'X-Csrf-Token': csrfToken!,
+                'X-Csrf-Token': csrfToken,
                 'X-Requested-With': 'XMLHttpRequest',
             },
-            body: new URLSearchParams({ _token: csrfToken!, horseId: id.toString() }),
+            body: new URLSearchParams({ _token: csrfToken, horseId: id.toString() }),
         });
     }
 
     /**
      * Fetches a horse's progeny list.
-     * @param {number} id - the id of the horse.
-     * @param {string} csrfToken - the token used to sign the request.
-     * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the progeny list.
+     * 
+     * @param id - The id of the horse.
+     * @param csrfToken - The token used to sign the request.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the progeny list page.
      */
-    async getProgenyList(id: number, csrfToken?: string): Promise<string> {
+    async getProgenyList(id: number, csrfToken?: string, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/progeny/list`);
+
         csrfToken ||= await this.getCSRFToken() ?? '';
 
-        return await this.#getOrCreateFromCache(`/horses/${id}/progeny/list`, 'https://www.harnessnation.com/api/progeny/list', {
+        return this.#getOrCreateFromCache(`/horses/${id}/progeny/list`, 'https://www.harnessnation.com/api/progeny/list', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'Referer': 'https://www.harnessnation.com/',
-                'X-Csrf-Token': csrfToken!,
+                'X-Csrf-Token': csrfToken,
                 'X-Requested-With': 'XMLHttpRequest',
             },
             body: new URLSearchParams({
@@ -378,11 +489,16 @@ export class HarnessNationAPI {
 
     /**
      * Fetches a horse's progeny report.
-     * @param {number} id - the id of the horse.
-     * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the progeny report.
+     * 
+     * @param id - The id of the horse.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the progeny report page.
      */
-    async getProgenyReport(id: number): Promise<string> {
-        return await this.#getOrCreateFromCache(`/horses/${id}/progeny/report`, 'https://www.harnessnation.com/api/progeny/report', {
+    async getProgenyReport(id: number, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/progeny/report`);
+
+        return this.#getOrCreateFromCache(`/horses/${id}/progeny/report`, 'https://www.harnessnation.com/api/progeny/report', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -394,32 +510,42 @@ export class HarnessNationAPI {
 
     /**
      * Fetches a horse's race history.
-     * @param {number} id - the id of the horse.
-     * @param {string} csrfToken - the token used to sign the request.
-     * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the race history.
+     * 
+     * @param id - The id of the horse.
+     * @param csrfToken - The token used to sign the request.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the race history page.
      */
-    async getRaceHistory(id: number, csrfToken?: string): Promise<string> {
+    async getRaceHistory(id: number, csrfToken?: string, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/races`);
+
         csrfToken ||= await this.getCSRFToken() ?? '';
 
-        return await this.#getOrCreateFromCache(`/horses/${id}/races`, 'https://www.harnessnation.com/horse/api/race-history', {
+        return this.#getOrCreateFromCache(`/horses/${id}/races`, 'https://www.harnessnation.com/horse/api/race-history', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'Referer': 'https://www.harnessnation.com/',
-                'X-Csrf-Token': csrfToken!,
+                'X-Csrf-Token': csrfToken,
                 'X-Requested-With': 'XMLHttpRequest',
             },
-            body: new URLSearchParams({ _token: csrfToken!, horseId: id.toString() }),
+            body: new URLSearchParams({ _token: csrfToken, horseId: id.toString() }),
         });
     }
 
     /**
      * Fetches a horse's sibling list.
-     * @param {number} id - the id of the horse.
-     * @returns {Promise<string>} A `Promise` that resolves with the HTML content of the sibling list.
+     * 
+     * @param id - The id of the horse.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the sibling list page.
      */
-    async getSiblings(id: number): Promise<string> {
-        return await this.#getOrCreateFromCache(`/horses/${id}/siblings`, 'https://www.harnessnation.com/horse/api/siblings', {
+    async getSiblings(id: number, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/siblings`);
+
+        return this.#getOrCreateFromCache(`/horses/${id}/siblings`, 'https://www.harnessnation.com/horse/api/siblings', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -430,42 +556,42 @@ export class HarnessNationAPI {
     }
 
     /**
-     * Prunes expired entries from the response cache.
-     * @returns {Promise<void>} A `Promise` that resolves once the cache has been pruned.
+     * Prunes expired entries from the api response cache.
+     * 
+     * @returns A promise that resolves once the cache has been pruned.
      */
     async pruneCache(): Promise<void> {
         await this.#startUp;
 
-        await new Promise<void>(resolve => {
+        return new Promise(resolve => {
             const transaction = this.#cache?.transaction(['responses'], 'readwrite');
 
             if (!transaction)
-                return resolve(undefined);
+                return resolve();
 
             transaction.addEventListener('error', e => {
-                const error = <Error>(e.target as any).error;
-                cacheError(`Failed to open api response cache transaction: ${error.message}`, error);
-                resolve(undefined);
-            });
-
-            const store = transaction.objectStore('responses');
-            const req = store.openCursor();
-
-            req.addEventListener('error', e => {
-                const error = <Error>(e.target as any).error;
-                cacheError(`Failed to open api response cache cursor: ${error.message}`, error);
+                const error = (e.target as IDBTransaction).error;
+                cacheError(`Failed to open api response cache transaction: ${error?.message}`, error);
                 resolve();
             });
 
+            transaction.addEventListener('complete', () => resolve());
+
+            const store = transaction.objectStore('responses');
+            const req = store.index('expiresAt').openCursor(IDBKeyRange.upperBound(Date.now()));
+
+            req.addEventListener('error', e => {
+                const error = (e.target as IDBRequest).error;
+                cacheError(`Failed to open api response cache cursor: ${error?.message}`, error);
+            });
+
             req.addEventListener('success', e => {
-                const cursor: IDBCursorWithValue | null = (e.target as any).result;
+                const cursor: IDBCursorWithValue | null = (e.target as IDBRequest).result;
 
                 if (!cursor)
-                    return resolve();
+                    return;
 
-                if (cursor.value.expiresAt < Date.now())
-                    store.delete(cursor.key);
-
+                store.delete(cursor.primaryKey);
                 cursor.continue();
             });
         });

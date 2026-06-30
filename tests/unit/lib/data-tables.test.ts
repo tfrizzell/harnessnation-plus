@@ -1,6 +1,5 @@
-import { chrome } from 'jest-chrome';
-import DataTables, { DataTablesMode, DataTablesOptions } from '../../src/lib/data-tables';
-import { DataTablesSettings } from '../../src/lib/settings';
+import DataTables, { DataTablesMode, DataTablesOptions } from '@src/lib/data-tables';
+import { DataTablesSettings } from '@src/lib/settings';
 
 describe(`DataTables`, () => {
     it(`exists`, () => {
@@ -140,31 +139,22 @@ describe(`DataTables`, () => {
         };
 
         beforeAll(() => {
-            chrome.storage.sync.get.mockImplementation((
-                keys: string | Array<string> | Partial<{ [key: string]: any }> | null | ((items: { [key: string]: any }) => void),
-                callback?: (items: { [key: string]: any }) => void
-            ) => {
-                if (keys instanceof Function)
-                    return chrome.storage.sync.get(null, keys);
-
-                if (!callback)
-                    return new Promise(resolve => chrome.storage.sync.get(keys, resolve));
-
+            (chrome.storage.sync.get as jest.Mock).mockImplementation((keys: string | string[] | object): Promise<object> => {
                 if (typeof keys === 'string')
-                    return callback(keys in mockData ? { [keys]: mockData[keys] } : {});
+                    return Promise.resolve(keys in mockData ? { [keys]: mockData[keys] } : {});
 
                 if (Array.isArray(keys))
-                    return callback(keys.reduce((data, key) => key in mockData ? { ...data, [key]: mockData[key] } : data, {}));
+                    return Promise.resolve(keys.reduce((data, key) => key in mockData ? { ...data, [key]: mockData[key] } : data, {}));
 
                 if (typeof keys === 'object' && keys != null)
-                    return callback(Object.keys(keys).reduce((data, key) => key in mockData ? { ...data, [key]: mockData[key] } : data, {}));
+                    return Promise.resolve(Object.keys(keys).reduce((data, key) => key in mockData ? { ...data, [key]: mockData[key] } : data, {}));
 
-                callback(mockData);
+                return Promise.resolve(mockData);
             });
         });
 
         afterAll(() => {
-            chrome.storage.sync.get.mockRestore();
+            (chrome.storage.sync.get as jest.Mock).mockRestore();
         });
 
         it(`exists`, () => {

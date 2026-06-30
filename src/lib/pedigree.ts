@@ -5,7 +5,8 @@ import { PDFParagraphBuilder } from './pdf/builder.js';
 import { drawTextCentered } from './pdf/utils.js';
 
 import { api } from './harnessnation.js'
-import { getHorse, getRaces, Horse, Race, RaceList } from './horses.js';
+import { getHorse, Horse } from './horses.js';
+import { getRaces, Race, RaceList } from './races.js';
 import { ageToText, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, isMobileOS, parseCurrency, parseInt, secondsToTime } from './utils.js';
 
 interface Ancestor {
@@ -223,12 +224,12 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     const DEFAULT_FONT_SIZE = 8.5;
     page.setFontSize(DEFAULT_FONT_SIZE);
 
-    // Consignor Name
+    // Owner Name
     page.moveDown(fonts.Normal.heightAtSize(8.5));
     const owner = info.match(/<b[^>]*>\s*Owner:\s*<\/b[^>]*>\s*<a[^>]*>(.*?)<\/a>/i)?.[1]?.trim();
 
     if (owner)
-        drawTextCentered(page, `Consigned by ${owner.toUpperCase()}`, { font: fonts.Normal, size: 8.5 });
+        drawTextCentered(page, `Owned by ${owner.toUpperCase()}`, { font: fonts.Normal, size: 8.5 });
 
     // Hip Number
     if (/^(\d+)$/.test(hipNumber?.toString() ?? '')) {
@@ -851,7 +852,7 @@ function getParagraphPriority(horse: Horse, dam: DamLineAncestor, progeny: Proge
 async function getPedigree(id: number, csrfToken?: string): Promise<Ancestor[]> {
     return Array.from(
         (await api.getPedigree(id, csrfToken))
-            .matchAll(/<a[^>]*horse\/(\d+)[^>]*>\s*(.*?)\s*<\/a[^>]*>|\b(Unknown)\b/gis)
+            .matchAll(/<a[^>]*\/horse\/(\d+)[^>]*>\s*(.*?)\s*<\/a[^>]*>|\b(Unknown)\b/gis)
     ).map((match: RegExpMatchArray): Ancestor => ({
         id: match[1] ? parseInt(match[1]!) : undefined,
         name: match[2] ?? match[3],
@@ -863,7 +864,7 @@ async function getProgeny(id: number, csrfToken?: string): Promise<Progeny[]> {
 
     return Array.from(
         (await api.getProgenyList(id, csrfToken))
-            .matchAll(/<td[^>]*>\s*<a[^>]*horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>().*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+\s*-\s*(\d+)\s*-\s*\d+\s*-\s*\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
+            .matchAll(/<td[^>]*>\s*<a[^>]*\/horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*\/horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>(.*?)<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+\s*-\s*(\d+)\s*-\s*\d+\s*-\s*\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
     ).map(([match, id, name, sireId, sireName, age, gender, stable, wins, earnings]): Progeny => {
         const progenyId = parseInt(id);
         progenyIds.push(progenyId)
