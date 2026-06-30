@@ -4,9 +4,10 @@ import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, g
 import { Action, ActionError, ActionResponse, ActionType, BreedingReportData, HorseSearchData, PedigreeCatalogData } from '../../lib/actions.js';
 import { AlarmType } from '../../lib/alarms.js';
 import { HNPlusRuntimeError } from '../../lib/errors.js';
-import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStudFee, getHorse, Horse, StallionScore, calculateStallionScore } from '../../lib/horses.js';
+import { calculateStudFee, getHorse, Horse } from '../../lib/horses.js';
 import { generatePedigreeCatalog as downloadPedigreeCatalog } from '../../lib/pedigree.js';
 import { generateBreedingReport as generateBreedingReportAsync } from '../../lib/reporting.js';
+import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStallionScore, StallionScore } from '../../lib/stallion-scores.js';
 import { downloadFile, isMobileOS, regexEscape, toTimestamp, waitFor } from '../../lib/utils.js';
 
 import * as firestore from '../../lib/firestore.js';
@@ -164,7 +165,7 @@ async function generateBreedingReport(data: BreedingReportData): Promise<string>
 async function generateBroodmareReport(data: BreedingReportData): Promise<void> {
     try {
         await downloadFile(
-            await generateBreedingReport(data),
+            await generateBreedingReport({ mode: 'enhanced', ...data }),
             data.filename?.trim() || `hn-plus-broodmare-report-${toTimestamp().replace(/\D/g, '')}.csv`
         );
     } catch (e: any) {

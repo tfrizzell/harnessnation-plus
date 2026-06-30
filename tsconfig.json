@@ -1,19 +1,7 @@
 {
-    "compilerOptions": {
-        "rootDir": "src",
-        "outDir": "dist",
-        "strict": true,
-        "target": "esnext",
-        "module": "esnext",
-        "moduleResolution": "bundler",
-        "esModuleInterop": true,
-        "types": [ "chrome" ],
-        "typeRoots": [ "./node_modules/@types", "./src/types" ],
-    },
-    "include": [ "src/**/*.ts" ],
-    "exclude": [ "dist/**/*", "node_modules/**/*" ],
-    "watchOptions": {
-        "watchFile": "DynamicPriorityPolling",
-        "watchDirectory": "DynamicPriorityPolling"
-    }
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.src.json" },
+    { "path": "./tsconfig.test.json" }
+  ]
 }

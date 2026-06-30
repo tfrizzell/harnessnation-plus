@@ -1,7 +1,8 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { EventType, onInstalled, onLoad } from '../../../lib/events.js';
-import { createStallionScoreBadge, Horse } from '../../../lib/horses.js';
+import { Horse } from '../../../lib/horses.js';
 import { Settings, StallionRegistrySettings } from '../../../lib/settings.js';
+import { createStallionScoreBadge } from '../../../lib/stallion-scores.js';
 import { removeAll, sleep } from '../../../lib/utils.js';
 import '../common/tooltip.js';
 

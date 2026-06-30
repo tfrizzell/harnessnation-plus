@@ -1,5 +1,6 @@
-import { Horse, StallionScore } from './horses.js';
+import { Horse } from './horses.js';
 import { StudFeeFormula } from './settings.js';
+import { StallionScore } from './stallion-scores.js';
 
 export enum ActionType {
     CalculateStudFee = 'ACTION__CALCULATE_STUD_FEE',
@@ -19,7 +20,10 @@ export interface BreedingReportData {
     ids: number[];
     headers?: { [key: number]: string };
     filename?: string;
+    mode?: BreedingReportMode;
 }
+
+export type BreedingReportMode = 'default' | 'enhanced';
 
 export interface CalculateStudFeeData {
     id: number;

@@ -40,7 +40,7 @@ gulp.task('copy:src', () =>
         .pipe(gulp.dest(DIR_DIST)));
 
 gulp.task('compile:src', () => {
-    const tsProject = ts.createProject('tsconfig.json');
+    const tsProject = ts.createProject('tsconfig.src.json');
 
     return tsProject
         .src()

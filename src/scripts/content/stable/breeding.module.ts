@@ -1,6 +1,6 @@
 import { ActionType, sendAction } from '../../../lib/actions.js';
 import { onInstalled, onLoad } from '../../../lib/events.js';
-import { createStallionScoreBadge } from '../../../lib/horses.js';
+import { createStallionScoreBadge } from '../../../lib/stallion-scores.js';
 import { removeAll } from '../../../lib/utils.js';
 import '../common/tooltip.js';
 

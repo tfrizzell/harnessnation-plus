@@ -1,7 +1,6 @@
 import { Timestamp } from '@firebase/firestore';
-import { chrome } from 'jest-chrome';
-import { RaceList } from '../../src/lib/horses';
-import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, secondsToTime, sleep, toDate, toPercentage, toTimestamp, waitFor } from '../../src/lib/utils';
+import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, secondsToTime, sleep, toDate, toPercentage, toTimestamp, waitFor } from '@src/lib/utils';
+import { RaceList } from '@src/lib/races';
 
 afterAll(() => {
     jest.clearAllTimers();
@@ -67,7 +66,7 @@ describe(`downloadFile`, () => {
     const downloadedFiles: Map<string, chrome.downloads.DownloadOptions | null> = new Map();
 
     beforeAll(() => {
-        chrome.downloads.download.mockImplementation((options) => {
+        (chrome.downloads.download as jest.Mock).mockImplementation((options) => {
             const id = downloadedFiles.size + 1;
             downloadedFiles.set(options.filename || `${Date.now()}.file`, options);
             return Promise.resolve(id);
@@ -75,7 +74,7 @@ describe(`downloadFile`, () => {
     });
 
     afterAll(() => {
-        chrome.downloads.download.mockRestore();
+        (chrome.downloads.download as jest.Mock).mockRestore();
     });
 
     it(`exists`, () => {

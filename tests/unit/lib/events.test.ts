@@ -1,4 +1,4 @@
-import { EventType, onInstalled, onLoad } from '../../src/lib/events';
+import { EventType, onInstalled, onLoad } from '@src/lib/events';
 
 afterAll(() => {
     jest.clearAllTimers();

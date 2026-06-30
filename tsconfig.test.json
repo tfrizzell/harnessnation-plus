@@ -1,0 +1,25 @@
+{
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+        "paths": {
+            "@src/*": [
+                "./src/*"
+            ],
+            "@mocks/*": [
+                "./tests/mocks/*"
+            ]
+        },
+        "types": [
+            "node",
+            "jest",
+            "chrome"
+        ]
+    },
+    "include": [
+        "global.setup.ts",
+        "jest.config.ts",
+        "jest.setup.ts",
+        "src/**/*.ts",
+        "tests/**/*"
+    ]
+}

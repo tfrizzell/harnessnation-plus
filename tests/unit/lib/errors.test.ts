@@ -1,4 +1,4 @@
-import { HNPlusRuntimeError } from '../../src/lib/errors';
+import { HNPlusRuntimeError } from '@src/lib/errors';
 
 afterAll(() => {
     jest.clearAllTimers();

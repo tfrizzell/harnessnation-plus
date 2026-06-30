@@ -1,10 +1,17 @@
 import { Timestamp } from 'firebase/firestore';
-import { Race, RaceList } from './horses';
+import { Race, RaceList } from './races.js';
 
 export interface DownloadOptions {
     contentType?: string;
     saveAs?: boolean
 };
+
+const earningsFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+});
 
 export function ageToText(age: number): string {
     return [
@@ -104,6 +111,10 @@ export async function downloadFile(file: string | Blob, filename: string, option
         if (revokeObjectUrl)
             setTimeout(window.URL.revokeObjectURL, 1, file);
     }
+}
+
+export function formatEarnings(value: number): string {
+    return earningsFormatter.format(value)
 }
 
 export function formatMark(race: Race | undefined, age?: number): string {
