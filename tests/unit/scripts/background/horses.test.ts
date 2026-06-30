@@ -42,10 +42,10 @@ describe(`shouldUpdateStallionScore`, () => {
         [{ retired: true, stallionScore: { lastModified: Date.now() - 2_505_600_000 } }, true],
         [{ retired: true, stallionScore: { lastModified: Date.now() - 31_622_400_000 } }, false],
     ]).forEach(([horse, expected]) => {
-        const lastModified = horse?.stallionScore?.lastModified;
+        const lastModified = horse?.stallionScore?.lastModified as number | undefined;
 
-        if (lastModified != null)
-            horse!.stallionScore!.lastModified = { toDate: () => new Date(lastModified!) };
+        if (horse.stallionScore != null && lastModified != null)
+            horse.stallionScore.lastModified = Timestamp.fromDate(new Date(lastModified));
 
         it(`returns ${expected} when given retired=${horse.retired} and lastModified=${lastModified}`, async () => {
             expect(shouldUpdateStallionScore(horse)).toBe(expected);

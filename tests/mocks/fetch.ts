@@ -33,7 +33,7 @@ beforeAll(() => {
         if (!file)
             return Promise.reject(`${url} not found`);
 
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             fs.access(file!, undefined, (err) => {
                 if (err) {
                     return resolve({
@@ -42,11 +42,17 @@ beforeAll(() => {
                     } as Response);
                 }
 
-                resolve({
-                    ok: true,
-                    text: () => new Promise(resolve =>
-                        fs.readFile(file!, { encoding: 'utf-8' }, (err: any, data: string) => resolve(err ? '' : data))),
-                } as Response);
+                fs.readFile(file, { encoding: 'utf-8' }, (err: any, data: string) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+
+                    resolve({
+                        ok: true,
+                        text: () => Promise.resolve(data),
+                    } as Response);
+                });
             });
         });
     });

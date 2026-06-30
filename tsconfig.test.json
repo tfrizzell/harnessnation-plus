@@ -19,6 +19,7 @@
         "global.setup.ts",
         "jest.config.ts",
         "jest.setup.ts",
+        "src/**/*.ts",
         "tests/**/*"
     ]
 }

@@ -111,13 +111,16 @@ export function calculateStallionScore({ confidence, racing: racingScore, breedi
     if (confidence == null || (breedingScore == null && racingScore == null && bloodlineScore == null))
         return Promise.resolve(null);
 
+    const racingScoreWeight = racingScore != null ? 1 : 0;
+    const bloodlineScoreWeight = bloodlineScore != null ? 1 : 0;
+
     racingScore ??= 0;
-    racingScore ??= 0;
+    breedingScore ??= 0;
     bloodlineScore ??= 0;
 
     return Promise.resolve(parseFloat(Number(
-        ((1 - +confidence) * (+racingScore! + +bloodlineScore!) / Math.max(1, +(racingScore != null) + +(bloodlineScore != null)))
-        + (+confidence! * +breedingScore!)
+        ((1 - confidence) * (racingScore + bloodlineScore) / Math.max(1, racingScoreWeight + bloodlineScoreWeight))
+        + (confidence * breedingScore)
     ).toFixed(6)));
 }
 
