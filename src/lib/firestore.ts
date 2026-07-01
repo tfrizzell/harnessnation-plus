@@ -4,7 +4,7 @@ import {
     getFirestore,
     initializeFirestore,
     persistentLocalCache,
-    persistentMultipleTabManager,
+    persistentSingleTabManager,
     terminate,
 } from '../vendor/firebasejs/firebase-firestore.js';
 
@@ -33,7 +33,7 @@ export function reinitializeFirestore(): Firestore {
     try {
         firestoreInstance = initializeFirestore(firebase, {
             localCache: persistentLocalCache({
-                tabManager: persistentMultipleTabManager(),
+                tabManager: persistentSingleTabManager({ forceOwnership: true }) ,
             }),
         });
     } catch (error: unknown) {
