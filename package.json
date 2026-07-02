@@ -13,9 +13,9 @@
     "build:edge": "gulp build:edge",
     "build:firefox": "gulp build:firefox",
     "clean": "gulp clean",
-    "debug": "yarn debug:chrome",
-    "debug:chrome": "gulp debug:chrome && yarn watch",
-    "debug:edge": "gulp debug:edge && yarn watch",
+    "debug": "pnpm debug:chrome",
+    "debug:chrome": "gulp debug:chrome && pnpm watch",
+    "debug:edge": "gulp debug:edge && pnpm watch",
     "debug:firefox": "gulp debug:firefox",
     "package": "gulp package",
     "package:all": "gulp package:all",
@@ -44,8 +44,8 @@
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   },
-  "resolutions": {
+  "overrides": {
     "**/minimatch": "^5.1.6"
   },
-  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
+  "packageManager": "pnpm@11.9.0+sha512.bd682d5d03fe525ef7c9fd6780c6884d1e756ac4c9c9fe00c538782824310dcf90e3ddc4f53835f06dfaebd5085e41855e0bcbb3b60de2ac5bbab89e5036f03b"
 }
