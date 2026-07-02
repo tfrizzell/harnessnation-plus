@@ -17,7 +17,18 @@ export interface Race {
     date?: Date;
 }
 
+/**
+ * Defines a race list array type with convenience functions to quickly find or compute
+ * key pieces of data.
+ */
 export class RaceList extends Array<Race> {
+    /**
+     * Computes the earnings based off the purse and finishing position.
+     * 
+     * @param purse - The purse the race went for.
+     * @param finish - The finishing position of the horse.
+     * @returns The purse earnings allocated to the horse.
+     */
     #getEarnings(purse: number, finish: number): number {
         switch (finish) {
             case 1: return purse * 0.5;
@@ -45,6 +56,13 @@ export class RaceList extends Array<Race> {
         return new RaceList(...removed);
     }
 
+    /**
+     * Finds the age a horse was during a given race.
+     * 
+     * @param race - The race to find the age of.
+     * @param ageRef - A race to use as an age reference.
+     * @returns The age the horse was during the race.
+     */
     findAge(race: Race, ageRef?: Race): number | undefined {
         if (/^[23]yo$/i.test(race?.age ?? ''))
             return parseInt(race.age!.charAt(0));
@@ -53,18 +71,35 @@ export class RaceList extends Array<Race> {
         return !ageRef || !race?.date ? undefined : parseInt(ageRef.age!.charAt(0)) + seasonsBetween(ageRef.date!, race.date!);
     }
 
+    /**
+     * Finds a race that is appropriate to use as an age reference.
+     * 
+     * @returns A race that is appropriate to use as an age reference.
+     */
     findAgeRef(): Race | undefined {
         return this.find((race, index, races) =>
             /^[23]yo$/i.test(race.age ?? '')
             || (index < races.length - 1 && race.stake !== true && /^5yo\+$/i.test(race.age ?? '') && /^2-4yo$/i.test(races[index + 1].age ?? '')));
     }
 
+    /**
+     * Finds the fastest race in the list.
+     * 
+     * @param predicate - An optional predicate used to filter the races.
+     * @returns The fastest race in the list, filtered by the predicate if given.
+     */
     findFastestRace(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): Race | undefined {
         return (predicate == null ? this.slice() : this.filter(predicate))
             .sort((a, b) => b.time! - a.time!)
             .pop();
     }
 
+    /**
+     * Finds the fastest win in the race list.
+     * 
+     * @param predicate - An optional predicate used to filter the races.
+     * @returns The fastest win in the race list, filtered by the predicate if given.
+     */
     findFastestWin(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): Race | undefined {
         return this.filter((value: Race, index: number, array: Array<Race>) =>
             value.finish === 1 && predicate?.(value, index, array) !== false)
@@ -72,15 +107,33 @@ export class RaceList extends Array<Race> {
             .pop();
     }
 
+    /**
+     * Calculates the total earnings of the race list.
+     * 
+     * @param predicate - An optional predicate used to filter the races.
+     * @returns The total earnings of the race list, filtered by the predicate if given.
+     */
     getEarnings(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): number {
         return (predicate == null ? this.slice() : this.filter(predicate))
             .reduce((earnings, race) => earnings + this.#getEarnings(race.purse ?? 0, race.finish ?? 0), 0);
     }
 
+    /**
+     * Calculates the number of starts of the race list.
+     * 
+     * @param predicate - An optional predicate used to filter the races.
+     * @returns The number of starts of the race list, filtered by the predicate if given.
+     */
     getStarts(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): number {
         return (predicate == null ? this.slice() : this.filter(predicate)).length;
     }
 
+    /**
+     * Calculates the race summary of the race list.
+     * 
+     * @param predicate - An optional predicate used to filter the races.
+     * @returns The race summary of the race list, filtered by the predicate if given.
+     */
     getSummary(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): [number, number, number, number, number] {
         return (predicate == null ? this.slice() : this.filter(predicate))
             .reduce(([starts, firsts, seconds, thirds, earnings], race) => [
@@ -92,6 +145,12 @@ export class RaceList extends Array<Race> {
             ], [0, 0, 0, 0, 0]);
     }
 
+    /**
+     * Calculates the number of wins of the race list.
+     * 
+     * @param predicate - An optional predicate used to filter the races.
+     * @returns The number of wins of the race list, filtered by the predicate if given.
+     */
     getWins(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): number {
         return this.filter((value: Race, index: number, array: Array<Race>) =>
             value.finish === 1 && predicate?.(value, index, array) !== false).length;
