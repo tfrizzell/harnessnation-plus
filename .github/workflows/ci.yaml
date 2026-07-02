@@ -10,10 +10,10 @@ on:
       - ".nvmrc"
       - "global.setup.ts"
       - "gulpfile.mjs"
-      - "jest.config.ts"
-      - "jest.setup.ts"
       - "package.json"
       - "tsconfig*.json"
+      - "vitest.config.ts"
+      - "vitest.setup.ts"
       - "yarn.lock"
   push:
     branches: [main, release/*]
@@ -24,10 +24,10 @@ on:
       - ".nvmrc"
       - "global.setup.ts"
       - "gulpfile.mjs"
-      - "jest.config.ts"
-      - "jest.setup.ts"
       - "package.json"
       - "tsconfig*.json"
+      - "vitest.config.ts"
+      - "vitest.setup.ts"
       - "yarn.lock"
   release:
     types: [created, published]

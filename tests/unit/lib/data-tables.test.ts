@@ -1,3 +1,4 @@
+import { type Mock, beforeAll, describe, expect, it } from 'vitest';
 import DataTables, { DataTablesMode, DataTablesOptions } from '@src/lib/data-tables';
 import { DataTablesSettings } from '@src/lib/settings';
 
@@ -138,8 +139,10 @@ describe(`DataTables`, () => {
             }
         };
 
+        const getMock = chrome.storage.sync.get as Mock;
+
         beforeAll(() => {
-            (chrome.storage.sync.get as jest.Mock).mockImplementation((keys: string | string[] | object): Promise<object> => {
+            getMock.mockImplementation((keys: string | string[] | object): Promise<object> => {
                 if (typeof keys === 'string')
                     return Promise.resolve(keys in mockData ? { [keys]: mockData[keys] } : {});
 
@@ -151,10 +154,6 @@ describe(`DataTables`, () => {
 
                 return Promise.resolve(mockData);
             });
-        });
-
-        afterAll(() => {
-            (chrome.storage.sync.get as jest.Mock).mockRestore();
         });
 
         it(`exists`, () => {

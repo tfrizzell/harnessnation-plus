@@ -1,4 +1,5 @@
-import { TaskQueue } from "@src/lib/task-queue";
+import { describe, expect, it } from 'vitest';
+import { TaskQueue } from '@src/lib/task-queue';
 
 describe(`TaskQueue`, () => {
     describe(`add`, () => {

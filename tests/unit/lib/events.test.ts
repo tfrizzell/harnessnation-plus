@@ -1,9 +1,5 @@
+import { describe, expect, it } from 'vitest';
 import { EventType, onInstalled, onLoad } from '@src/lib/events';
-
-afterAll(() => {
-    jest.clearAllTimers();
-    jest.clearAllMocks();
-});
 
 describe(`EventType`, () => {
     it(`exists`, () => {

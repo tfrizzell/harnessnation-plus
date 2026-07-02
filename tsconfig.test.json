@@ -11,15 +11,14 @@
         },
         "types": [
             "node",
-            "jest",
             "chrome"
         ]
     },
     "include": [
-        "global.setup.ts",
-        "jest.config.ts",
-        "jest.setup.ts",
         "src/**/*.ts",
-        "tests/**/*"
+        "tests/**/*",
+        "global.setup.ts",
+        "vitest.config.ts",
+        "vitest.setup.ts"
     ]
 }

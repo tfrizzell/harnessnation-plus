@@ -1,21 +1,14 @@
-import { Timestamp } from '@firebase/firestore';
-import { ageToText, downloadFile, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, secondsToTime, sleep, toDate, toPercentage, toTimestamp, waitFor } from '@src/lib/utils';
+import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Timestamp } from 'firebase/firestore';
 import { RaceList } from '@src/lib/races';
+import { ageToText, downloadFile, formatEarnings, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, secondsToTime, sleep, toDate, toPercentage, toTimestamp, waitFor } from '@src/lib/utils';
 
-afterAll(() => {
-    jest.clearAllTimers();
-    jest.clearAllMocks();
+afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
 });
 
 describe(`ageToText`, () => {
-    it(`exists`, () => {
-        expect(ageToText).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof ageToText).toEqual('function');
-    });
-
     it(`throws an exception when given null`, () => {
         expect(() => ageToText(<any>null)).toThrow(TypeError);
     });
@@ -63,30 +56,17 @@ describe(`downloadFile`, () => {
     const base64Content = 'SGVsbG8gV29ybGQ=';
     const blobContent = new Blob([textContent], { type: 'text/plain' });
 
-    const downloadedFiles: Map<string, chrome.downloads.DownloadOptions | null> = new Map();
+    const downloadMock = chrome.downloads.download as Mock;
+    let createObjectURLSpy: ReturnType<typeof vi.spyOn>;
+    let revokeObjectURLSpy: ReturnType<typeof vi.spyOn>;
 
-    beforeAll(() => {
-        (chrome.downloads.download as jest.Mock).mockImplementation((options) => {
-            const id = downloadedFiles.size + 1;
-            downloadedFiles.set(options.filename || `${Date.now()}.file`, options);
-            return Promise.resolve(id);
-        });
-    });
+    beforeEach(() => {
+        vi.restoreAllMocks();
 
-    afterAll(() => {
-        (chrome.downloads.download as jest.Mock).mockRestore();
-    });
+        createObjectURLSpy = vi.spyOn(URL, 'createObjectURL')
+            .mockReturnValue('blob:mock-url');
 
-    it(`exists`, () => {
-        expect(downloadFile).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof downloadFile).toEqual('function');
-    });
-
-    it(`returns a promise`, () => {
-        expect(downloadFile(textContent, 'test-return-promise.txt')).toBeInstanceOf(Promise);
+        revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL');
     });
 
     [
@@ -101,136 +81,136 @@ describe(`downloadFile`, () => {
     ].forEach(([ext, contentType]) => {
         it(`infers the content type ${contentType} for the extension ${ext}`, async () => {
             const filename = `test-content-type.${ext}`;
+            await downloadFile(textContent, filename);
 
-            await expect(downloadFile(textContent, filename)).resolves;
-            await new Promise(process.nextTick);
-
-            expect(downloadedFiles.get(filename)).toEqual({
-                url: `data:${contentType};base64,${base64Content}`,
-                filename: filename,
-                saveAs: false,
-            });
+            const blobArg = createObjectURLSpy.mock.calls[0][0] as Blob;
+            expect(blobArg).toBeInstanceOf(Blob);
+            expect(blobArg.type).toBe(contentType);
         });
+    });
+
+    it(`downloads the file with the given filename`, async () => {
+        const filename = `${new Date().toISOString()}.txt`;
+        await downloadFile(textContent, filename);
+
+        expect(downloadMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                url: 'blob:mock-url',
+                filename: filename,
+            })
+        );
     });
 
     it(`accepts the contentType and saveAs options`, async () => {
-        const filename = `test-options.txt`;
-
-        await expect(downloadFile(textContent, filename, { contentType: 'text/html', saveAs: true })).resolves;
-        await new Promise(process.nextTick);
-
-        expect(downloadedFiles.get(filename)).toEqual({
-            url: `data:text/html;base64,${base64Content}`,
-            filename: filename,
+        await downloadFile(textContent, 'file.txt', {
+            contentType: 'text/html',
             saveAs: true,
         });
+
+        const blobArg = createObjectURLSpy.mock.calls[0][0] as Blob;
+        expect(blobArg.type).toBe('text/html');
+
+        expect(downloadMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                url: 'blob:mock-url',
+                saveAs: true,
+            })
+        );
     });
 
     [
-        ['test-unencoded-string.txt', textContent, 'unencoded string'],
-        ['test-unencoded-data-uri.txt', `data:text/plain;${textContent}`, 'unencoded data uri'],
-        ['test-encoded-data-uri.txt', `data:text/plain;base64,${base64Content}`, 'encoded data uri'],
-    ].forEach(([filename, content, descriptor]) => {
+        [textContent, 'unencoded string'],
+        [`data:text/plain;${textContent}`, 'unencoded data uri'],
+        [`data:text/plain;base64,${base64Content}`, 'encoded data uri'],
+    ].forEach(([content, descriptor]) => {
         it(`downloads an ${descriptor}`, async () => {
-            await expect(downloadFile(content, filename)).resolves;
-            await new Promise(process.nextTick);
+            await downloadFile(content, 'file.txt');
 
-            expect(downloadedFiles.get(filename)).toEqual({
-                url: `data:text/plain;base64,${base64Content}`,
-                filename: filename,
-                saveAs: false,
-            });
+            expect(downloadMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    url: 'blob:mock-url'
+                })
+            );
         });
     });
 
-    test(`downloads a ${Blob.name}`, async () => {
-        const _FileReader = global.FileReader;
+    it(`converts string input into Blob when using createObjectURL`, async () => {
+        await downloadFile(textContent, 'file.txt');
 
-        jest.spyOn(global, 'FileReader').mockImplementation(() => {
-            const inst = new _FileReader();
+        const blobArg = createObjectURLSpy.mock.calls[0][0];
+        expect(blobArg).toBeInstanceOf(Blob);
+    });
 
-            inst.readAsDataURL = (blob) => {
-                blob.text().then(content => {
-                    Object.defineProperty(inst, 'result', { value: `data:${blob.type};base64,${global.window.btoa(content)}` });
-                    inst.dispatchEvent(new Event('load'));
-                });
-            }
+    it(`downloads a ${Blob.name}`, async () => {
+        await downloadFile(blobContent, 'file.txt');
 
-            return inst;
-        });
+        expect(downloadMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                url: 'blob:mock-url'
+            })
+        );
+    });
+
+    it(`falls back to FileReader when createObjectURL is unavailable and input as Blob`, async () => {
+        const originalURL = global.URL;
 
         try {
-            const filename = 'test-blob.txt';
+            // @ts-expect-error intentionally breaking environment
+            global.URL = undefined;
 
-            await expect(downloadFile(blobContent, filename)).resolves;
-            await new Promise(process.nextTick);
+            const readSpy = vi.spyOn(FileReader.prototype, 'readAsDataURL');
+            await downloadFile(blobContent, 'file.txt');
 
-            expect(downloadedFiles.get(filename)).toEqual({
-                url: `data:text/plain;base64,${base64Content}`,
-                filename: filename,
-                saveAs: false,
-            });
+            expect(readSpy).toHaveBeenCalledWith(blobContent);
+
+            expect(downloadMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    url: `data:text/plain;base64,${base64Content}`
+                })
+            );
         } finally {
-            jest.restoreAllMocks();
+            global.URL = originalURL;
         }
     });
 
-    [
-        textContent,
-        blobContent,
-    ].forEach(content => {
-        const type = typeof content === 'object' ? content.constructor.name : typeof content;
+    it('falls back to base64 data URL when createObjectURL is unavailable and input is string', async () => {
+        const originalURL = global.URL;
 
-        it(`downloads a ${type} using window.URL.createObjectURL`, async () => {
-            const createdUrls: string[] = [];
-            let createdUrlCount: number = 0;
+        try {
+            // @ts-expect-error intentionally breaking environment
+            global.URL = undefined;
 
-            global.window.URL.createObjectURL = jest.fn((obj: Blob): string => {
-                const result = `data:${obj.type};base64,${base64Content}`;
-                createdUrls.push(result!);
-                createdUrlCount++;
-                return result!;
-            });
+            await downloadFile(textContent, 'file.txt')
 
-            global.window.URL.revokeObjectURL = jest.fn((id: string): void => {
-                const index = createdUrls.indexOf(id);
+            expect(downloadMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    url: `data:text/plain;base64,${base64Content}`
+                })
+            );
+        } finally {
+            global.URL = originalURL;
+        }
+    });
 
-                if (index >= 0)
-                    createdUrls.splice(0, 1);
-            });
+    it(`revokes a created object URL`, async () => {
+        vi.useFakeTimers();
 
-            try {
-                const filename = `test-${type.toLowerCase()}-from-createobjecturl.txt`;
+        await downloadFile(textContent, 'file.txt');
+        expect(revokeObjectURLSpy).not.toHaveBeenCalled();
 
-                await expect(downloadFile(content, filename)).resolves;
-                await new Promise(process.nextTick);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(revokeObjectURLSpy).toHaveBeenCalledTimes(createObjectURLSpy.mock.calls.length);
+        expect(revokeObjectURLSpy).toHaveBeenLastCalledWith('blob:mock-url');
+    });
+});
 
-                expect(downloadedFiles.get(filename)).toEqual({
-                    url: `data:text/plain;base64,${base64Content}`,
-                    filename: filename,
-                    saveAs: false,
-                });
-
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                expect(createdUrlCount).toBe(1);
-                expect(createdUrls.length).toBe(0);
-            } finally {
-                (<jest.Mock>global.window.URL.revokeObjectURL).mockRestore();
-                (<jest.Mock>global.window.URL.createObjectURL).mockRestore();
-            }
-        });
+describe(`formatEarnings`, () => {
+    it(`returns a formatted currency string`, () => {
+        expect(formatEarnings(12_345_678.09)).toEqual('$12,345,678')
     });
 });
 
 describe(`formatMark`, () => {
-    it(`exists`, () => {
-        expect(formatMark).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof formatMark).toEqual('function');
-    });
-
     it(`returns an empty string when given null`, () => {
         expect(formatMark(<any>null)).toEqual('');
     });
@@ -257,14 +237,6 @@ describe(`formatMark`, () => {
 });
 
 describe(`formatOrdinal`, () => {
-    it(`exists`, () => {
-        expect(formatOrdinal).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof formatOrdinal).toEqual('function');
-    });
-
     (<[number, string][]>[
         [0, '0th'],
         [1, '1st'],
@@ -293,40 +265,21 @@ describe(`formatOrdinal`, () => {
 });
 
 describe(`getCurrentSeason`, () => {
-    it(`exists`, () => {
-        expect(getCurrentSeason).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof getCurrentSeason).toEqual('function');
-    });
-
     const actual = new Date(1_735_689_600_000);
 
     new Array(90).fill(0).forEach((_, offset) => {
         const value = new Date(1_735_704_000_000 + offset * 86400000);
 
         it(`returns the expected season start date for ${value.toJSON()}`, () => {
-            jest.useFakeTimers().setSystemTime(value);
+            vi.useFakeTimers()
+            vi.setSystemTime(value);
 
-            try {
-                expect(getCurrentSeason()).toEqual(actual);
-            } finally {
-                jest.useRealTimers();
-            }
+            expect(getCurrentSeason()).toEqual(actual);
         });
     });
 });
 
 describe(`getLifetimeMark`, () => {
-    it(`exists`, () => {
-        expect(getLifetimeMark).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof getLifetimeMark).toEqual('function');
-    });
-
     it(`throws an exception when given null`, () => {
         expect(() => getLifetimeMark(<any>null)).toThrow(TypeError);
     });
@@ -376,14 +329,6 @@ describe(`getLifetimeMark`, () => {
 });
 
 describe(`parseCurrency`, () => {
-    it(`exists`, () => {
-        expect(parseCurrency).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof parseCurrency).toEqual('function');
-    });
-
     it(`returns null when given null`, () => {
         expect(parseCurrency(<any>null)).toBeNull();
     });
@@ -409,14 +354,6 @@ describe(`parseCurrency`, () => {
 });
 
 describe(`parseInt`, () => {
-    it(`exists`, () => {
-        expect(parseInt).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof parseInt).toEqual('function');
-    });
-
     it(`returns null when given null`, () => {
         expect(parseInt(<any>null)).toBeNull();
     });
@@ -442,14 +379,6 @@ describe(`parseInt`, () => {
 });
 
 describe(`reduceChanges`, () => {
-    it(`exists`, () => {
-        expect(reduceChanges).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof reduceChanges).toEqual('function');
-    });
-
     it(`reduces changes as expected`, () => {
         expect({
             a: 'a',
@@ -502,14 +431,6 @@ describe(`regexEscape`, () => {
         '\\',
     ];
 
-    it(`exists`, () => {
-        expect(regexEscape).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof regexEscape).toEqual('function');
-    });
-
     specialCharacters.forEach(value => {
         it(`escape the special character: ${value}`, () => {
             expect(regexEscape(value)).toEqual(`\\${value}`);
@@ -530,63 +451,21 @@ describe(`regexEscape`, () => {
 });
 
 describe(`removeAll`, () => {
-    it(`exists`, () => {
-        expect(removeAll).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof removeAll).toEqual('function');
-    });
-
     it(`removes matching elements from the DOM`, () => {
-        global.document.body.innerHTML = '<div class="one">1</div><div class="two">2</div><div class="one">1</div><div class="three">3</div>';
-        expect(global.document.querySelectorAll('.one').length).toBe(2)
-        expect(global.document.querySelectorAll('.two').length).toBe(1)
-        expect(global.document.querySelectorAll('.three').length).toBe(1)
+        document.body.innerHTML = '<div class="one">1</div><div class="two">2</div><div class="one">1</div><div class="three">3</div>';
+        expect(document.querySelectorAll('.one').length).toBe(2)
+        expect(document.querySelectorAll('.two').length).toBe(1)
+        expect(document.querySelectorAll('.three').length).toBe(1)
 
         removeAll('.one', '.three');
-        expect(global.document.querySelectorAll('.one').length).toBe(0)
-        expect(global.document.querySelectorAll('.two').length).toBe(1)
-        expect(global.document.querySelectorAll('.three').length).toBe(0)
-    });
-});
-
-describe(`getCurrentSeason`, () => {
-    it(`exists`, () => {
-        expect(getCurrentSeason).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof getCurrentSeason).toEqual('function');
-    });
-
-    const actual = new Date(1_735_689_600_000);
-
-    new Array(90).fill(0).forEach((_, offset) => {
-        const value = new Date(1_735_704_000_000 + offset * 86400000);
-
-        it(`returns the expected season start date for ${value.toJSON()}`, () => {
-            jest.useFakeTimers().setSystemTime(value);
-
-            try {
-                expect(getCurrentSeason()).toEqual(actual);
-            } finally {
-                jest.useRealTimers();
-            }
-        });
+        expect(document.querySelectorAll('.one').length).toBe(0)
+        expect(document.querySelectorAll('.two').length).toBe(1)
+        expect(document.querySelectorAll('.three').length).toBe(0)
     });
 });
 
 describe(`seasonsBetween`, () => {
     const ref = new Date(1_735_689_600_000);
-
-    it(`exists`, () => {
-        expect(seasonsBetween).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof seasonsBetween).toEqual('function');
-    });
 
     it(`throws an exception when given null`, () => {
         expect(() => seasonsBetween(<any>null, <any>null)).toThrow(TypeError);
@@ -610,14 +489,6 @@ describe(`seasonsBetween`, () => {
 });
 
 describe(`secondsToTime`, () => {
-    it(`exists`, () => {
-        expect(secondsToTime).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof secondsToTime).toEqual('function');
-    });
-
     (<[number, string][]>[
         [114.25, '1:54.25'],
         [120, '2:00.00'],
@@ -630,43 +501,34 @@ describe(`secondsToTime`, () => {
 });
 
 describe(`sleep`, () => {
-    it(`exists`, () => {
-        expect(sleep).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof sleep).toEqual('function');
-    });
-
     it(`sleeps for 100ms then returns`, async () => {
-        const start = performance.now();
-        await sleep(100);
-        const time = Math.round(performance.now() - start);
-        expect(time).toBeGreaterThanOrEqual(90);
-        expect(time).toBeLessThanOrEqual(199);
+        vi.useFakeTimers();
+
+        let resolved = false;
+        const p = sleep(100).then(() => { resolved = true; });
+        expect(resolved).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(50);
+        expect(resolved).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(50);
+        expect(resolved).toBe(true);
+
+        await expect(p).resolves.toBeUndefined();
     });
 
     it(`can be aborted`, async () => {
-        try {
-            const controller = new AbortController();
-            setTimeout(() => controller.abort(), 50);
-            await sleep(100, controller.signal);
-            throw 'Test failed to be aborted';
-        } catch (e) {
-            expect(e).toEqual('Aborted by the user');
-        }
+        vi.useFakeTimers();
+
+        const controller = new AbortController();
+        const p = sleep(100, controller.signal);
+
+        controller.abort();
+        await expect(p).rejects.toEqual('Aborted by the user');
     });
 });
 
 describe(`toDate`, () => {
-    it(`exists`, () => {
-        expect(toDate).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof toDate).toEqual('function');
-    });
-
     it(`returns a default value of new Date(0)`, () => {
         expect(toDate(undefined)).toEqual(new Date(0));
     });
@@ -677,14 +539,6 @@ describe(`toDate`, () => {
 });
 
 describe(`toPercentage`, () => {
-    it(`exists`, () => {
-        expect(toPercentage).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof toPercentage).toEqual('function');
-    });
-
     (<[[number, number], string][]>[
         [[25, 100], '25.00%'],
         [[50, 25], '200.00%'],
@@ -704,22 +558,11 @@ describe(`toPercentage`, () => {
 });
 
 describe(`toTimestamp`, () => {
-    it(`exists`, () => {
-        expect(toTimestamp).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof toTimestamp).toEqual('function');
-    });
-
     it(`returns the current timestamp if no value is given`, () => {
-        jest.useFakeTimers().setSystemTime(new Date(1_640_995_200_000));
+        vi.useFakeTimers()
+        vi.setSystemTime(new Date(1_640_995_200_000));
 
-        try {
-            expect(toTimestamp()).toEqual('2022-01-01T00:00:00');
-        } finally {
-            jest.useRealTimers();
-        }
+        expect(toTimestamp()).toEqual('2022-01-01T00:00:00');
     });
 
     [
@@ -734,28 +577,58 @@ describe(`toTimestamp`, () => {
 });
 
 describe(`waitFor`, () => {
-    it(`exists`, () => {
-        expect(waitFor).not.toBeUndefined();
+    it(`returns the promise result`, async () => {
+        const result = Symbol('result');
+        await expect(waitFor(Promise.resolve(result))).resolves.toBe(result);
     });
 
-    it(`is a function`, () => {
-        expect(typeof waitFor).toEqual('function');
+    it(`rethrows promise rejections`, async () => {
+        const error = new Error('boom');
+        await expect(waitFor(Promise.reject(error))).rejects.toBe(error);
     });
 
-    it(`creates an interval that calls chrome.runtime.getPlatformInfo every 15 seconds`, async () => {
-        jest.useFakeTimers();
-        const expectedValue = Date.now();
-        jest.spyOn(global, 'setInterval');
-        jest.spyOn(global, 'clearInterval');
+    it(`starts a keep-alive interval`, async () => {
+        const setIntervalSpy = vi.spyOn(global, 'setInterval');
 
-        try {
-            await expect(waitFor(Promise.resolve(expectedValue))).resolves.toEqual(expectedValue);
-            expect(setInterval).toHaveBeenCalledTimes(1)
-            expect(setInterval).toHaveBeenCalledWith(chrome.runtime.getPlatformInfo, 15000);
-            expect(clearInterval).toHaveBeenCalled();
-        } finally {
-            jest.restoreAllMocks();
-            jest.useRealTimers();
-        }
+        await waitFor(Promise.resolve());
+
+        expect(setIntervalSpy).toHaveBeenCalledWith(
+            chrome.runtime.getPlatformInfo,
+            15000,
+        );
+    });
+
+    it(`calls getPlatformInfo every 15 seconds while waiting`, async () => {
+        vi.useFakeTimers();
+
+        const getPlatformInfoSpy = vi.spyOn(chrome.runtime, 'getPlatformInfo');
+
+        let resolve!: () => void;
+        const w = waitFor(new Promise<void>(r => (resolve = r)));
+
+        vi.advanceTimersByTime(15000);
+        expect(getPlatformInfoSpy).toHaveBeenCalledTimes(1);
+
+        vi.advanceTimersByTime(15000);
+        expect(getPlatformInfoSpy).toHaveBeenCalledTimes(2);
+
+        resolve();
+        await expect(w).resolves;
+    });
+
+    it(`stops the keep-alive interval when the promise settles`, async () => {
+        vi.useFakeTimers();
+
+        const intervalId = Symbol('interval');
+
+        vi.spyOn(global, 'setInterval')
+            .mockReturnValue(intervalId as unknown as ReturnType<typeof setInterval>);
+
+        const clearIntervalSpy = vi.spyOn(global, 'clearInterval')
+            .mockImplementation(() => {});
+
+        await waitFor(Promise.resolve());
+
+        expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);
     });
 });

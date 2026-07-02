@@ -1,6 +1,8 @@
+import { describe, expect, it } from 'vitest';
+import '@mocks/harnessnation';
+
 import { Horse } from '../../../src/lib/horses';
 import { BreedingScore, calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStallionScore, createStallionScoreBadge, StallionScore } from '../../../src/lib/stallion-scores';
-import '@mocks/harnessnation';
 
 describe(`calculateBloodlineScore`, () => {
     it(`exists`, () => {
