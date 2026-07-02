@@ -22,8 +22,12 @@ export class TaskQueue {
      * Creates a new task queue.
      * 
      * @param limit - The maximum number of tasks that may execute concurrently.
+     * @throws RangeError - If the limit is invalid.
      */
     constructor(limit: number) {
+        if (!Number.isInteger(limit) || limit < 1)
+            throw new RangeError('TaskQueue limit must be a positive integer');
+
         this.#limit = limit;
     }
 
@@ -43,7 +47,8 @@ export class TaskQueue {
                 this.#active++;
 
                 Promise
-                    .resolve(task())
+                    .resolve()
+                    .then(task)
                     .then(resolve, reject)
                     .finally(() => {
                         this.#active--;

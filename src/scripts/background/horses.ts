@@ -530,19 +530,20 @@ async function updateStallionScores(): Promise<void> {
     const updated: HorseWithLastModified[] = (await Promise.all(tasks))
         .filter(horse => horse != null);
 
-    updated.map(horse =>
-        tq.add(async () => {
-            try {
-                horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
-                horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!);
-            } catch (e: any) {
-                console.warn(`%chorses.ts%c     Failed to compute stallion score for horse ${horse.id}: ${e.message ?? e}`, 'color:#406e8e;font-weight:bold;', '');
-                console.error(e);
-            }
-        })
+    await Promise.allSettled(
+        updated.map(horse =>
+            tq.add(async () => {
+                try {
+                    horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
+                    horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!);
+                } catch (e: any) {
+                    console.warn(`%chorses.ts%c     Failed to compute stallion score for horse ${horse.id}: ${e.message ?? e}`, 'color:#406e8e;font-weight:bold;', '');
+                    console.error(e);
+                }
+            })
+        )
     );
 
-    await tq.onIdle();
     let chunk: HorseWithLastModified[];
 
     while ((chunk = updated.splice(0, 25)) && chunk.length > 0) {

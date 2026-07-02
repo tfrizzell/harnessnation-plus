@@ -682,22 +682,23 @@ export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumb
     const pdfDoc = await createPDF();
     const fonts = await loadFonts(pdfDoc);
 
-    horses.map(([horse, hipNumber]) =>
-        tq.add(() =>
-            addPedigreePage(
-                pdfDoc,
-                horse,
-                showHipNumbers
-                    ? hipNumber
-                    : undefined,
-                fullPedigrees,
-                csrfToken,
-                fonts
+    await Promise.all(
+        horses.map(([horse, hipNumber]) =>
+            tq.add(() =>
+                addPedigreePage(
+                    pdfDoc,
+                    horse,
+                    showHipNumbers
+                        ? hipNumber
+                        : undefined,
+                    fullPedigrees,
+                    csrfToken,
+                    fonts
+                )
             )
         )
-    )
+    );
 
-    await tq.onIdle();
     await addWatermark(pdfDoc);
 
     const dataUri = await pdfDoc.saveAsBase64({ dataUri: true });
@@ -957,33 +958,36 @@ async function populateAncestors(pedigree: Ancestor[], csrfToken?: string): Prom
 
     const ancestors = new Map<number | undefined, Ancestor>();
 
-    Array(2 ** (PEDIGREE_GENERATIONS + 1) - 2)
-        .fill(0)
-        .map((_, i) =>
-            tq.add(async () => {
-                const ancestor = ancestors.get(pedigree[i]?.id) ?? pedigree[i] ?? { name: 'Undefined' };
+    await Promise.all(
+        Array(2 ** (PEDIGREE_GENERATIONS + 1) - 2)
+            .fill(0)
+            .map((_, i) =>
+                tq.add(async () => {
+                    let ancestor = ancestors.get(pedigree[i]?.id) ?? pedigree[i] ?? { name: 'Undefined' };
 
-                if (ancestor.id != null) {
-                    const races = ancestors.get(ancestor.id)?.races ?? await getRaces(ancestor.id, csrfToken);
+                    if (ancestor.id != null) {
+                        const races = ancestors.get(ancestor.id)?.races ?? await getRaces(ancestor.id, csrfToken);
 
-                    if (!ancestors.has(ancestor.id)) {
-                        ancestor.sireId = pedigree[2 * (i + 1)]?.id;
-                        ancestor.damId = pedigree[2 * (i + 1) + 1]?.id;
-                        ancestor.lifetimeMark = getLifetimeMark(races);
+                        if (!ancestors.has(ancestor.id)) {
+                            ancestor.sireId = pedigree[2 * (i + 1)]?.id;
+                            ancestor.damId = pedigree[2 * (i + 1) + 1]?.id;
+                            ancestor.lifetimeMark = getLifetimeMark(races);
+                        }
+
+                        if (showDamInfo(i) && (ancestor.progeny == null || ancestor.races == null)) {
+                            const progeny = await getProgeny(ancestor.id, csrfToken);
+                            ancestor = ancestors.get(pedigree[i]?.id) ?? pedigree[i] ?? { name: 'Undefined' };
+                            ancestor.progeny = progeny;
+                            ancestor.races = races;
+                        }
                     }
 
-                    if (showDamInfo(i) && (ancestor.progeny == null || ancestor.races == null)) {
-                        ancestor.progeny = await getProgeny(ancestor.id, csrfToken);
-                        ancestor.races = races;
-                    }
-                }
+                    if (ancestor.id != null && !ancestors.has(ancestor.id))
+                        ancestors.set(ancestor.id, ancestor);
+                })
+            )
+    );
 
-                if (ancestor.id != null && !ancestors.has(ancestor.id))
-                    ancestors.set(ancestor.id, ancestor);
-            })
-        );
-
-    await tq.onIdle();
     return ancestors;
 }
 
@@ -991,17 +995,17 @@ async function populateProgenyData(progeny: Progeny[], csrfToken?: string): Prom
     const tq = new TaskQueue(3);
     csrfToken ??= await api.getCSRFToken();
 
-    progeny.map(prog =>
-        tq.add(async () => {
-            if (prog?.id == null)
-                return;
+    await Promise.all(
+        progeny.map(prog =>
+            tq.add(async () => {
+                if (prog?.id == null)
+                    return;
 
-            prog.races = await getRaces(prog.id, csrfToken);
-            prog.earnings = prog.races.getEarnings();
-        })
-    );
-
-    await tq.onIdle();
+                prog.races = await getRaces(prog.id, csrfToken);
+                prog.earnings = prog.races.getEarnings();
+            })
+        )
+    )
 }
 
 async function recordTelemetry(start: number, pageCount: number): Promise<void> {
