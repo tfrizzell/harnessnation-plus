@@ -1,9 +1,5 @@
+import { describe, expect, it } from 'vitest';
 import { HNPlusRuntimeError } from '@src/lib/errors';
-
-afterAll(() => {
-    jest.clearAllTimers();
-    jest.clearAllMocks();
-});
 
 describe(`HNPlusRuntimeError`, () => {
     it(`exists`, () => {

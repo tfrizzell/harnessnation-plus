@@ -1,5 +1,7 @@
-import { generateBreedingReport } from '@src/lib/reporting';
+import { describe, expect, it } from 'vitest';
 import '@mocks/harnessnation';
+
+import { generateBreedingReport } from '@src/lib/reporting';
 
 describe(`generateBreedingReport`, () => {
     it(`exists`, () => {

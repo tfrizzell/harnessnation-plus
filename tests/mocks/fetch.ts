@@ -1,10 +1,11 @@
-import fs from 'fs';
-import path from 'path';
+import { afterAll, beforeAll, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const originalFetch = global.fetch;
 
 beforeAll(() => {
-    global.fetch = jest.fn((input: string | URL | Request, init?: RequestInit | undefined): Promise<Response> => {
+    global.fetch = vi.fn((input: string | URL | Request, init?: RequestInit | undefined): Promise<Response> => {
         const url = typeof input === 'string'
             ? input
             : input instanceof URL

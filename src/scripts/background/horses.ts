@@ -6,6 +6,7 @@ import { AlarmType } from '../../lib/alarms.js';
 import { HNPlusRuntimeError } from '../../lib/errors.js';
 import { calculateStudFee, getHorse, Horse } from '../../lib/horses.js';
 import { generatePedigreeCatalog as downloadPedigreeCatalog } from '../../lib/pedigree.js';
+import { TaskQueue } from '../../lib/task-queue.js';
 import { generateBreedingReport as generateBreedingReportAsync } from '../../lib/reporting.js';
 import { calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStallionScore, StallionScore } from '../../lib/stallion-scores.js';
 import { downloadFile, isMobileOS, regexEscape, toTimestamp, waitFor } from '../../lib/utils.js';
@@ -487,42 +488,63 @@ async function updateStallionScores(): Promise<void> {
     console.debug(`%chorses.ts%c     Updating stallion scores`, 'color:#406e8e;font-weight:bold;', '');
 
     const horses = await getHorsesWithLastModified();
-    const updated: HorseWithLastModified[] = [];
-    let chunk: HorseWithLastModified[];
+    const tq = new TaskQueue(3);
 
-    for (const horse of horses) {
-        if (!shouldUpdateStallionScore(horse))
-            continue;
+    let tasks = horses.map(horse =>
+        tq.add(async () => {
+            if (!shouldUpdateStallionScore(horse))
+                return;
 
-        if (!horse.retired || (!!horse.sireId !== !!horse.damId)) {
-            try {
-                const info = await getHorse(horse.id!);
-                horse.name = info.name;
-                horse.sireId = info.sireId;
-                horse.damId = info.damId;
-                horse.retired = info.retired;
-            } catch (e: any) {
-                console.warn(`%chorses.ts%c     Failed to fetch info for horse ${horse.id}: ${e.message ?? e}`, 'color:#406e8e;font-weight:bold;', '');
-                console.error(e);
-                continue;
+            if (!horse.retired || (!!horse.sireId !== !!horse.damId)) {
+                try {
+                    const info = await getHorse(horse.id!);
+                    horse.name = info.name;
+                    horse.sireId = info.sireId;
+                    horse.damId = info.damId;
+                    horse.retired = info.retired;
+                } catch (e: any) {
+                    console.warn(`%chorses.ts%c     Failed to fetch info for horse ${horse.id}: ${e.message ?? e}`, 'color:#406e8e;font-weight:bold;', '');
+                    console.error(e);
+                    return;
+                }
             }
-        }
 
-        const { score: breedingScore, confidence } = await calculateBreedingScore(horse.id!);
-        horse.stallionScore ??= {};
-        horse.stallionScore!.breeding = breedingScore;
-        horse.stallionScore!.confidence = confidence;
+            try {
+                const { score: breedingScore, confidence } = await calculateBreedingScore(horse.id!);
+                horse.stallionScore ??= {};
+                horse.stallionScore!.breeding = breedingScore;
+                horse.stallionScore!.confidence = confidence;
 
-        if (horse.stallionScore!.racing === undefined)
-            horse.stallionScore!.racing = await calculateRacingScore(horse.id!);
+                if (horse.stallionScore!.racing === undefined)
+                    horse.stallionScore!.racing = await calculateRacingScore(horse.id!);
 
-        updated.push(horse)
-    }
+                return horse;
+            } catch (e: any) {
+                console.warn(`%chorses.ts%c     Failed to compute stallion score for horse ${horse.id}: ${e.message ?? e}`, 'color:#406e8e;font-weight:bold;', '');
+                console.error(e);
+                return;
+            }
+        })
+    );
 
-    for (const horse of updated) {
-        horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
-        horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!);
-    }
+    const updated: HorseWithLastModified[] = (await Promise.all(tasks))
+        .filter(horse => horse != null);
+
+    await Promise.allSettled(
+        updated.map(horse =>
+            tq.add(async () => {
+                try {
+                    horse.stallionScore!.bloodline = await calculateBloodlineScore(horse.id!, horses);
+                    horse.stallionScore!.value = await calculateStallionScore(horse.stallionScore!);
+                } catch (e: any) {
+                    console.warn(`%chorses.ts%c     Failed to compute stallion score for horse ${horse.id}: ${e.message ?? e}`, 'color:#406e8e;font-weight:bold;', '');
+                    console.error(e);
+                }
+            })
+        )
+    );
+
+    let chunk: HorseWithLastModified[];
 
     while ((chunk = updated.splice(0, 25)) && chunk.length > 0) {
         const batch = writeBatch(db);

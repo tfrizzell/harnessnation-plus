@@ -119,7 +119,7 @@ export async function getBreedingReport(id: number, mode?: BreedingReportMode): 
             .replace(/\s*data-[^\s=]+="[^"]*"/g, '')
             .matchAll(/<tr[^>]*>[\s\S]*?<\/tr[^>]*>/g)
         )
-            .filter(([match]) => /<td[^>]*>\s*(1\d|[2-9])\s*<\/td[^>]*>\s*<td[^>]*>[\s\S]*?<\/td[^>]*>\s*<td[^>]*>[\s\S]*?<\/td[^>]*>\s*<td[^>]*>[\s\S]*?<\/td[^>]*>\s*<td[^>]*>\s*0\s*-\s*0\s*-\s*0\s*-\s*0\s*<\/td[^>]*>\s*<td[^>]*>\s*\$0\s*<\/td[^>]*>/i.test(match))
+            .filter(([match]) => /<td[^>]*>\s*(1\d|[2-9])\s*<\/td[^>]*>\s*<td[^>]*>[\s\S]*?<\/td[^>]*>\s*<td[^>]*>\s*<span[^>]*>\s*R\s*<\/span[^>]*>\s*<\/td[^>]*>\s*<td[^>]*>[\s\S]*?<\/td[^>]*>\s*<td[^>]*>\s*0\s*-\s*0\s*-\s*0\s*-\s*0\s*<\/td[^>]*>\s*<td[^>]*>\s*\$0\s*<\/td[^>]*>/i.test(match))
             .map(([match]) => parseInt(/<a(?=[^>]*\bhorseLink\b)[^>]*\/horse\/(\d+)[^>]*>/i.exec(match)?.[1] ?? ''))
             .filter(id => !Number.isNaN(id));
 

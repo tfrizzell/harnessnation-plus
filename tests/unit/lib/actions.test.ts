@@ -1,9 +1,5 @@
+import { type Mock, describe, expect, it, test } from 'vitest';
 import { Action, ActionError, ActionResponse, ActionType, HorseSearchData, sendAction } from '@src/lib/actions';
-
-afterAll(() => {
-    jest.clearAllTimers();
-    jest.clearAllMocks();
-});
 
 describe(`ActionType`, () => {
     it(`exists`, () => {
@@ -366,26 +362,30 @@ describe(sendAction.name, () => {
     });
 
     it(`resolves with an ${ActionResponse.name}`, async () => {
-        (chrome.runtime.sendMessage as jest.Mock).mockImplementation((action: any): Promise<ActionResponse<RegExp | string>> => {
+        const sendMessageMock = chrome.runtime.sendMessage as Mock;
+
+        sendMessageMock.mockImplementation((action: any): Promise<ActionResponse<RegExp | string>> => {
             return Promise.resolve(new ActionResponse<RegExp | string>(Action.of<HorseSearchData>(action)!, 'Astronomical'));
         });
 
         try {
             await expect(sendAction(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 })).resolves.toBeInstanceOf(ActionResponse);
         } finally {
-            (chrome.runtime.sendMessage as jest.Mock).mockRestore();
+            sendMessageMock.mockRestore();
         }
     });
 
     it(`rejects with an ${ActionError.name}`, async () => {
-        (chrome.runtime.sendMessage as jest.Mock).mockImplementation((action: any): Promise<ActionError> => {
+        const sendMessageMock = chrome.runtime.sendMessage as Mock;
+
+        sendMessageMock.mockImplementation((action: any): Promise<ActionError> => {
             return Promise.resolve(new ActionError(Action.of<HorseSearchData>(action)!, 'Invalid action'));
         });
 
         try {
             await expect(sendAction(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 })).rejects.toBeInstanceOf(ActionError);
         } finally {
-            (chrome.runtime.sendMessage as jest.Mock).mockRestore();
+            sendMessageMock.mockRestore();
         }
     });
 });
