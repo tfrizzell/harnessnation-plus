@@ -7,6 +7,7 @@ import { drawTextCentered } from './pdf/utils.js';
 import { api } from './harnessnation.js'
 import { getHorse, Horse } from './horses.js';
 import { getRaces, Race, RaceList } from './races.js';
+import { TaskQueue } from './task-queue.js';
 import { ageToText, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, isMobileOS, parseCurrency, parseInt, secondsToTime } from './utils.js';
 
 interface Ancestor {
@@ -660,26 +661,43 @@ export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumb
     }
 
     const start = performance.now();
-    const horses: [Horse, string | number | undefined][] = [];
+    const tq = new TaskQueue(3);
     let csrfToken: string | undefined;
 
-    for (let i = 0; i < ids.length; i++) {
-        const [id, hipNumber] = <[number, HipNumberType | undefined]>(Array.isArray(ids[i]) ? ids[i] : [ids[i], i + 1]);
-        const horse = await getHorse(id);
-        csrfToken ??= await api.getCSRFToken();
+    const horses = await Promise.all(
+        ids.map((row, i) =>
+            tq.add(async () => {
+                const [id, hipNumber] = (Array.isArray(row) ? row : [row, i + 1]);
+                const horse = await getHorse(id);
+                csrfToken ??= await api.getCSRFToken();
 
-        if (horse.id !== id || csrfToken == null)
-            throw new ReferenceError(`Failed to generate sale catalog: could not parse info for horse ${id}`);
+                if (horse.id !== id || csrfToken == null)
+                    throw new ReferenceError(`Failed to generate sale catalog: could not parse info for horse ${id}`);
 
-        horses.push([horse, convertHipNumber(hipNumber, i)]);
-    }
+                return [horse, convertHipNumber(hipNumber, i)] as [Horse, string | number | undefined];
+            })
+        )
+    );
 
     const pdfDoc = await createPDF();
     const fonts = await loadFonts(pdfDoc);
 
-    while (horses.length > 0)
-        await Promise.all(horses.splice(0, 3).map(([horse, hipNumber]) => addPedigreePage(pdfDoc, horse, showHipNumbers ? hipNumber : undefined, fullPedigrees, csrfToken, fonts)));
+    horses.map(([horse, hipNumber]) =>
+        tq.add(() =>
+            addPedigreePage(
+                pdfDoc,
+                horse,
+                showHipNumbers
+                    ? hipNumber
+                    : undefined,
+                fullPedigrees,
+                csrfToken,
+                fonts
+            )
+        )
+    )
 
+    await tq.onIdle();
     await addWatermark(pdfDoc);
 
     const dataUri = await pdfDoc.saveAsBase64({ dataUri: true });
@@ -934,49 +952,56 @@ async function loadFonts(pdfDoc: PDFDocument): Promise<FontMap> {
 }
 
 async function populateAncestors(pedigree: Ancestor[], csrfToken?: string): Promise<Map<number | undefined, Ancestor>> {
+    const tq = new TaskQueue(3);
     csrfToken ??= await api.getCSRFToken();
+
     const ancestors = new Map<number | undefined, Ancestor>();
 
-    for (let i = 0; i < 2 ** (PEDIGREE_GENERATIONS + 1) - 2; i += 3) {
-        await Promise.all(Array(3).fill(0).map(async (_, j) => {
-            const ancestor = ancestors.get(pedigree[i + j]?.id) ?? pedigree[i + j] ?? { name: 'Undefined' };
+    Array(2 ** (PEDIGREE_GENERATIONS + 1) - 2)
+        .fill(0)
+        .map((_, i) =>
+            tq.add(async () => {
+                const ancestor = ancestors.get(pedigree[i]?.id) ?? pedigree[i] ?? { name: 'Undefined' };
 
-            if (ancestor.id != null) {
-                const races = ancestors.get(ancestor.id)?.races ?? await getRaces(ancestor.id, csrfToken);
+                if (ancestor.id != null) {
+                    const races = ancestors.get(ancestor.id)?.races ?? await getRaces(ancestor.id, csrfToken);
 
-                if (!ancestors.has(ancestor.id)) {
-                    ancestor.sireId = pedigree[2 * (i + j + 1)]?.id;
-                    ancestor.damId = pedigree[2 * (i + j + 1) + 1]?.id;
-                    ancestor.lifetimeMark = getLifetimeMark(races);
+                    if (!ancestors.has(ancestor.id)) {
+                        ancestor.sireId = pedigree[2 * (i + 1)]?.id;
+                        ancestor.damId = pedigree[2 * (i + 1) + 1]?.id;
+                        ancestor.lifetimeMark = getLifetimeMark(races);
+                    }
+
+                    if (showDamInfo(i) && (ancestor.progeny == null || ancestor.races == null)) {
+                        ancestor.progeny = await getProgeny(ancestor.id, csrfToken);
+                        ancestor.races = races;
+                    }
                 }
 
-                if (showDamInfo(i + j) && (ancestor.progeny == null || ancestor.races == null)) {
-                    ancestor.progeny = await getProgeny(ancestor.id, csrfToken);
-                    ancestor.races = races;
-                }
-            }
+                if (ancestor.id != null && !ancestors.has(ancestor.id))
+                    ancestors.set(ancestor.id, ancestor);
+            })
+        );
 
-            if (ancestor.id != null && !ancestors.has(ancestor.id))
-                ancestors.set(ancestor.id, ancestor);
-        }));
-    }
-
+    await tq.onIdle();
     return ancestors;
 }
 
 async function populateProgenyData(progeny: Progeny[], csrfToken?: string): Promise<void> {
-    for (let i = 0; i < progeny.length; i += 3) {
-        await Promise.all(Array(3).fill(0).map(async (_, j) => {
-            const prog = progeny[i + j];
+    const tq = new TaskQueue(3);
+    csrfToken ??= await api.getCSRFToken();
 
+    progeny.map(prog =>
+        tq.add(async () => {
             if (prog?.id == null)
                 return;
 
-            csrfToken ??= await api.getCSRFToken();
             prog.races = await getRaces(prog.id, csrfToken);
             prog.earnings = prog.races.getEarnings();
-        }));
-    }
+        })
+    );
+
+    await tq.onIdle();
 }
 
 async function recordTelemetry(start: number, pageCount: number): Promise<void> {
