@@ -1,5 +1,7 @@
-import { getRaces, Race, RaceList } from '@src/lib/races';
+import { describe, expect, it } from 'vitest';
 import '@mocks/harnessnation';
+
+import { getRaces, Race, RaceList } from '@src/lib/races';
 
 describe(`getRaces`, () => {
     it(`exists`, () => {

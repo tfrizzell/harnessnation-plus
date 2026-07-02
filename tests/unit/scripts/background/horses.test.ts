@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
 import { Horse } from '@src/lib/horses';
 import { shouldUpdateStallionScore } from '@src/scripts/background/horses';

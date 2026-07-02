@@ -10,11 +10,12 @@ on:
       - ".nvmrc"
       - "global.setup.ts"
       - "gulpfile.mjs"
-      - "jest.config.ts"
-      - "jest.setup.ts"
       - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - "tsconfig*.json"
-      - "yarn.lock"
+      - "vitest.config.ts"
+      - "vitest.setup.ts"
   push:
     branches: [main, release/*]
     paths:
@@ -24,11 +25,12 @@ on:
       - ".nvmrc"
       - "global.setup.ts"
       - "gulpfile.mjs"
-      - "jest.config.ts"
-      - "jest.setup.ts"
       - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - "tsconfig*.json"
-      - "yarn.lock"
+      - "vitest.config.ts"
+      - "vitest.setup.ts"
   release:
     types: [created, published]
 
@@ -54,17 +56,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: yarn
-          cache-dependency-path: yarn.lock
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          cache: true
 
       - name: Install dependencies
-        run: yarn install --immutable --inline-builds
+        run: pnpm install --frozen-lockfile
 
       - name: Type check
-        run: yarn typecheck
+        run: pnpm typecheck
 
       - name: Run unit tests
-        run: yarn test
+        run: pnpm test
 
       - name: Build extension
-        run: yarn build
+        run: pnpm build

@@ -1,13 +1,11 @@
-import { HarnessNationAPI } from '@src/lib/harnessnation';
+import { type MockInstance, beforeEach, vi } from 'vitest';
 import '@mocks/fetch';
 
-let getCSRFTokenSpy: jest.SpyInstance;
+import { api } from '@src/lib/harnessnation';
 
-beforeAll(() => {
-    getCSRFTokenSpy = jest.spyOn(HarnessNationAPI.prototype, "getCSRFToken")
+let getCSRFTokenSpy: MockInstance;
+
+beforeEach(() => {
+    getCSRFTokenSpy = vi.spyOn(api, 'getCSRFToken')
         .mockResolvedValue('csrf-token');
-});
-
-afterAll(() => {
-    getCSRFTokenSpy.mockRestore();
 });
