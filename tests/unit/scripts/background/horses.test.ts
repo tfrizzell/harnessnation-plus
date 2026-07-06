@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
-import { Horse } from '@src/lib/horses';
-import { shouldUpdateStallionScore } from '@src/scripts/background/horses';
-import { StallionScore } from '@src/lib/stallion-scores';
+import { Horse } from 'src/lib/horses';
+import { StallionScore } from 'src/lib/stallion-scores';
+import { shouldUpdateStallionScore } from 'src/scripts/background/horses';
 
 interface HorseWithLastModified extends Horse {
     stallionScore?: StallionScoreWithLastModified;
@@ -26,7 +26,7 @@ describe(`shouldUpdateStallionScore`, () => {
         expect(typeof shouldUpdateStallionScore({})).toBe('boolean');
     });
 
-    (<[Partial<HorseWithLastModified>, boolean][]>[
+    ([
         [{}, true],
         [{ stallionScore: { lastModified: undefined } }, true],
         [{ stallionScore: { lastModified: Date.now() - 1_209_600_000 } }, false],
@@ -42,13 +42,13 @@ describe(`shouldUpdateStallionScore`, () => {
         [{ retired: true, stallionScore: { lastModified: Date.now() - 1_209_600_000 } }, true],
         [{ retired: true, stallionScore: { lastModified: Date.now() - 2_505_600_000 } }, true],
         [{ retired: true, stallionScore: { lastModified: Date.now() - 31_622_400_000 } }, false],
-    ]).forEach(([horse, expected]) => {
-        const lastModified = horse?.stallionScore?.lastModified as number | undefined;
+    ] as Array<[Partial<HorseWithLastModified>, boolean]>).forEach(([horse, expected]) => {
+        const lastModified = horse.stallionScore?.lastModified as number | undefined;
 
         if (horse.stallionScore != null && lastModified != null)
             horse.stallionScore.lastModified = Timestamp.fromDate(new Date(lastModified));
 
-        it(`returns ${expected} when given retired=${horse.retired} and lastModified=${lastModified}`, async () => {
+        it(`returns ${expected} when given retired=${horse.retired} and lastModified=${lastModified}`, () => {
             expect(shouldUpdateStallionScore(horse)).toBe(expected);
         });
     });

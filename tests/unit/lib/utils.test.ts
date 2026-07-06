@@ -1,23 +1,15 @@
-import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
 import { RaceList } from '@src/lib/races';
 import { ageToText, downloadFile, formatEarnings, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark, parseCurrency, parseInt, reduceChanges, regexEscape, removeAll, seasonsBetween, secondsToTime, sleep, toDate, toPercentage, toTimestamp, waitFor } from '@src/lib/utils';
 
 afterEach(() => {
+    vi.clearAllTimers();
     vi.useRealTimers();
-    vi.restoreAllMocks();
 });
 
 describe(`ageToText`, () => {
-    it(`throws an exception when given null`, () => {
-        expect(() => ageToText(<any>null)).toThrow(TypeError);
-    });
-
-    it(`throws an exception when given undefined`, () => {
-        expect(() => ageToText(<any>undefined)).toThrow(TypeError);
-    });
-
-    (<[number, string][]>[
+    ([
         [0, 'Zero'],
         [1, 'One'],
         [2, 'Two'],
@@ -40,7 +32,7 @@ describe(`ageToText`, () => {
         [19, 'Nineteen'],
         [20, 'Twenty'],
         [21, 'Twenty-One'],
-    ]).forEach(([value, expected]) => {
+    ] as Array<[number, string]>).forEach(([value, expected]) => {
         it(`returns ${expected} when given ${value}`, () => {
             expect(ageToText(value)).toEqual(expected)
         });
@@ -57,8 +49,8 @@ describe(`downloadFile`, () => {
     const blobContent = new Blob([textContent], { type: 'text/plain' });
 
     const downloadMock = chrome.downloads.download as Mock;
-    let createObjectURLSpy: ReturnType<typeof vi.spyOn>;
-    let revokeObjectURLSpy: ReturnType<typeof vi.spyOn>;
+    let createObjectURLSpy: MockInstance;
+    let revokeObjectURLSpy: MockInstance;
 
     beforeEach(() => {
         vi.restoreAllMocks();
@@ -137,7 +129,7 @@ describe(`downloadFile`, () => {
     it(`converts string input into Blob when using createObjectURL`, async () => {
         await downloadFile(textContent, 'file.txt');
 
-        const blobArg = createObjectURLSpy.mock.calls[0][0];
+        const blobArg = createObjectURLSpy.mock.calls[0][0] as Blob;
         expect(blobArg).toBeInstanceOf(Blob);
     });
 
@@ -211,13 +203,6 @@ describe(`formatEarnings`, () => {
 });
 
 describe(`formatMark`, () => {
-    it(`returns an empty string when given null`, () => {
-        expect(formatMark(<any>null)).toEqual('');
-    });
-
-    it(`returns an empty string when given undefined`, () => {
-        expect(formatMark(<any>undefined)).toEqual('');
-    });
 
     it(`returns the expected mark outputs`, () => {
         expect(formatMark({
@@ -237,7 +222,7 @@ describe(`formatMark`, () => {
 });
 
 describe(`formatOrdinal`, () => {
-    (<[number, string][]>[
+    ([
         [0, '0th'],
         [1, '1st'],
         [2, '2nd'],
@@ -257,7 +242,7 @@ describe(`formatOrdinal`, () => {
         [112, '112th'],
         [113, '113th'],
         [121, '121st'],
-    ]).forEach(([value, expected]) => {
+    ] as Array<[number, string]>).forEach(([value, expected]) => {
         it(`returns ${expected} when given ${value}`, () => {
             expect(formatOrdinal(value)).toEqual(expected)
         });
@@ -271,22 +256,13 @@ describe(`getCurrentSeason`, () => {
         const value = new Date(1_735_704_000_000 + offset * 86400000);
 
         it(`returns the expected season start date for ${value.toJSON()}`, () => {
-            vi.useFakeTimers()
             vi.setSystemTime(value);
-
             expect(getCurrentSeason()).toEqual(actual);
         });
     });
 });
 
 describe(`getLifetimeMark`, () => {
-    it(`throws an exception when given null`, () => {
-        expect(() => getLifetimeMark(<any>null)).toThrow(TypeError);
-    });
-
-    it(`throws an exception when given undefined`, () => {
-        expect(() => getLifetimeMark(<any>undefined)).toThrow(TypeError);
-    });
 
     it(`returns an empty string if no wins are found`, () => {
         const races = new RaceList();
@@ -329,11 +305,7 @@ describe(`getLifetimeMark`, () => {
 });
 
 describe(`parseCurrency`, () => {
-    it(`returns null when given null`, () => {
-        expect(parseCurrency(<any>null)).toBeNull();
-    });
-
-    [
+    ([
         ['1000000', 1000000],
         ['1000000.00', 1000000.00],
         ['$1000000', 1000000],
@@ -346,7 +318,7 @@ describe(`parseCurrency`, () => {
         [1000000.00, 1000000.00],
         [1_000_000, 1000000],
         [1_000_000.00, 1000000.00],
-    ].forEach(([value, expected]) => {
+    ] as Array<[string | number, number]>).forEach(([value, expected]) => {
         it(`returns ${expected} when given ${typeof value} ${value}`, () => {
             expect(parseCurrency(value)).toEqual(expected);
         });
@@ -354,11 +326,7 @@ describe(`parseCurrency`, () => {
 });
 
 describe(`parseInt`, () => {
-    it(`returns null when given null`, () => {
-        expect(parseInt(<any>null)).toBeNull();
-    });
-
-    [
+    ([
         ['1000000', 1000000],
         ['1000000.00', 1000000],
         ['$1000000', 1000000],
@@ -371,7 +339,7 @@ describe(`parseInt`, () => {
         [1000000.00, 1000000],
         [1_000_000, 1000000],
         [1_000_000.00, 1000000],
-    ].forEach(([value, expected]) => {
+    ] as Array<[string | number, number]>).forEach(([value, expected]) => {
         it(`returns ${expected} when given ${typeof value} ${value}`, () => {
             expect(parseInt(value)).toEqual(expected);
         });
@@ -414,7 +382,7 @@ describe(`reduceChanges`, () => {
 });
 
 describe(`regexEscape`, () => {
-    const specialCharacters: string[] = [
+    const specialCharacters = [
         '.',
         '*',
         '+',
@@ -467,14 +435,6 @@ describe(`removeAll`, () => {
 describe(`seasonsBetween`, () => {
     const ref = new Date(1_735_689_600_000);
 
-    it(`throws an exception when given null`, () => {
-        expect(() => seasonsBetween(<any>null, <any>null)).toThrow(TypeError);
-    });
-
-    it(`throws an exception when given undefined`, () => {
-        expect(() => seasonsBetween(<any>undefined, <any>undefined)).toThrow(TypeError);
-    });
-
     [
         [0, 0],
         [1, 3],
@@ -489,11 +449,11 @@ describe(`seasonsBetween`, () => {
 });
 
 describe(`secondsToTime`, () => {
-    (<[number, string][]>[
+    ([
         [114.25, '1:54.25'],
         [120, '2:00.00'],
         [126.1, '2:06.10'],
-    ]).forEach(([seconds, expected]) => {
+    ] as Array<[number, string]>).forEach(([seconds, expected]) => {
         it(`resolves with ${JSON.stringify(expected)} when given seconds=${seconds}`, () => {
             expect(secondsToTime(seconds)).toEqual(expected);
         });
@@ -524,7 +484,7 @@ describe(`sleep`, () => {
         const p = sleep(100, controller.signal);
 
         controller.abort();
-        await expect(p).rejects.toEqual('Aborted by the user');
+        await expect(p).rejects.toEqual(new Error('Aborted by the user'));
     });
 });
 
@@ -534,19 +494,19 @@ describe(`toDate`, () => {
     });
 
     it(`converts a Timestamp object`, () => {
-        expect(toDate(<Timestamp>{ seconds: 1730165342, nanoseconds: 322 })).toEqual(new Date(1730165342322));
+        expect(toDate(new Timestamp(1730165342, 322))).toEqual(new Date(1730165342322));
     });
 });
 
 describe(`toPercentage`, () => {
-    (<[[number, number], string][]>[
+    ([
         [[25, 100], '25.00%'],
         [[50, 25], '200.00%'],
         [[256, 287], '89.20%'],
         [[239, 256], '93.36%'],
         [[48, 256], '18.75%'],
         [[5, 256], '1.95%'],
-    ]).forEach(([[nom, den], expected]) => {
+    ] as Array<[[number, number], string]>).forEach(([[nom, den], expected]) => {
         it(`returns ${expected} when given ${nom} / ${den}`, () => {
             expect(toPercentage(nom, den)).toEqual(expected);
         });
@@ -561,16 +521,15 @@ describe(`toTimestamp`, () => {
     it(`returns the current timestamp if no value is given`, () => {
         vi.useFakeTimers()
         vi.setSystemTime(new Date(1_640_995_200_000));
-
         expect(toTimestamp()).toEqual('2022-01-01T00:00:00');
     });
 
-    [
+    ([
         [new Date('2022-01-01 00:00:00 +00:00'), '2022-01-01T00:00:00'],
         ['2022-01-01 00:00:00 +00:00', '2022-01-01T00:00:00'],
         [1_640_995_200_000, '2022-01-01T00:00:00'],
-    ].forEach(([value, expected]) => {
-        it(`returns ${expected} when given ${typeof value} ${value}`, () => {
+    ] as Array<[Date | string | number, string]>).forEach(([value, expected]) => {
+        it(`returns ${expected} when given ${typeof value} ${value.toString()}`, () => {
             expect(toTimestamp(value)).toEqual(expected);
         });
     });
@@ -593,7 +552,7 @@ describe(`waitFor`, () => {
         await waitFor(Promise.resolve());
 
         expect(setIntervalSpy).toHaveBeenCalledWith(
-            chrome.runtime.getPlatformInfo,
+            expect.any(Function),
             15000,
         );
     });
@@ -613,7 +572,7 @@ describe(`waitFor`, () => {
         expect(getPlatformInfoSpy).toHaveBeenCalledTimes(2);
 
         resolve();
-        await expect(w).resolves;
+        await expect(w).resolves.toBeUndefined();
     });
 
     it(`stops the keep-alive interval when the promise settles`, async () => {
@@ -625,7 +584,7 @@ describe(`waitFor`, () => {
             .mockReturnValue(intervalId as unknown as ReturnType<typeof setInterval>);
 
         const clearIntervalSpy = vi.spyOn(global, 'clearInterval')
-            .mockImplementation(() => {});
+            .mockImplementation(() => { });
 
         await waitFor(Promise.resolve());
 

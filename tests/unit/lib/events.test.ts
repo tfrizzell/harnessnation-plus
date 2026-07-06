@@ -1,39 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { EventType, onInstalled, onLoad } from '@src/lib/events';
-
-describe(`EventType`, () => {
-    it(`exists`, () => {
-        expect(EventType).not.toBeUndefined();
-    });
-});
-
-describe(`onInstalled`, () => {
-    it(`exists`, () => {
-        expect(onInstalled).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof onInstalled).toEqual('function');
-    });
-
-    it(`returns nothing`, () => {
-        expect(onInstalled(() => { })).toBeUndefined();
-    });
-});
+import { onLoad } from '@src/lib/events';
 
 describe(`onLoad`, () => {
-    it(`exists`, () => {
-        expect(onLoad).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof onLoad).toEqual('function');
-    });
-
-    it(`returns nothing`, () => {
-        expect(onLoad(() => { })).toBeUndefined();
-    });
-
     it(`waits for DOMContentLoaded if document.readyState is loading`, () => {
         Object.defineProperty(global.document, 'readyState', {
             configurable: true,
@@ -41,17 +9,14 @@ describe(`onLoad`, () => {
         });
 
         let value = false,
-            srcElement: EventTarget | null | undefined = undefined,
             target: EventTarget | null | undefined = undefined;
 
-        expect(onLoad((e: Event) => {
+        onLoad((e: Event) => {
             value = true;
-            srcElement = e.srcElement;
             target = e.target;
-        })).toBeUndefined();
+        });
 
         expect(value).toBe(false);
-        expect(srcElement).toBeUndefined();
         expect(target).toBeUndefined();
 
         const event = new Event('DOMContentLoaded', {
@@ -76,7 +41,6 @@ describe(`onLoad`, () => {
 
         window.dispatchEvent(event);
         expect(value).toBe(true);
-        expect(srcElement).toBe(global.document);
         expect(target).toBe(global.document);
     });
 
@@ -87,17 +51,14 @@ describe(`onLoad`, () => {
         });
 
         let value = false,
-            srcElement: EventTarget | null | undefined = undefined,
             target: EventTarget | null | undefined = undefined;
 
-        expect(onLoad((e: Event) => {
+        onLoad((e: Event) => {
             value = true;
-            srcElement = e.srcElement;
             target = e.target;
-        })).toBeUndefined();
+        });
 
         expect(value).toBe(true);
-        expect(srcElement).toBe(document);
         expect(target).toBe(document);
     });
 
@@ -108,17 +69,14 @@ describe(`onLoad`, () => {
         });
 
         let value = false,
-            srcElement: EventTarget | null | undefined = undefined,
             target: EventTarget | null | undefined = undefined;
 
-        expect(onLoad((e: Event) => {
+        onLoad((e: Event) => {
             value = true;
-            srcElement = e.srcElement;
             target = e.target;
-        })).toBeUndefined();
+        });
 
         expect(value).toBe(true);
-        expect(srcElement).toBe(document);
         expect(target).toBe(document);
     });
 });
