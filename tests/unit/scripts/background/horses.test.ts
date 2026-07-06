@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
-import { Horse } from 'src/lib/horses';
-import { StallionScore } from 'src/lib/stallion-scores';
-import { shouldUpdateStallionScore } from 'src/scripts/background/horses';
+import { Horse } from '@src/lib/horses';
+import { StallionScore } from '@src/lib/stallion-scores';
+import { shouldUpdateStallionScore } from '@src/scripts/background/horses';
 
 interface HorseWithLastModified extends Horse {
     stallionScore?: StallionScoreWithLastModified;

@@ -9,23 +9,23 @@ See the [features page on our wiki](https://github.com/tfrizzell/harnessnation-p
 
 ## Installation
 
-### <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" height="30" valign="text-bottom" /> &nbsp; Google Chrome
+### <img alt="" src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" height="30" valign="text-bottom" /> &nbsp; Google Chrome
 
 [Install **HarnessNation+** on Google Chrome](https://chrome.google.com/webstore/detail/harnessnation%20/aonknefdnheomhlfcnjdicnkbfdakcdo)
 
-### <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" height="30" valign="text-bottom" /> &nbsp; Microsoft Edge
+### <img alt="" src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" height="30" valign="text-bottom" /> &nbsp; Microsoft Edge
 
 [Install **HarnessNation+** on Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/harnessnation/joniipgaaolooildpfoinglgbfefjobk)
 
-### <img src="https://upload.wikimedia.org/wikipedia/commons/a/a0/Firefox_logo%2C_2019.svg" height="30" valign="text-bottom" /> &nbsp; Mozilla Firefox
+### <img alt="" src="https://upload.wikimedia.org/wikipedia/commons/a/a0/Firefox_logo%2C_2019.svg" height="30" valign="text-bottom" /> &nbsp; Mozilla Firefox
 
 [Install **HarnessNation+** on Mozilla Firefox](https://addons.mozilla.org/en-US/firefox/addon/harnessnation-plus/)
 
-### <img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Chromium_Logo.svg" height="30" valign="text-bottom" /> &nbsp; Other Chromium-based Browsers
+### <img alt="" src="https://upload.wikimedia.org/wikipedia/commons/2/28/Chromium_Logo.svg" height="30" valign="text-bottom" /> &nbsp; Other Chromium-based Browsers
 
 Other Chromium-based browsers, such as Brave, Opera, and Vivaldi are compatible with the [Google Chrome version of **HarnessNation+**](#google-chrome)
 
-## Features
+## Version History
 
 See the [version history page on our wiki](https://github.com/tfrizzell/harnessnation-plus/wiki/Version-History) for information about the progression of **HarnessNation+** over time.
 

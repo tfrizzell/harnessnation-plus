@@ -105,7 +105,7 @@ export default defineConfig(
             'coverage/**/*',
             'dist/**/*',
             'node_modules/**/*',
-            'src/vendor/**/*.js',
+            'src/vendor/**/*',
             'eslint.config.js',
         ],
     },
