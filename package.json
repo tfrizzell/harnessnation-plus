@@ -25,7 +25,7 @@
     "package:edge": "gulp package:edge",
     "package:firefox": "gulp package:firefox",
     "test": "vitest run --coverage",
-    "typecheck": "tsc -p tsconfig.src.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "watch": "tsc --watch --sourceMap"
   },
   "devDependencies": {
@@ -33,6 +33,7 @@
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/chrome": "^0.2.0",
     "@types/datatables.net": "1.10.18",
+    "@types/gulp": "^4.0.18",
     "@types/jquery": "3.3.1",
     "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "^4.1.9",

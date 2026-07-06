@@ -1,7 +1,25 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.src.json" },
-    { "path": "./tsconfig.test.json" }
-  ]
+    "extends": "./tsconfig.base.json",
+    "compilerOptions": {
+        "noEmit": true,
+        "types": ["chrome", "node"],
+        "paths": {
+            "@mocks/*": ["./tests/mocks/*"],
+            "@src/*": ["./src/*"],
+            "@tests/*": ["./tests/*"]
+        },
+        "baseUrl": ".",
+        "ignoreDeprecations": "6.0"
+    },
+    "include": [
+        "src/**/*",
+        "tests/**/*",
+        "global.setup.ts",
+        "vitest.config.ts",
+        "vitest.setup.ts"
+    ],
+    "watchOptions": {
+        "watchFile": "DynamicPriorityPolling",
+        "watchDirectory": "DynamicPriorityPolling"
+    }
 }

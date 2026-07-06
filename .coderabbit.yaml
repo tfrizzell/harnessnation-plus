@@ -1,3 +1,29 @@
 # .coderabbit.yaml
 reviews:
   request_changes_workflow: true
+
+  path_instructions:
+    - path: src/**/*
+      instructions: |
+        This is browser extension source code compiled via TypeScript without a bundler.
+
+        STRICT RULES (must enforce):
+
+        1. Only relative imports are allowed in src/.
+
+        2. Do not allow Node.js APIs or Node globals.
+
+          This includes (but is not limited to):
+            - process / globalThis.process
+            - Buffer
+            - require()
+            - fs, path, os modules
+            - node: protocol imports
+
+          Any usage of these must result in a request for changes.
+
+        3. Do not allow imports from:
+            - @tests
+            - any test-only modules (.test, .spec)
+
+        If any rule is violated, explicitly request changes (not just a comment).

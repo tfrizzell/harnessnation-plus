@@ -1,45 +1,64 @@
 // @ts-check
 import js from '@eslint/js';
-import { defineConfig } from 'eslint/config';
-import tseslint from 'typescript-eslint';
-import globals from 'globals';
-import unusedImports from 'eslint-plugin-unused-imports';
 import stylistic from '@stylistic/eslint-plugin';
+import { defineConfig } from 'eslint/config';
+import unusedImports from 'eslint-plugin-unused-imports';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+
+/** @type {import('eslint').Linter.Globals} */
+const browserGlobals = {
+    ...globals.browser,
+    chrome: 'readonly',
+};
+
+/** @type {Record<string, import('eslint').ESLint.Plugin>} */
+const plugins = {
+    '@stylistic': stylistic,
+    'unused-imports': unusedImports,
+};
+
+/** @type {import('eslint').Linter.RulesRecord} */
+const stylisticRules = {
+    '@stylistic/arrow-parens': ['error', 'as-needed'],
+    '@stylistic/max-len': ['warn', {
+        code: 100,
+        tabWidth: 4,
+        ignoreUrls: true,
+        ignoreStrings: true,
+        ignoreTemplateLiterals: true,
+        ignoreComments: false,
+    }],
+    '@stylistic/newline-per-chained-call': ['error', {
+        ignoreChainWithDepth: 3,
+    }],
+};
+
+/** @type {import('eslint').Linter.RulesRecord} */
+const unusedImportsRules = {
+    'unused-imports/no-unused-imports': 'error',
+};
 
 export default defineConfig(
-    js.configs.recommended,
-    ...tseslint.configs.recommended,
-    ...tseslint.configs.strictTypeChecked,
     {
-        files: ['**/*.{js,mjs,mts,ts}'],
-        plugins: {
-            '@stylistic': stylistic,
-            'unused-imports': unusedImports,
-        },
+        files: ['**/*.{ts,mts}'],
+        extends: [
+            js.configs.recommended,
+            ...tseslint.configs.recommended,
+            ...tseslint.configs.strictTypeChecked,
+        ],
+        plugins,
         languageOptions: {
-            globals: {
-                ...globals.browser,
-                chrome: 'readonly',
-            },
+            globals: browserGlobals,
             parserOptions: {
-                project: './tsconfig.eslint.json',
+                projectService: true,
                 tsconfigRootDir: import.meta.dirname,
             },
         },
         rules: {
-            /* @stylistic */
-            '@stylistic/arrow-parens': ['error', 'as-needed'],
-            '@stylistic/max-len': ['warn', {
-                code: 100,
-                tabWidth: 4,
-                ignoreUrls: true,
-                ignoreStrings: true,
-                ignoreTemplateLiterals: true,
-                ignoreComments: false,
-            }],
-            '@stylistic/newline-per-chained-call': ['error', {
-                ignoreChainWithDepth: 3,
-            }],
+            ...stylisticRules,
+            ...unusedImportsRules,
+
             /* @typescript-eslint */
             '@typescript-eslint/array-type': ['error', {
                 default: 'generic'
@@ -63,15 +82,22 @@ export default defineConfig(
             '@typescript-eslint/prefer-nullish-coalescing': 'error',
             '@typescript-eslint/prefer-readonly-parameter-types': 'off',
             '@typescript-eslint/require-await': 'error',
-            '@typescript-eslint/switch-exhaustiveness-check': 'error',
-            /* eslint-plugin-unused-imports */
-            'unused-imports/no-unused-imports': 'error',
-            'unused-imports/no-unused-vars': ['warn', {
-                vars: 'all',
-                varsIgnorePattern: '^_',
-                args: 'after-used',
-                argsIgnorePattern: '^_',
+            '@typescript-eslint/restrict-template-expressions': ['error', {
+                'allowBoolean': true,
+                'allowNumber': true,
+                'allowNullish': true
             }],
+            '@typescript-eslint/switch-exhaustiveness-check': 'error',
+        },
+    },
+    {
+        files: ['**/*.{js,mjs}'],
+        extends: [js.configs.recommended],
+        plugins,
+        languageOptions: { globals: browserGlobals },
+        rules: {
+            ...stylisticRules,
+            ...unusedImportsRules,
         },
     },
     {
@@ -79,12 +105,8 @@ export default defineConfig(
             'coverage/**/*',
             'dist/**/*',
             'node_modules/**/*',
-            'src/vendor/**/*',
+            'src/vendor/**/*.js',
             'eslint.config.js',
-            'global.setup.ts',
-            'gulpfile.mjs',
-            'jest.config.ts',
-            'jest.setup.ts',
         ],
     },
 );
