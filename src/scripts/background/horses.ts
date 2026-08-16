@@ -1,4 +1,4 @@
-import { DocumentData, DocumentSnapshot, FieldValue, WriteBatch } from 'firebase/firestore';
+import type { DocumentData, DocumentSnapshot, FieldValue, WriteBatch } from 'firebase/firestore';
 import { collection, doc, getDocFromCache, getDocFromServer, getDocsFromCache, getDocsFromServer, limit, orderBy, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from '../../vendor/firebasejs/firebase-firestore.js';
 
 import { Action, ActionError, ActionObjectUnion, ActionResponse, ActionResponseUnion, ActionType, BreedingReportData, HorseSearchData, PedigreeCatalogData } from '../../lib/actions.js';
@@ -530,9 +530,9 @@ async function saveHorse(horse: Horse, batch?: WriteBatch): Promise<number | und
 
         const data: HorseWithLastModified = {
             id: horse.id,
-            damId: null,
             ...(horse.name != null && { name: horse.name.trim() }),
             ...(horse.sireId != null && { sireId: horse.sireId }),
+            ...(horse.damId != null && { damId: horse.damId }),
             ...(horse.retired != null && { retired: horse.retired }),
             ...(horse.stallionScore != null && { stallionScore: horse.stallionScore }),
         };

@@ -8,8 +8,17 @@ import { bindDialogEventListeners } from './dialogs.js';
 const settings = await chrome.storage.sync.get<Settings>();
 
 function getSetting<P extends Paths<Settings>>(path: P): ValueAt<Settings, P> {
+    if (/^dt\..*?\.duration$/.test(path)) {
+        const data = getSettingValue(path.split('.').slice(0, -1).join('.') as Paths<Settings>) as DataTablesSettings;
+        return (data.duration / data.displayUnits) as ValueAt<Settings, P>;
+    }
+
+    return getSettingValue(path);
+}
+
+function getSettingValue<P extends Paths<Settings>>(path: P): ValueAt<Settings, P> {
     return path
-        .split(".")
+        .split('.')
         .reduce<unknown>(
             (obj, key) =>
                 typeof obj === 'object' && obj !== null

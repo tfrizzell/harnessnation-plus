@@ -37,7 +37,7 @@ function bloodlineSearch(this: Window, evt: Event, retries: number = 10): void {
                     await sleep(100, controller.signal);
                     bloodlineSearch.call(this, evt, retries - 1);
                 } catch (e: unknown) {
-                    if (e !== 'Aborted by the user')
+                    if (!(e instanceof Error) || e.message !== 'Aborted by the user')
                         throw e;
                 }
             }

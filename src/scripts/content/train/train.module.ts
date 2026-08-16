@@ -169,8 +169,11 @@ function removeButtons(row?: Element): void {
 
 const observer = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
-        [].forEach.call(mutation.addedNodes, (node: HTMLElement) => {
-            if (node.classList.contains('horseField') || node.classList.contains('horseFieldYearling')) {
+        [].forEach.call(mutation.addedNodes, (node: Node) => {
+            if (
+                node instanceof HTMLElement
+                && (node.classList.contains('horseField') || node.classList.contains('horseFieldYearling'))
+            ) {
                 node.querySelectorAll<HTMLSelectElement>('select.horseNameSelect, select.horseNameSelectYearling')
                     .forEach(select => {
                         select.addEventListener('change', () => {

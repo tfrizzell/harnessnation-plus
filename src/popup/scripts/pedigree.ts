@@ -44,18 +44,22 @@ form.addEventListener('submit', e => {
             dialog.innerHTML = '<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:green">check_circle</span> Your pedigree catalog has been created and downloaded successfully!</p>';
         } catch (e: unknown) {
             console.groupCollapsed(`%cpedigree.ts%c     Error while generating catalog`, 'color:#406e8e;font-weight:bold;', '')
+            const message = document.createElement('span');
 
             if (e instanceof Error) {
                 console.error('Message:', e.message);
                 console.error('Stack Trace:', e);
-                dialog.innerHTML = `<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ${e.message}</p>`;
+                message.textContent = e.message;
             } else {
                 console.error('Unknown Error:', e);
-                dialog.innerHTML = `<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ${String(e)}</p>`;
+                message.textContent = String(e);
             }
 
             console.groupEnd();
             closeTimeout = 10000;
+
+            dialog.innerHTML = '<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: </p>';
+            dialog.children[0].append(message);
         }
 
         if (dialog.innerHTML) {

@@ -55,23 +55,6 @@ async function addExportButtons(): Promise<void> {
         tooltip.textContent = 'Generate a CSV export of all stallions listed in this table. This report includes data from their progeny report and may take several minutes to generate.';
         wrapper.append(button, tooltip);
     });
-
-    function handleStateChange(
-        changes: { [key: string]: chrome.storage.StorageChange },
-        areaName: chrome.storage.AreaName
-    ): void {
-        if (areaName !== 'local' || !('running.exports.breeding' in changes))
-            return;
-
-        const isRunning = Boolean(changes['running.exports.breeding'].newValue)
-        document.querySelectorAll<HTMLButtonElement>('.hn-plus-breeding-report-button').forEach(el => { el.disabled = isRunning; });
-    }
-
-    chrome.storage.onChanged.addListener(handleStateChange);
-
-    onInstalled(() => {
-        chrome.storage.onChanged.removeListener(handleStateChange);
-    });
 }
 
 function addScripts(): void {
@@ -138,11 +121,23 @@ function handleSearch(e: Event): void {
                     : search.value,
             }));
         } catch (e: unknown) {
-            if (e !== 'Aborted by the user')
+            if (!(e instanceof Error) || e.message !== 'Aborted by the user')
                 throw e;
         }
     })();
 }
+
+    function handleStateChange(
+        changes: { [key: string]: chrome.storage.StorageChange },
+        areaName: chrome.storage.AreaName
+    ): void {
+        if (areaName !== 'local' || !('running.exports.breeding' in changes))
+            return;
+
+        const isRunning = Boolean(changes['running.exports.breeding'].newValue)
+        document.querySelectorAll<HTMLButtonElement>('.hn-plus-breeding-report-button').forEach(el => { el.disabled = isRunning; });
+    }
+
 
 function removeExportButtons(): void {
     removeAll('.hn-plus-breeding-report-button-wrapper');
@@ -203,8 +198,10 @@ const observer: MutationObserver = new MutationObserver(mutations => {
 });
 
 observer.observe(document, { childList: true, subtree: true });
+chrome.storage.onChanged.addListener(handleStateChange);
 
 onInstalled(() => {
+    chrome.storage.onChanged.removeListener(handleStateChange);
     observer.disconnect();
     unbindBloodlineSearch();
 });

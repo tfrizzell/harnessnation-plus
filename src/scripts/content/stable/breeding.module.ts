@@ -57,25 +57,6 @@ async function addExportButtons(): Promise<void> {
             const tooltip = document.createElement('hn-plus-tooltip');
             tooltip.textContent = 'Generate a CSV export of all broodmares listed in this table. This report includes data from their progeny report and may take several minutes to generate.';
             wrapper.append(tooltip, button);
-
-            function handleStateChange(
-                changes: { [key: string]: chrome.storage.StorageChange },
-                areaName: chrome.storage.AreaName
-            ): void {
-                if (areaName !== 'local' || !('running.exports.breeding' in changes))
-                    return;
-
-                const isRunning = Boolean(changes['running.exports.breeding'].newValue);
-
-                document.querySelectorAll<HTMLButtonElement>('.hn-plus-breeding-report-button')
-                    .forEach(el => { el.disabled = isRunning; });
-            }
-
-            chrome.storage.onChanged.addListener(handleStateChange);
-
-            onInstalled(() => {
-                chrome.storage.onChanged.removeListener(handleStateChange);
-            });
         });
     });
 }
@@ -109,6 +90,18 @@ async function exportReport(html: string): Promise<void> {
 
     await sendAction(ActionType.GenerateBroodmareReport, { ids });
 }
+function handleStateChange(
+    changes: { [key: string]: chrome.storage.StorageChange },
+    areaName: chrome.storage.AreaName
+): void {
+    if (areaName !== 'local' || !('running.exports.breeding' in changes))
+        return;
+
+    const isRunning = Boolean(changes['running.exports.breeding'].newValue);
+
+    document.querySelectorAll<HTMLButtonElement>('.hn-plus-breeding-report-button')
+        .forEach(el => { el.disabled = isRunning; });
+}
 
 function removeExportButtons(): void {
     removeAll('.horseContentContainer_3 .hn-plus-export-button');
@@ -131,8 +124,10 @@ const observer = new MutationObserver(mutations => {
 });
 
 observer.observe(document, { childList: true, subtree: true });
+chrome.storage.onChanged.addListener(handleStateChange);
 
 onInstalled(() => {
+    chrome.storage.onChanged.removeListener(handleStateChange);
     observer.disconnect();
 });
 

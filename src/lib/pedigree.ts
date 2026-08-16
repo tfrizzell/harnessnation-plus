@@ -1,5 +1,5 @@
 import '../vendor/pdf-lib/pdf-lib.min.js';
-import { PDFDocument, PDFFont } from 'pdf-lib';
+import type { PDFDocument, PDFFont } from 'pdf-lib';
 
 import { PDFParagraphBuilder } from './pdf/builder.js';
 import { drawTextCentered } from './pdf/utils.js';
@@ -488,7 +488,8 @@ async function addPedigreePage(
                 const xGrandProgeny = xProgeny.progeny.
                     reduce<Array<Progeny>>((grandProgeny, progeny) => [
                         ...grandProgeny,
-                        ...(progeny as ProgenyExtended).progeny
+                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                        ...((progeny as ProgenyExtended).progeny ?? [])
                     ], [])
                     .filter(isNotable);
 

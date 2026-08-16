@@ -112,62 +112,78 @@ function showCatalogDialog(optionsSelector?: string): Promise<void> {
             form.setAttribute('options', JSON.stringify(form.options));
         }
 
+        let submitted: boolean = false;
+
         form.addEventListener('submit', e => {
             e.preventDefault();
 
+            if (submitted)
+                return;
+
+            submitted = true;
+
             void (async () => {
-                const { data, showHipNumbers, fullPedigrees } = e.detail;
-                const estimatedDuration = await getEstimatedRuntime(data.length);
-
-                const estimateString = [
-                    Math.floor(estimatedDuration / 3600000).toString().padStart(2, '0'),
-                    Math.floor(estimatedDuration % 3600000 / 60000).toString().padStart(2, '0'),
-                    Math.ceil(estimatedDuration % 60000 / 1000).toString().padStart(2, '0'),
-                ].join(':');
-
-                if (data.length < 1 || !confirm(`You are about to generate a pedigree catalog with ${data.length} ${data.length !== 1 ? 'pages' : 'page'}. This will take an estimated ${estimateString}. During this time you will be unable to generate another catalog. Would you like to continue?`))
-                    return;
-
-                let closeTimeout = 5000;
-                const message = document.createElement('p');
-                message.style.setProperty('align-items', 'center');
-                message.style.setProperty('display', 'flex');
-                message.style.setProperty('gap', '0.3em');
-
                 try {
-                    form.disabled = true;
+                    const { data, showHipNumbers, fullPedigrees } = e.detail;
+                    const estimatedDuration = await getEstimatedRuntime(data.length);
 
-                    await sendAction(ActionType.GeneratePedigreeCatalog, {
-                        data: data,
-                        showHipNumbers: showHipNumbers,
-                        fullPedigrees: fullPedigrees,
-                        filename: data.length !== 1
-                            ? undefined
-                            : `${form.options?.find(([id]) => id === (Array.isArray(data[0]) ? data[0][0] : data[0]))?.[1] ?? ''}.pdf`,
-                    });
+                    const estimateString = [
+                        Math.floor(estimatedDuration / 3600000).toString().padStart(2, '0'),
+                        Math.floor(estimatedDuration % 3600000 / 60000).toString().padStart(2, '0'),
+                        Math.ceil(estimatedDuration % 60000 / 1000).toString().padStart(2, '0'),
+                    ].join(':');
 
-                    message.innerHTML = '<span class="material-symbols-outlined" style="color:green">check_circle</span> Your pedigree catalog has been created and downloaded successfully!';
-                } catch (e: unknown) {
-                    console.groupCollapsed(`%cpedigree-catalog.module.ts%c     Error while generating catalog`, 'color:#406e8e;font-weight:bold;', '')
+                    if (data.length < 1 || !confirm(`You are about to generate a pedigree catalog with ${data.length} ${data.length !== 1 ? 'pages' : 'page'}. This will take an estimated ${estimateString}. During this time you will be unable to generate another catalog. Would you like to continue?`))
+                        return;
 
-                    if (e instanceof Error) {
-                        console.error('Message:', e.message);
-                        console.error('Stack Trace:', e);
-                    } else {
-                        console.error('Unknown Error:', e);
-                        message.innerHTML = `<span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ${String(e)}`;
+                    let closeTimeout = 5000;
+                    const message = document.createElement('p');
+                    message.style.setProperty('align-items', 'center');
+                    message.style.setProperty('display', 'flex');
+                    message.style.setProperty('gap', '0.3em');
+
+                    try {
+                        form.disabled = true;
+
+                        await sendAction(ActionType.GeneratePedigreeCatalog, {
+                            data: data,
+                            showHipNumbers: showHipNumbers,
+                            fullPedigrees: fullPedigrees,
+                            filename: data.length !== 1
+                                ? undefined
+                                : `${form.options?.find(([id]) => id === (Array.isArray(data[0]) ? data[0][0] : data[0]))?.[1] ?? ''}.pdf`,
+                        });
+
+                        message.innerHTML = '<span class="material-symbols-outlined" style="color:green">check_circle</span> Your pedigree catalog has been created and downloaded successfully!';
+                    } catch (e: unknown) {
+                        console.groupCollapsed(`%cpedigree-catalog.module.ts%c     Error while generating catalog`, 'color:#406e8e;font-weight:bold;', '')
+                        const msg = document.createElement('span');
+
+                        if (e instanceof Error) {
+                            console.error('Message:', e.message);
+                            console.error('Stack Trace:', e);
+                            msg.textContent = e.message;
+                        } else {
+                            console.error('Unknown Error:', e);
+                            msg.textContent = String(e);
+                        }
+
+                        console.groupEnd();
+                        closeTimeout = 10000;
+
+                        message.innerHTML = '<span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ';
+                        message.appendChild(msg);
+                    } finally {
+                        form.disabled = false;
                     }
 
-                    console.groupEnd();
-                    closeTimeout = 10000;
+                    if (message.innerHTML) {
+                        dialog.style.setProperty('height', 'min-content');
+                        form.replaceWith(message);
+                        setTimeout(() => { dialog.close(); }, closeTimeout);
+                    }
                 } finally {
-                    form.disabled = false;
-                }
-
-                if (message.innerHTML) {
-                    dialog.style.setProperty('height', 'min-content');
-                    form.replaceWith(message);
-                    setTimeout(() => { dialog.close(); }, closeTimeout);
+                    submitted = false;
                 }
             })();
         });

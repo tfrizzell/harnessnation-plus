@@ -4,7 +4,7 @@ export interface HNPlusCatalogData {
     readonly fullPedigrees: boolean;
 }
 
-export interface HNPlusCatalogCreatorEvents {
+export interface HNPlusCatalogCreatorEvents extends HTMLElementEventMap {
     'submit': CustomEvent<HNPlusCatalogData>;
 }
 

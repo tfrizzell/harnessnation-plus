@@ -1,4 +1,4 @@
-import { PDFFont, PDFPage, PDFPageDrawTextOptions } from 'pdf-lib';
+import type { PDFFont, PDFPage, PDFPageDrawTextOptions } from 'pdf-lib';
 
 const normalize = (obj: Record<string, unknown>): Array<[string, unknown]> =>
     Object.keys(obj).sort().map(k => [k, obj[k]]);

@@ -1,4 +1,4 @@
-import { PDFPage, PDFPageDrawTextOptions } from 'pdf-lib';
+import type { PDFPage, PDFPageDrawTextOptions } from 'pdf-lib';
 
 type DrawTextCenteredOptions = Omit<PDFPageDrawTextOptions, 'font' | 'size'> & {
     font: NonNullable<PDFPageDrawTextOptions['font']>;
