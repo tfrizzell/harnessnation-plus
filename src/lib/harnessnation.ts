@@ -366,7 +366,7 @@ export class HarnessNationAPI {
             this.#retryCount++;
 
             const retryAfter = res.headers.get('Retry-After');
-            let timeout: number;
+            let timeout: number = NaN;
 
             if (retryAfter) {
                 if (/^\d+(\.\d+)?$/.test(retryAfter))
@@ -374,8 +374,11 @@ export class HarnessNationAPI {
                 else
                     timeout = Date.parse(retryAfter) - Date.now().valueOf();
 
-                console.debug(`%charnessnation.ts%c     'Retry-After' header detected; retrying in ${(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
-            } else {
+                if (!Number.isNaN(timeout))
+                    console.debug(`%charnessnation.ts%c     'Retry-After' header detected; retrying in ${(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
+            }
+
+            if (!Number.isFinite(timeout) || timeout < 1) {
                 timeout = this.#backoffTimeout * Math.pow(2, this.#retryCount - 1);
                 console.debug(`%charnessnation.ts%c     Backing off; retry #${this.#retryCount} in ${(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
             }

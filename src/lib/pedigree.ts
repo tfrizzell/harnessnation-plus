@@ -671,7 +671,7 @@ async function addPedigreePage(
         page.moveTo(x, y + addedHeight);
     }
 
-    while (page.getY() - totalHeight < margin.bottom) {
+    while (paragraphs.length > 0 && page.getY() - totalHeight < margin.bottom) {
         const lowestPriority: ParagraphPriority = Math.min(
             ...paragraphs.map(paragraph => paragraph.priority)
         );
@@ -907,12 +907,9 @@ function getKeyRaces(
         .filter(race => isKeyRace(race, includeOpen, includePreferred))
         .sort((a, b) =>
             ((b.stake ? 1 : 0) - (a.stake ? 1 : 0))
-            || ((a.finish ?? Number.POSITIVE_INFINITY) - (b.finish ?? Number.POSITIVE_INFINITY))
-            || ((b.purse ?? Number.POSITIVE_INFINITY) - (a.purse ?? Number.POSITIVE_INFINITY))
-            || (
-                (a.date?.valueOf() ?? Number.POSITIVE_INFINITY)
-                - (b.date?.valueOf() ?? Number.POSITIVE_INFINITY)
-            )
+            || ((a.finish ?? 0) - (b.finish ?? 0))
+            || ((b.purse ?? 0) - (a.purse ?? 0))
+            || ((a.date?.valueOf() ?? 0) - (b.date?.valueOf() ?? 0))
         );
 }
 
@@ -955,7 +952,7 @@ function getKeyRaceString(
                     !r.stake
                     || (r.date?.valueOf() ?? 0) - (race.date?.valueOf() ?? 0) < 1_209_600_000
                 )
-            ).sort((a, b) => (b.date?.valueOf() ?? 1) - (a.date?.valueOf() ?? 0));
+            ).sort((a, b) => (b.date?.valueOf() ?? 0) - (a.date?.valueOf() ?? 0));
 
             if (race.stake) {
                 buffer.push(

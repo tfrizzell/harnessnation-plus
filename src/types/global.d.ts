@@ -31,7 +31,7 @@ interface NavigatorUAData {
     readonly platform: string;
 
     getHighEntropyValues(
-        hints: readonly Array<string>
+        hints: ReadonlyArray<string>
     ): Promise<Record<string, unknown>>;
 }
 

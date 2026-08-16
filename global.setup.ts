@@ -1,4 +1,4 @@
 // global.setup.ts
-module.exports = () => {
+export default () => {
     process.env.TZ = 'UTC';
 };

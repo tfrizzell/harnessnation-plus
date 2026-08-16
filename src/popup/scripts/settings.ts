@@ -1,11 +1,12 @@
 import { ActionType, sendAction } from '../../lib/actions.js';
 import { DataTablesMode } from '../../lib/data-tables.js';
 import api from '../../lib/harnessnation.js';
-import { DataTablesDisplayUnits, StudFeeFormula } from '../../lib/settings.js';
+import { DataTablesDisplayUnits, StudFeeFormula, default as defaultSettings } from '../../lib/settings.js';
 import { Paths, ValueAt } from '../../types/paths.js';
 import { bindDialogEventListeners } from './dialogs.js';
 
-const settings = await chrome.storage.sync.get<Settings>();
+const settings = await chrome.storage.sync.get<Settings>()
+    .catch(() => structuredClone(defaultSettings));
 
 function getSetting<P extends Paths<Settings>>(path: P): ValueAt<Settings, P> {
     if (/^dt\..*?\.duration$/.test(path)) {
@@ -70,18 +71,22 @@ async function handleButtonClick(button: HTMLButtonElement): Promise<void> {
         }
     } catch (e: unknown) {
         console.groupCollapsed(`%csettings.ts%c     An unexpected error has occurred`, 'color:#406e8e;font-weight:bold;', '')
+        const message = document.createElement('span');
 
         if (e instanceof Error) {
             console.error('Message:', e.message);
             console.error('Stack Trace:', e);
-            dialog.innerHTML = `<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ${e.message}</p>`;
+            message.textContent = e.message;
         } else {
             console.error('Unknown Error:', e);
-            dialog.innerHTML = `<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: ${String(e)}</p>`;
+            message.textContent = String(e);
         }
 
         console.groupEnd();
         closeTimeout = 10000;
+
+        dialog.innerHTML = '<p style="align-items:center;display:flex;gap:0.3em"><span class="material-symbols-outlined" style="color:red">error</span> An unexpected error has occurred: </p>';
+        dialog.querySelector('p')?.appendChild(message)
     }
 
 

@@ -9,7 +9,8 @@ reviews:
 
         STRICT RULES (must enforce):
 
-        1. Only relative imports are allowed in src/.
+        1. Only relative imports are allowed in src/, except for declaration shims under
+           src/vendor/**/*.d.ts. These shims may import the packaged vendor type entrypoints.
 
         2. Do not allow Node.js APIs or Node globals.
 

@@ -33,7 +33,7 @@ function addCalculateButtons(): void {
                         input.classList.add('hn-plus-calculating');
                         calculating = true;
 
-                        const formula = (await chrome.storage.local.get(
+                        const formula = (await chrome.storage.sync.get(
                             'stallions.management.formula'
                         ))['stallions.management.formula'] as StudFeeFormula | undefined;
 

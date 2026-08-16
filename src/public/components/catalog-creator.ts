@@ -478,6 +478,11 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
                 continue;
 
             const [horseId, pastedHipNumber] = data.at(i - index) ?? [];
+
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            if (horseId == null)
+                continue;
+
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             const hipNumber = pastedHipNumber ?? parseInt(hipNumberInput.value).toString();
             horseIdInput.value = horseId;
