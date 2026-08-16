@@ -5,58 +5,64 @@ import path from 'node:path';
 const originalFetch = global.fetch;
 
 beforeAll(() => {
-    global.fetch = vi.fn((input: string | URL | Request, init?: RequestInit | undefined): Promise<Response> => {
-        const url = typeof input === 'string'
-            ? input
-            : input instanceof URL
-                ? input.toString()
-                : input.url;
+    const mockResponse = (response: { ok: boolean, text: () => Promise<string> }): Response =>
+        response as Response;
 
-        let file: fs.PathLike | undefined;
+    global.fetch = vi.fn(
+        (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+            const url = typeof input === 'string'
+                ? input
+                : input instanceof URL
+                    ? input.toString()
+                    : input.url;
 
-        if (url === 'https://www.harnessnation.com/api/progeny/list' && init?.method === 'POST') {
-            // TODO: Add some progeny lists to test new reporting
-            return Promise.resolve({
-                ok: true,
-                text: () => Promise.resolve(''),
-            } as Response)
-        } else if (url === 'https://www.harnessnation.com/api/progeny/report' && init?.method === 'POST') {
-            const { horseId } = Object.fromEntries(new URLSearchParams(init!.body as string));
-            file = path.join(__dirname, '..', 'fixtures', 'api', 'progeny', 'report', `${horseId}.html`);
-        } else if (url === 'https://www.harnessnation.com/horse/api/race-history' && init?.method === 'POST') {
-            const { horseId } = Object.fromEntries(new URLSearchParams(init!.body as string));
-            file = path.join(__dirname, '..', 'fixtures', 'horse', 'api', 'race-history', `${horseId}.html`);
-        } else if (url.startsWith('https://www.harnessnation.com/horse/')) {
-            const horseId = url.split('/').pop()!;
-            file = path.join(__dirname, '..', 'fixtures', 'horse', `${horseId}.html`);
-        }
+            let file: fs.PathLike | undefined;
 
-        if (!file)
-            return Promise.reject(`${url} not found`);
+            if (url === 'https://www.harnessnation.com/api/progeny/list' && init?.method === 'POST') {
+                // TODO: Add some progeny lists to test new reporting
+                return Promise.resolve(mockResponse({
+                    ok: true,
+                    text: () => Promise.resolve(''),
+                }));
+            } else if (url === 'https://www.harnessnation.com/api/progeny/report' && init?.method === 'POST') {
+                const { horseId } = Object.fromEntries(new URLSearchParams(init.body as string));
+                file = path.join(__dirname, '..', 'fixtures', 'api', 'progeny', 'report', `${horseId}.html`);
+            } else if (url === 'https://www.harnessnation.com/horse/api/race-history' && init?.method === 'POST') {
+                const { horseId } = Object.fromEntries(new URLSearchParams(init.body as string));
+                file = path.join(__dirname, '..', 'fixtures', 'horse', 'api', 'race-history', `${horseId}.html`);
+            } else if (url.startsWith('https://www.harnessnation.com/horse/')) {
+                const horseId = url.split('/').pop();
+                file = path.join(__dirname, '..', 'fixtures', 'horse', `${horseId}.html`);
+            }
 
-        return new Promise((resolve, reject) => {
-            fs.access(file!, undefined, (err) => {
-                if (err) {
-                    return resolve({
-                        ok: true,
-                        text: () => Promise.resolve('')
-                    } as Response);
-                }
+            if (!file)
+                return Promise.reject(new Error(`${url} not found`));
 
-                fs.readFile(file, { encoding: 'utf-8' }, (err: any, data: string) => {
+            return new Promise((resolve, reject) => {
+                fs.access(file, undefined, err => {
                     if (err) {
-                        reject(err);
+                        resolve(mockResponse({
+                            ok: true,
+                            text: () => Promise.resolve('')
+                        }));
+
                         return;
                     }
 
-                    resolve({
-                        ok: true,
-                        text: () => Promise.resolve(data),
-                    } as Response);
+                    fs.readFile(file, { encoding: 'utf-8' }, (err, data) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+
+                        resolve(mockResponse({
+                            ok: true,
+                            text: () => Promise.resolve(data),
+                        }));
+                    });
                 });
             });
         });
-    });
 });
 
 afterAll(() => {

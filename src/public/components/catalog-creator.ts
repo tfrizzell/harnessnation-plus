@@ -6,14 +6,14 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
     }
 
     #disabled: boolean = false;
-    #options?: [number, string][];
+    #options?: Array<[number, string]>;
 
     get disabled(): boolean {
         return this.#disabled;
     }
 
     set disabled(value: boolean) {
-        this.#disabled = value ?? false;
+        this.#disabled = value;
 
         if (this.#disabled)
             this.#disableAll();
@@ -21,20 +21,20 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
             this.#enableAll();
     }
 
-    get options(): [number, string][] | undefined {
+    get options(): Array<[number, string]> | undefined {
         return this.#options;
     }
 
-    set options(value: [number, string][] | undefined) {
+    set options(value: Array<[number, string]> | undefined) {
         this.#options = value;
         this.#updateRows();
     }
 
     #root: ShadowRoot;
-    #useHipNumbers: HTMLInputElement = null!;
-    #useCustomHipNumbers: HTMLInputElement = null!;
-    #showFullPedigrees: HTMLInputElement = null!;
-    #pages: HTMLElement = null!;
+    #useHipNumbers!: HTMLInputElement;
+    #useCustomHipNumbers!: HTMLInputElement;
+    #showFullPedigrees!: HTMLInputElement;
+    #pages!: HTMLElement;
 
     constructor() {
         super();
@@ -47,13 +47,15 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
             '/public/style/theme.css',
             '/public/style/common.css',
         ].map(file => {
-            if (window?.chrome?.runtime?.getURL != null)
+            // eslint-disable-next-line @stylistic/max-len
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+            if ((window as any)?.chrome?.runtime?.getURL)
                 return window.chrome.runtime.getURL(file);
 
             try {
                 return new URL(file, import.meta.url).toString();
-            } catch (e: any) {
-                if (e.message === `Cannot use 'import.meta' outside a module`)
+            } catch (e: unknown) {
+                if ((e instanceof Error) && e.message === `Cannot use 'import.meta' outside a module`)
                     return file;
 
                 throw e;
@@ -337,11 +339,11 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
         addButton.addEventListener('click', this.addRow.bind(this));
         this.addRow();
 
-        if (this.hasAttribute('disabled') === true)
+        if (this.hasAttribute('disabled'))
             this.#disableAll();
     }
 
-    attributeChangedCallback(name: string, oldValue: any, newValue: any): void {
+    attributeChangedCallback(name: string, oldValue: unknown, newValue: unknown): void {
         switch (name) {
             case 'disabled':
                 this.disabled = (newValue != null);
@@ -349,7 +351,11 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
 
             case 'options':
                 this.removeAttribute('options');
-                this.options = newValue == null ? undefined : JSON.parse(newValue);
+
+                this.options = newValue == null
+                    ? undefined
+                    : (JSON.parse(newValue as string) as Array<[number, string]>);
+
                 break;
         }
     }
@@ -362,7 +368,7 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
         const hipNumber = document.createElement('input');
         hipNumber.setAttribute('name', 'hipNumber');
         hipNumber.setAttribute('placeholder', 'Hip #');
-        hipNumber.toggleAttribute('readonly', !this.#useCustomHipNumbers!.checked);
+        hipNumber.toggleAttribute('readonly', !this.#useCustomHipNumbers.checked);
         hipNumber.toggleAttribute('required', true);
         hipNumber.setAttribute('type', 'number');
         hipNumber.setAttribute('value', this.#getNextHipNumber());
@@ -394,8 +400,8 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
     }
 
     reset(): void {
-        while (this.#pages.children.length > 0)
-            this.#pages.removeChild(this.#pages.firstChild!);
+        while (this.#pages.firstChild)
+            this.#pages.removeChild(this.#pages.firstChild);
 
         this.addRow();
     }
@@ -435,36 +441,51 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
 
     #enableAll(): void {
         this.#root.querySelectorAll<HTMLButtonElement | HTMLInputElement>('button, input, select').forEach(el => el.disabled = false);
-        this.#useCustomHipNumbers.checked = this.#useHipNumbers.checked && this.#useCustomHipNumbers.checked;
+
+        this.#useCustomHipNumbers.checked =
+            this.#useHipNumbers.checked && this.#useCustomHipNumbers.checked;
+
         this.#useCustomHipNumbers.disabled = !this.#useHipNumbers.checked;
     }
 
     #getNextHipNumber(): string {
-        return Number(1 + Math.max(0, ...Array.from(this.#root.querySelectorAll<HTMLInputElement>('input[name="hipNumber"]')).map(input => parseInt(input.value) || 0))).toString();
+        return (1 + Math.max(0, ...Array.from(this.#root.querySelectorAll<HTMLInputElement>('input[name="hipNumber"]')).map(input => parseInt(input.value) || 0))).toString();
     }
 
     #handlePaste(e: ClipboardEvent): void {
         e.preventDefault();
 
-        const data = e.clipboardData?.getData('text')?.split(/[\r\n]+/).filter(r => r.trim()).map(r => r.split(/\s*,\s*/).map(p => p.trim()).reverse()) ?? [];
+        const data = e.clipboardData
+            ?.getData('text')
+            .split(/[\r\n]+/)
+            .filter(r => r.trim())
+            .map(r => r.split(/\s*,\s*/)
+                .map(p => p.trim())
+                .reverse()) ?? [];
 
-        const row = (<HTMLInputElement>e.target).closest<HTMLDivElement>('.pedigree-page')!;
+        const row = (e.target as HTMLInputElement).closest('.pedigree-page') as HTMLDivElement;
         const index = Array.from(this.#pages.children).indexOf(row);
-        const useCustomHipNumbers = this.#useCustomHipNumbers!.checked;
+        const useCustomHipNumbers = this.#useCustomHipNumbers.checked;
 
         while (this.#pages.children.length < index + data.length)
             this.addRow();
 
         for (let i = index; i < this.#pages.children.length; i++) {
-            let [horseId, hipNumber] = data[i - index]
-            hipNumber = hipNumber ?? this.#pages.children[i].querySelector<HTMLInputElement>('[name="hipNumber"]')!.value;
+            const horseIdInput = this.#pages.children[i].querySelector<HTMLInputElement>('[name="horseId"]');
+            const hipNumberInput = this.#pages.children[i].querySelector<HTMLInputElement>('[name="hipNumber"]');
 
-            this.#pages.children[i].querySelector<HTMLInputElement>('[name="horseId"]')!.value = horseId;
+            if (!horseIdInput || !hipNumberInput)
+                continue;
+
+            const [horseId, pastedHipNumber] = data.at(i - index) ?? [];
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            const hipNumber = pastedHipNumber ?? parseInt(hipNumberInput.value).toString();
+            horseIdInput.value = horseId;
 
             if (useCustomHipNumbers)
-                this.#pages.children[i].querySelector<HTMLInputElement>('[name="hipNumber"]')!.value = hipNumber;
+                hipNumberInput.value = hipNumber;
             else
-                this.#pages.children[i].querySelector<HTMLInputElement>('[name="hipNumber"]')!.dataset.customHipNumber = hipNumber;
+                hipNumberInput.dataset.customHipNumber = hipNumber;
         }
     }
 
@@ -472,10 +493,10 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
         e.preventDefault();
         e.stopPropagation();
 
-        const form = <HTMLFormElement>e.target;
-        const useHipNumbers = (<HTMLInputElement>form.elements.namedItem('useHipNumbers'))!.checked;
-        const useCustomHipNumbers = (<HTMLInputElement>form.elements.namedItem('useCustomHipNumbers'))!.checked;
-        const fullPedigree = (<HTMLInputElement>form.elements.namedItem('showFullPedigrees'))!.checked;
+        const form = e.target as HTMLFormElement;
+        const useHipNumbers = (form.elements.namedItem('useHipNumbers') as HTMLInputElement).checked;
+        const useCustomHipNumbers = (form.elements.namedItem('useCustomHipNumbers') as HTMLInputElement).checked;
+        const fullPedigree = (form.elements.namedItem('showFullPedigrees') as HTMLInputElement).checked;
 
         this.dispatchEvent(new CustomEvent<HNPlusCatalogData>('submit', {
             detail: {
@@ -486,7 +507,7 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
                             parseInt(input.value),
                             !useCustomHipNumbers
                                 ? index + 1
-                                : input.parentElement!.querySelector<HTMLInputElement>('[name="hipNumber"]')!.value
+                                : (input.parentElement?.querySelector<HTMLInputElement>('[name="hipNumber"]')?.value ?? index + 1)
                         ]
                 ),
                 showHipNumbers: useHipNumbers,
@@ -496,14 +517,14 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
     }
 
     #handleToggleCustomUseHipNumbers(e: Event): void {
-        const enabled = (<HTMLInputElement>e.target).checked;
+        const enabled = (e.target as HTMLInputElement).checked;
 
         this.#root.querySelectorAll<HTMLInputElement>('input[name="hipNumber"]').forEach((input, index) => {
             input.readOnly = !enabled;
 
             if (!enabled) {
                 input.dataset.customHipNumber = input.value;
-                input.value = `${index + 1}`;
+                input.value = (index + 1).toString();
             } else {
                 input.value = input.dataset.customHipNumber ?? input.value;
                 delete input.dataset.customHipNumber;
@@ -512,12 +533,12 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
     }
 
     #handleToggleUseHipNumbers(): void {
-        this.#useCustomHipNumbers!.disabled = !this.#useHipNumbers!.checked;
+        this.#useCustomHipNumbers.disabled = !this.#useHipNumbers.checked;
     }
 
     #updateRows(): void {
-        this.#root.querySelectorAll('.pedigree-page').forEach((row) => {
-            const oldHorseId = row.querySelector<HTMLInputElement | HTMLSelectElement>('[name="horseId"]')!
+        this.#root.querySelectorAll('.pedigree-page').forEach(row => {
+            const oldHorseId = row.querySelector('[name="horseId"]') as HTMLInputElement | HTMLSelectElement;
             const horseId = this.#createHorseIdInput();
             horseId.value = oldHorseId.value;
             oldHorseId.replaceWith(horseId);
@@ -525,5 +546,5 @@ class HNPlusCatalogCreatorElement extends HTMLElement {
     }
 }
 
-if (customElements?.get('hn-plus-catalog-creator') == null)
-    customElements?.define('hn-plus-catalog-creator', HNPlusCatalogCreatorElement);
+if (customElements.get('hn-plus-catalog-creator') == null)
+    customElements.define('hn-plus-catalog-creator', HNPlusCatalogCreatorElement);

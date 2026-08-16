@@ -5,44 +5,59 @@ import { removeAll } from '../../../lib/utils.js';
 import '../fonts/material-symbols.js';
 
 function addCalculateButtons(): void {
-    document.querySelectorAll<HTMLInputElement>('#inputStudFee, #inputStudFeeUpdate').forEach(input => {
-        const button = document.createElement('button');
-        button.classList.add('hn-plus-calculate-button');
-        button.setAttribute('data-extension', chrome.runtime.id);
-        button.setAttribute('type', 'button');
+    document.querySelectorAll<HTMLInputElement>('#inputStudFee, #inputStudFeeUpdate')
+        .forEach(input => {
+            const button = document.createElement('button');
+            button.classList.add('hn-plus-calculate-button');
+            button.setAttribute('data-extension', chrome.runtime.id);
+            button.setAttribute('type', 'button');
 
-        const icon = document.createElement('span');
-        icon.classList.add('material-symbols-outlined');
-        icon.innerHTML = 'calculate';
-        button.append(icon);
+            const icon = document.createElement('span');
+            icon.classList.add('material-symbols-outlined');
+            icon.innerHTML = 'calculate';
+            button.append(icon);
 
-        input.classList.add('hn-plus-calculate-input');
-        input.parentNode?.append(button);
+            input.classList.add('hn-plus-calculate-input');
+            input.parentNode?.append(button);
 
-        let calculating = false;
+            let calculating = false;
 
-        button.addEventListener('click', async () => {
-            const id = parseInt((<any>input?.form?.elements)?.horse?.value);
+            button.addEventListener('click', () => {
+                const id = parseInt((input.form?.elements.namedItem('horse') as HTMLInputElement | null)?.value ?? '');
 
-            if (calculating || Number.isNaN(id))
-                return;
+                if (calculating || Number.isNaN(id))
+                    return;
 
-            try {
-                input.classList.add('hn-plus-calculating');
-                calculating = true;
+                void (async () => {
+                    try {
+                        input.classList.add('hn-plus-calculating');
+                        calculating = true;
 
-                const formula = (await chrome.storage.sync.get('stallions.management.formula'))?.['stallions.management.formula'] as StudFeeFormula | undefined;
-                input.value = (await sendAction(ActionType.CalculateStudFee, { id, formula }))?.data?.toString() ?? input.value;
-            } catch (e: any) {
-                console.error(`%cmanage-stallions.module.ts%c     Error while calculating stud fee: ${e?.message || e}`, 'color:#406e8e;font-weight:bold;', '');
-                console.error(e);
-                alert(e?.message || e);
-            } finally {
-                calculating = false;
-                input.classList.remove('hn-plus-calculating');
-            }
+                        const formula = (await chrome.storage.local.get(
+                            'stallions.management.formula'
+                        ))['stallions.management.formula'] as StudFeeFormula | undefined;
+
+                        input.value = (
+                            await sendAction(ActionType.CalculateStudFee, { id, formula })
+                        ).data.toString();
+                    } catch (e: unknown) {
+                        console.groupCollapsed(`%cbreeding.module.ts%c     Error while calculating stud fee`, 'color:#406e8e;font-weight:bold;', '');
+
+                        if (e instanceof Error) {
+                            console.error('Message:', e.message);
+                            console.error('Stack Trace:', e);
+                        } else
+                            console.error('Unknown Error:', e);
+
+                        console.groupEnd();
+                        alert(e instanceof Error ? e.message : e);
+                    } finally {
+                        calculating = false;
+                        input.classList.remove('hn-plus-calculating');
+                    }
+                })();
+            });
         });
-    });
 }
 
 function removeCalculateButtons(): void {

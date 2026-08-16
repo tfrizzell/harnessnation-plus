@@ -6,19 +6,18 @@ import './scripts/background/settings.js';
 import './scripts/background/runtime.js';
 import './scripts/background/horses.js';
 
-chrome.alarms.onAlarm.addListener(async alarm => {
-    switch (alarm.name) {
-        case AlarmType.PruneAPICache: {
-            await api.pruneCache();
-            break;
-        }
+chrome.alarms.onAlarm.addListener(alarm => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    if (alarm.name === AlarmType.PruneAPICache) {
+        void api.pruneCache();
+        return;
+    }
 
-        case AlarmType.UpdateStallionScores: {
-            const next = new Date(alarm.scheduledTime);
-            await chrome.alarms.clear(alarm.name);
-            await register__updateStallionScores(next);
-            break;
-        }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    if (alarm.name === AlarmType.UpdateStallionScores) {
+        const next = new Date(alarm.scheduledTime);
+        void chrome.alarms.clear(alarm.name).then(() => register__updateStallionScores(next));
+        return;
     }
 });
 
@@ -62,9 +61,9 @@ async function register__updateStallionScores(from: Date | number = new Date()):
     }
 
     await chrome.alarms.create(AlarmType.UpdateStallionScores, {
-        when: getNext__updateStallionScores(new Date(from?.valueOf?.() ?? from)).valueOf(),
+        when: getNext__updateStallionScores(new Date(from.valueOf())).valueOf(),
     });
 }
 
-register__pruneAPICache();
-register__updateStallionScores();
+void register__pruneAPICache();
+void register__updateStallionScores();

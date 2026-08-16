@@ -102,5 +102,5 @@ class HNPlusTooltipElement extends HTMLElement {
     }
 }
 
-if (customElements?.get('hn-plus-tooltip') == null)
-    customElements?.define('hn-plus-tooltip', HNPlusTooltipElement);
+if (customElements.get('hn-plus-tooltip') == null)
+    customElements.define('hn-plus-tooltip', HNPlusTooltipElement);

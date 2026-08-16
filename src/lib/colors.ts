@@ -1,4 +1,4 @@
-export const pastels: string[] = [
+export const pastels: Array<string> = [
     'c8dcb8',
     'b2c6de',
     'edccb6',

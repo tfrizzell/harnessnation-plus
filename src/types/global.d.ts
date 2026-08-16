@@ -22,3 +22,19 @@ interface ObjectConstructor {
         keySelector: (item: T, index: number) => K,
     ): Partial<Record<K, Array<T>>>;
 }
+interface NavigatorUAData {
+    readonly brands: ReadonlyArray<{
+        brand: string;
+        version: string;
+    }>;
+    readonly mobile: boolean;
+    readonly platform: string;
+
+    getHighEntropyValues(
+        hints: readonly Array<string>
+    ): Promise<Record<string, unknown>>;
+}
+
+interface Navigator {
+    readonly userAgentData?: NavigatorUAData;
+}

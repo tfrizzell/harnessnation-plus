@@ -1,11 +1,9 @@
-import { type MockInstance, beforeEach, vi } from 'vitest';
-import '@mocks/fetch';
+import { beforeEach, vi } from 'vitest';
+import 'tests/mocks/fetch';
 
-import { api } from '@src/lib/harnessnation';
-
-let getCSRFTokenSpy: MockInstance;
+import { api } from 'src/lib/harnessnation';
 
 beforeEach(() => {
-    getCSRFTokenSpy = vi.spyOn(api, 'getCSRFToken')
+    vi.spyOn(api, 'getCSRFToken')
         .mockResolvedValue('csrf-token');
 });

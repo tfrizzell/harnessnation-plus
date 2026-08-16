@@ -12,5 +12,5 @@ export function removeCatalogButton(): void {
 
 onLoad(() => {
     removeCatalogButton();
-    addCatalogButton();
+    void addCatalogButton();
 });

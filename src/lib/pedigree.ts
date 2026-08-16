@@ -1,5 +1,5 @@
 import '../vendor/pdf-lib/pdf-lib.min.js';
-import { PDFDocument, PDFFont } from 'pdf-lib/ts3.4/es';
+import { PDFDocument, PDFFont } from 'pdf-lib';
 
 import { PDFParagraphBuilder } from './pdf/builder.js';
 import { drawTextCentered } from './pdf/utils.js';
@@ -12,11 +12,12 @@ import { ageToText, formatMark, formatOrdinal, getCurrentSeason, getLifetimeMark
 
 interface Ancestor {
     id?: number;
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     name: string | 'Unknown';
     sireId?: number;
     damId?: number;
     lifetimeMark?: string;
-    progeny?: Progeny[];
+    progeny?: Array<Progeny>;
     races?: RaceList;
 }
 
@@ -30,7 +31,7 @@ enum Context {
 
 interface DamLineAncestor extends Ancestor {
     id: number;
-    progeny: Progeny[];
+    progeny: Array<Progeny>;
     races: RaceList;
 }
 
@@ -73,7 +74,7 @@ interface Progeny {
 
 interface ProgenyExtended extends Progeny {
     races: RaceList;
-    progeny: Progeny[];
+    progeny: Array<Progeny>;
 }
 
 export interface Telemetry {
@@ -95,7 +96,15 @@ const PEDIGREE_GENERATIONS = 3;
 class ParagraphBuilder extends PDFParagraphBuilder {
     #priority: ParagraphPriority;
 
-    constructor(priority: ParagraphPriority, font: PDFFont, size: number = 8.5, maxWidth: number = window.PDFLib.PageSizes.Letter[0], indent?: number, firstLineIndent?: number, paddingTop?: number) {
+    constructor(
+        priority: ParagraphPriority,
+        font: PDFFont,
+        size: number = 8.5,
+        maxWidth: number = window.PDFLib.PageSizes.Letter[0],
+        indent?: number,
+        firstLineIndent?: number,
+        paddingTop?: number
+    ) {
         super(font, size, maxWidth, indent, firstLineIndent, paddingTop);
         this.#priority = priority;
     }
@@ -110,23 +119,45 @@ class ParagraphBuilder extends PDFParagraphBuilder {
  * @param {PDFDocument} pdfDoc - the pdf document to add the page to.
  * @param {Horse} horse - the horse the page is being generated for.
  * @param {number} hipNumber - the hip number of the horse, if desired.
- * @param {boolean} fullPedigree - if true, the page height will be extended as needed to fit the content.
+ * @param {boolean} fullPedigree - if true, the page height will be extended as needed to fit the
+ *                                 content.
  * @param {token} csrfToken - the CSRF token to sign requests.
  * @param {FontMap} fonts - the map of fonts to use in the pdf page.
  * @returns {Promise<void>} A `Promise` that resolves when the page has been added.
  */
-async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: string | number, fullPedigree: boolean = false, csrfToken?: string, fonts?: FontMap): Promise<void> {
-    fonts ??= await loadFonts(pdfDoc);
+async function addPedigreePage(
+    pdfDoc: PDFDocument,
+    horse: Horse,
+    hipNumber?: string | number,
+    fullPedigree: boolean = false,
+    csrfToken?: string,
+    fonts?: FontMap
+): Promise<void> {
+    if (horse.id == null)
+        return
 
-    async function addHorseInfo(paragraph: ParagraphBuilder, horse: Horse | Ancestor | Progeny, races: RaceList | undefined, context: Context = Context.Default): Promise<void> {
+    fonts ??= (await loadFonts(pdfDoc));
+
+    async function addHorseInfo(
+        paragraph: ParagraphBuilder,
+        horse: Horse | Ancestor | Progeny,
+        races: RaceList | undefined,
+        context: Context = Context.Default
+    ): Promise<void> {
+        if (horse.id == null || horse.name == null)
+            throw new ReferenceError('Horse data incomplete');
+
+        if (fonts == null)
+            throw new ReferenceError('Font map not found')
+
         races ??= new RaceList();
 
         paragraph.add(
-            formatName(horse.name!, races),
+            formatName(horse.name, races),
             getNameFont(races),
         );
 
-        if ((context & Context.Progeny) === Context.Progeny && (<Progeny>horse).gender === 'female')
+        if ((context & Context.Progeny) && (horse as Progeny).gender === 'female')
             paragraph.add(' (M)');
 
         const ageRef = races.findAgeRef();
@@ -135,17 +166,17 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         if (markString.trim() != '')
             paragraph.add(` ${markString}`);
 
-        const sireName = (<Progeny>horse).sireName ?? ancestors.get(horse.sireId!)?.name;
+        const sireName = (horse as Progeny).sireName || ancestors.get(horse.sireId)?.name;
 
         if (sireName) {
-            if ((context & Context.DamLine) === Context.DamLine)
+            if (context & Context.DamLine)
                 paragraph.add(` by ${sireName}.`);
             else
                 paragraph.add(` (${sireName}).`);
         } else
             paragraph.add('.');
 
-        if ((context & Context.Progeny) !== Context.Progeny || !damIds.includes(horse.id)) {
+        if (!(context & Context.Progeny) || !damIds.includes(horse.id)) {
             const winText = getWinText(
                 races.getWins(),
                 races.findAge(races.slice(-1)[0], ageRef),
@@ -157,22 +188,22 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
             const awardText = getAwardText(
                 Object.keys(horse).some(key => /^(overall|conference)Award/i.test(key))
-                    ? <Progeny>horse
-                    : await api.getHorse(horse.id!)
+                    ? horse as Progeny
+                    : await api.getHorse(horse.id)
             );
 
             if (awardText.trim() != '')
-                paragraph.add(` ${awardText}.`, fonts!.Bold);
+                paragraph.add(` ${awardText}.`, fonts.Bold);
 
             const keyRaceText = getKeyRaceString(races, ageRef, context === Context.Create);
 
             if (keyRaceText.trim() != '')
                 paragraph.add(` ${getKeyRaceString(races, ageRef, context === Context.Create)}`.replace(/^\s+\.?$/, ''));
 
-            if ((context & Context.Production) === Context.Production && (<Progeny>horse).age === 1)
+            if ((context & Context.Production) && (horse as Progeny).age === 1)
                 paragraph.add(' (Yearling)');
-            else if ((context & Context.Progeny) === Context.Progeny && (<Progeny>horse).age < 4)
-                paragraph.add(` Now ${(<Progeny>horse).age}.`);
+            else if ((context & Context.Progeny) && (horse as Progeny).age < 4)
+                paragraph.add(` Now ${(horse as Progeny).age}.`);
         } else
             paragraph.add(' As above.');
     }
@@ -182,7 +213,12 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     }
 
     function getNameFont(races?: RaceList): PDFFont {
-        return races?.some(r => r.stake && r.finish! <= 3) ? fonts!.Bold : fonts!.Normal;
+        if (fonts == null)
+            throw new ReferenceError('Font map not found')
+
+        return races?.some(r => r.stake && r.finish != null && r.finish <= 3)
+            ? fonts.Bold
+            : fonts.Normal;
     }
 
     function isNotable(progeny: Progeny): boolean {
@@ -202,19 +238,29 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     const margin = { top: 34.87, right: 99, bottom: 34.87, left: 99 };
     const page = pdfDoc.addPage(window.PDFLib.PageSizes.Letter);
 
-    page.setBleedBox(margin.left, margin.bottom, page.getWidth() - margin.left - margin.right, page.getHeight() - margin.top - margin.bottom);
+    page.setBleedBox(
+        margin.left,
+        margin.bottom,
+        page.getWidth() - margin.left - margin.right,
+        page.getHeight() - margin.top - margin.bottom
+    );
+
     page.moveTo(margin.left, page.getHeight() - margin.top);
 
-    const info = await api.getHorse(horse.id!);
+    const info = await api.getHorse(horse.id);
     csrfToken ??= await api.getCSRFToken();
 
     const [races, pedigree] = await Promise.all([
-        getRaces(horse.id!, csrfToken),
-        getPedigree(horse.id!, csrfToken),
+        getRaces(horse.id, csrfToken),
+        getPedigree(horse.id, csrfToken),
     ]);
 
     const ancestors = await populateAncestors(pedigree, csrfToken);
-    const damIds: (number | undefined)[] = pedigree.slice(0, 2 ** (PEDIGREE_GENERATIONS + 1) - 2).filter((ancestor, index) => ancestor.id != null && showDamInfo(index)).map(ancestor => ancestor.id!);
+
+    const damIds: Array<(number | undefined)> = pedigree
+        .slice(0, 2 ** (PEDIGREE_GENERATIONS + 1) - 2)
+        .filter((ancestor, index) => ancestor.id != null && showDamInfo(index))
+        .map(ancestor => ancestor.id);
 
     const DEFAULT_FONT = fonts.Normal;
     page.setFont(DEFAULT_FONT);
@@ -233,8 +279,8 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         drawTextCentered(page, `Owned by ${owner.toUpperCase()}`, { font: fonts.Normal, size: 8.5 });
 
     // Hip Number
-    if (/^(\d+)$/.test(hipNumber?.toString() ?? '')) {
-        page.drawText(hipNumber!.toString(), {
+    if (hipNumber != null && /^(\d+)$/.test(hipNumber.toString())) {
+        page.drawText(hipNumber.toString(), {
             x: margin.left,
             y: page.getY() - 1.95 * fonts.Bold.heightAtSize(16),
             font: fonts.Bold,
@@ -244,7 +290,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
     // Horse Name
     page.moveDown(fonts.Bold.heightAtSize(16) + 1);
-    drawTextCentered(page, horse.name!.toUpperCase(), { font: fonts.Bold, size: 16 });
+    drawTextCentered(page, horse.name?.toUpperCase() ?? '', { font: fonts.Bold, size: 16 });
 
     // Racing Statistics
     const fastestWin = races.findFastestWin();
@@ -255,7 +301,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         page.moveDown(fonts.Normal.heightAtSize(10) + 2);
 
         drawTextCentered(page,
-            `${lifetimeMark}${fastestWin ? `-'${fastestWin.date!.getFullYear() % 100}` : ''} ${age === 1 ? '(Yearling)' : age > 0 ? `(${ageToText(age)} Year Old)` : ''}`.trim(),
+            `${lifetimeMark}${fastestWin?.date ? `-'${fastestWin.date.getFullYear() % 100}` : ''} ${age === 1 ? '(Yearling)' : age > 0 ? `(${ageToText(age)} Year Old)` : ''}`.trim(),
             { font: fonts.Normal, size: 10 }
         );
     }
@@ -263,9 +309,15 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     // Horse Info
     page.moveDown(fonts.Bold.heightAtSize(8.5) + 4);
 
-    const color = info.match(/<b[^>]*>\s*Coat Color:\s*<\/b[^>]*>\s*(.*?)\s*<br[^>]*>/i)?.[1]?.trim()?.toUpperCase();
-    const gender = info.match(/<b[^>]*>\s*Gender:\s*<\/b[^>]*>\s*(\S+)/i)?.[1]?.trim()?.toUpperCase();
-    const foaledDate = info.match(/Foaled: (\w+ \d+[A-Z]{2}, \d{4})/i)?.[1]?.trim()?.replace(/(\d)[A-Z]{2}/i, '$1');
+    const color = info.match(/<b[^>]*>\s*Coat Color:\s*<\/b[^>]*>\s*(.*?)\s*<br[^>]*>/i)?.[1]
+        .trim()
+        .toUpperCase();
+
+    const gender = info.match(/<b[^>]*>\s*Gender:\s*<\/b[^>]*>\s*(\S+)/i)?.[1]?.trim()
+        .toUpperCase();
+
+    const foaledDate = info.match(/Foaled: (\w+ \d+[A-Z]{2}, \d{4})/i)?.[1]?.trim()
+        .replace(/(\d)[A-Z]{2}/i, '$1');
 
     drawTextCentered(page,
         `${color ?? ''} ${gender ?? ''} ${foaledDate ? `Foaled ${foaledDate}` : ''}`.trim().replace(/ +/g, ' '),
@@ -281,14 +333,14 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     page.moveRight(1);
     page.moveDown(4.878 * rowHeight);
 
-    page.drawText(`${horse.name!.toUpperCase()} ${lifetimeMark}`.trim(), {
+    page.drawText(`${horse.name?.toUpperCase() ?? ''} ${lifetimeMark}`.trim(), {
         font: fonts.Bold,
         size: 7,
     });
 
     page.moveRight(18);
 
-    const paragraphs: ParagraphBuilder[] = [];
+    const paragraphs: Array<ParagraphBuilder> = [];
     let paragraph: ParagraphBuilder;
     let column = 0, row = 0;
 
@@ -303,12 +355,15 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         const offsetY = (2 * offsetRow - 1) * rowSpan * rowHeight / 2 - (column === 0 ? 0 : 1);
         const columnWidth = (maxWidth / PEDIGREE_GENERATIONS) - (column === 0 ? 14.5 : 0);
 
-        let text = `${ancestor.name ?? ''} ${ancestor.lifetimeMark ?? ''}`?.trim() || 'Unknown';
+        let text = `${ancestor.name} ${ancestor.lifetimeMark ?? ''}`.trim() || 'Unknown';
 
         while (fonts.Normal.widthOfTextAtSize(text, 7) > columnWidth)
             text = text.replace(/.{4}$/, '...');
 
-        while (column < PEDIGREE_GENERATIONS - 1 && fonts.Normal.widthOfTextAtSize(text, 7) < columnWidth) {
+        while (
+            column < PEDIGREE_GENERATIONS - 1
+            && fonts.Normal.widthOfTextAtSize(text, 7) < columnWidth
+        ) {
             if (text.endsWith('-') || text.endsWith('  '))
                 text += '-';
             else
@@ -339,10 +394,24 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         dam.progeny.sort(sortProgeny);
 
         const generation = damIds.indexOf(ancestor.id) + 1;
-        paragraphs.push(paragraph = new ParagraphBuilder(ParagraphPriority.Required, fonts.Bold, 8.5, maxWidth, indent));
+        paragraphs.push(paragraph = new ParagraphBuilder(
+            ParagraphPriority.Required,
+            fonts.Bold,
+            8.5,
+            maxWidth,
+            indent
+        ));
+
         paragraph.add(`${formatOrdinal(generation)} Dam`);
 
-        paragraphs.push(paragraph = new ParagraphBuilder(ParagraphPriority.Required, fonts.Normal, 8.5, maxWidth, indent));
+        paragraphs.push(paragraph = new ParagraphBuilder(
+            ParagraphPriority.Required,
+            fonts.Normal,
+            8.5,
+            maxWidth,
+            indent
+        ));
+
         await addHorseInfo(paragraph, dam, dam.races, Context.DamLine);
 
         const isYearling = (age === 1 && generation === 1);
@@ -356,7 +425,8 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
         if (dam.progeny.length > (generation === 1 ? 1 : 0)) {
             const foalCount = dam.progeny.length - (isYearling ? 1 : 0);
-            const winningProgeny = dam.progeny.filter(progeny => progeny.races?.some(race => race.finish === 1)).length;
+            const winningProgeny = dam.progeny
+                .filter(progeny => progeny.races?.some(race => race.finish === 1)).length;
 
             paragraph.add(` From ${foalCount}${isYearling ? ' previous' : ''} ${foalCount === 1 ? 'foal' : 'foals'}, dam of ${winningProgeny} winners including:`
                 .replace(/ [01] winners including/, ''));
@@ -398,11 +468,13 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                     paragraph.add(count === 0 ? ' Dam of' : ',');
 
                     paragraph.add(
-                        ` ${formatName(grandProgeny.name!, grandProgeny.races)}`,
+                        ` ${formatName(grandProgeny.name, grandProgeny.races)}`,
                         getNameFont(grandProgeny.races)
                     );
 
-                    const markString = getMarkString(grandProgeny.races!.filter(r => r.finish === 1));
+                    const markString = grandProgeny.races == null
+                        ? ''
+                        : getMarkString(grandProgeny.races.filter(r => r.finish === 1));
 
                     if (markString.trim() != '')
                         paragraph.add(` ${markString}`);
@@ -414,7 +486,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                     paragraph.add('.');
 
                 const xGrandProgeny = xProgeny.progeny.
-                    reduce((grandProgeny, progeny) => [...grandProgeny, ...(progeny as ProgenyExtended)?.progeny ?? []], [] as Progeny[])
+                    reduce<Array<Progeny>>((grandProgeny, progeny) => [
+                        ...grandProgeny,
+                        ...(progeny as ProgenyExtended).progeny
+                    ], [])
                     .filter(isNotable);
 
                 if (xGrandProgeny.length > 0) {
@@ -425,11 +500,15 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                             paragraph.add(',');
 
                         paragraph.add(
-                            ` ${formatName(greatGrandProgeny.name!, greatGrandProgeny.races)}`,
+                            ` ${formatName(greatGrandProgeny.name, greatGrandProgeny.races)}`,
                             getNameFont(greatGrandProgeny.races)
                         );
 
-                        const markString = getMarkString(greatGrandProgeny.races!.filter(r => r.finish === 1));
+                        const markString = greatGrandProgeny.races == null
+                            ? ''
+                            : getMarkString(
+                                greatGrandProgeny.races.filter(r => r.finish === 1)
+                            );
 
                         if (markString.trim() != '')
                             paragraph.add(` ${markString}`);
@@ -442,20 +521,27 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
     }
 
     if (horse.sireId == null && horse.damId == null) {
-        paragraphs.push(paragraph = new ParagraphBuilder(ParagraphPriority.Required, fonts.Normal, 8.5, maxWidth, indent));
+        paragraphs.push(paragraph = new ParagraphBuilder(
+            ParagraphPriority.Required,
+            fonts.Normal, 8.5,
+            maxWidth,
+            indent
+        ));
+
         await addHorseInfo(paragraph, horse, races, Context.Create);
     }
 
     if (/<b[^>]*>\s*Total Foals:\s*<\/b[^>]*>\s*\d+/.test(info)) {
         if (gender === 'STALLION') {
-            const progeny = await getProgeny(horse.id!);
+            const progeny = await getProgeny(horse.id);
             await populateProgenyData(progeny);
 
-            const [starters, winners, earnings] = progeny.reduce(([starters, winners, earnings], p) => [
-                starters + (p.races?.[0] ? 1 : 0),
-                winners + (p.races?.some(r => r.finish === 1) ? 1 : 0),
-                earnings + p.earnings,
-            ], [0, 0, 0]);
+            const [starters, winners, earnings] = progeny.reduce(
+                ([starters, winners, earnings], p) => [
+                    starters + (p.races?.[0] ? 1 : 0),
+                    winners + (p.races?.some(r => r.finish === 1) ? 1 : 0),
+                    earnings + p.earnings,
+                ], [0, 0, 0]);
 
             if (starters > 0) {
                 const notableProgeny = progeny.filter(isNotable);
@@ -482,7 +568,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
 
                     for (const progeny of notableProgeny) {
                         paragraphs.push(paragraph = new ParagraphBuilder(
-                            Math.max(ParagraphPriority.VeryHigh, getParagraphPriority(horse, <DamLineAncestor>horse, progeny) + 3),
+                            Math.max(
+                                ParagraphPriority.VeryHigh,
+                                getParagraphPriority(horse, horse as DamLineAncestor, progeny) + 3
+                            ),
                             fonts.Normal,
                             8.5,
                             maxWidth,
@@ -491,14 +580,16 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                         ));
 
                         paragraph.add(
-                            ` ${formatName(progeny.name!, progeny.races)}`,
+                            ` ${formatName(progeny.name, progeny.races)}`,
                             getNameFont(progeny.races)
                         );
 
                         if (progeny.gender === 'female')
                             paragraph.add(' (M)');
 
-                        const markString = getMarkString(progeny.races!);
+                        const markString = progeny.races == null
+                            ? ''
+                            : getMarkString(progeny.races);
 
                         if (markString.trim() != '')
                             paragraph.add(` ${markString}`);
@@ -520,7 +611,7 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
             paragraph.add('PRODUCTION RECORD');
 
             const currentSeason = getCurrentSeason();
-            const progeny = await getProgeny(horse.id!);
+            const progeny = await getProgeny(horse.id);
             await populateProgenyData(progeny);
 
             progeny.sort((a, b) => (b.age - a.age) || (a.id - b.id));
@@ -534,7 +625,10 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                 birthSeason.setMonth(birthSeason.getMonth() - 3 * (prog.age - 1));
 
                 paragraphs.push(paragraph = new ParagraphBuilder(
-                    Math.max(ParagraphPriority.High, getParagraphPriority(horse, <DamLineAncestor>horse, prog) + 3),
+                    Math.max(
+                        ParagraphPriority.High,
+                        getParagraphPriority(horse, horse as DamLineAncestor, prog) + 3
+                    ),
                     fonts.Normal,
                     8.5,
                     maxWidth,
@@ -543,14 +637,21 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
                 ));
 
                 paragraph.add(`${birthSeason.toLocaleString('default', { month: 'short', year: 'numeric' })}-`);
-                await addHorseInfo(paragraph, prog, prog.races, Context.Progeny | Context.Production);
+
+                await addHorseInfo(
+                    paragraph,
+                    prog,
+                    prog.races,
+                    Context.Progeny | Context.Production
+                );
             }
         }
     }
 
     page.moveLeft(page.getX() - margin.left);
     page.moveDown(5.25 * rowHeight);
-    let totalHeight = paragraphs.reduce((total, paragraph) => total + paragraph.getHeight(), 0) + 1 * Math.max(0, paragraphs.length - 1);
+    let totalHeight = paragraphs.reduce((total, paragraph) =>
+        total + paragraph.getHeight(), 0) + 1 * Math.max(0, paragraphs.length - 1);
 
     if (fullPedigree) {
         const { x, y } = page.getPosition();
@@ -559,12 +660,20 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         page.translateContent(0, addedHeight);
         page.resetPosition();
 
-        page.setBleedBox(margin.left, margin.bottom, page.getWidth() - margin.left - margin.right, page.getHeight() - margin.top - margin.bottom);
+        page.setBleedBox(
+            margin.left,
+            margin.bottom,
+            page.getWidth() - margin.left - margin.right,
+            page.getHeight() - margin.top - margin.bottom
+        );
+
         page.moveTo(x, y + addedHeight);
     }
 
     while (page.getY() - totalHeight < margin.bottom) {
-        const lowestPriority = Math.min(...paragraphs.map(paragraph => paragraph.priority));
+        const lowestPriority: ParagraphPriority = Math.min(
+            ...paragraphs.map(paragraph => paragraph.priority)
+        );
 
         if (lowestPriority === ParagraphPriority.Required)
             break;
@@ -572,7 +681,13 @@ async function addPedigreePage(pdfDoc: PDFDocument, horse: Horse, hipNumber?: st
         for (let i = paragraphs.length - 1; i >= 0; i--) {
             const paragraph = paragraphs[i];
 
-            if (paragraph.text.match(/^\d+\w{2} Dam$/i) && (i + 3 > paragraphs.length || paragraphs[i + 2]?.text.match(/^(Production Record$|From \d+ starters)/i))) {
+            if (
+                paragraph.text.match(/^\d+\w{2} Dam$/i)
+                && (
+                    i + 3 > paragraphs.length
+                    || paragraphs[i + 2]?.text.match(/^(Production Record$|From \d+ starters)/i)
+                )
+            ) {
                 totalHeight -= paragraphs.splice(i, 2).reduce((h, p) => h + p.getHeight() + 1, 0);
                 break;
             }
@@ -607,7 +722,7 @@ async function addWatermark(pdfDoc: PDFDocument): Promise<void> {
             const box = page.getBleedBox();
             x = box.x + box.width;
             y = box.y + box.height;
-        } catch (e: any) {
+        } catch {
             x = page.getWidth() - 99;
             y = page.getHeight() - 34.87;
         }
@@ -622,7 +737,10 @@ async function addWatermark(pdfDoc: PDFDocument): Promise<void> {
     }
 }
 
-function convertHipNumber(hipNumber?: HipNumberType, index: number = 0): string | number | undefined {
+function convertHipNumber(
+    hipNumber?: HipNumberType,
+    index: number = 0
+): string | number | undefined {
     if (hipNumber === true)
         return index + 1;
 
@@ -646,10 +764,15 @@ async function createPDF(): Promise<PDFDocument> {
  *                          `[id1, id2, ...]`  
  *                          `[[id1, hip1], [id2, hip2], ...]`
  * @param {boolean} showHipNumbers - if true, hip numbers will be displayed on each page.
- * @param {boolean} fullPedigrees - if true, the page height will be extended as needed to fit the content.
+ * @param {boolean} fullPedigrees - if true, the page height will be extended as needed to fit the
+ *                                  content.
  * @returns {Promise<Horse>} A `Promise` that resolves with the data-uri of the pdf file.
  */
-export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumbers: boolean = false, fullPedigrees: boolean = false): Promise<string> {
+export async function generatePedigreeCatalog(
+    ids: Array<PedigreeIdType>,
+    showHipNumbers: boolean = false,
+    fullPedigrees: boolean = false
+): Promise<string> {
     if (await isMobileOS()) {
         console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree catalog generation`, 'color:#406e8e;font-weight:bold;', '');
         throw new Error('Pedigree catalogs are not supported on mobile');
@@ -657,7 +780,11 @@ export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumb
 
     if (ids.length === 1) {
         const [id, hipNumber] = Array.isArray(ids[0]) ? ids[0] : [ids[0], 1];
-        return await generatePedigreePage(id, showHipNumbers ? hipNumber ?? true : false, fullPedigrees);
+        return await generatePedigreePage(
+            id,
+            showHipNumbers ? (hipNumber ?? true) : false,
+            fullPedigrees
+        );
     }
 
     const start = performance.now();
@@ -674,7 +801,10 @@ export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumb
                 if (horse.id !== id || csrfToken == null)
                     throw new ReferenceError(`Failed to generate sale catalog: could not parse info for horse ${id}`);
 
-                return [horse, convertHipNumber(hipNumber, i)] as [Horse, string | number | undefined];
+                return [
+                    horse,
+                    convertHipNumber(hipNumber, i)
+                ] as [Horse, string | number | undefined];
             })
         )
     );
@@ -709,11 +839,16 @@ export async function generatePedigreeCatalog(ids: PedigreeIdType[], showHipNumb
 /**
  * Generates a sale catalog style pedigree page for the given horse.
  * @param {number} id - the id of the horse.
- * @param {string | number | boolean} hipNumber - if set, the hip number will be displayed on the pedigree page.
- * @param {boolean} fullPedigree - if true, the page height will be extended as needed to fit the content.
+ * @param {HipNumberType} hipNumber - if set, the hip number will be displayed on the pedigree page.
+ * @param {boolean} fullPedigree - if true, the page height will be extended as needed to fit the
+ *                                 content.
  * @returns {Promise<Horse>} A `Promise` that resolves with the data-uri of the pdf file.
  */
-export async function generatePedigreePage(id: number, hipNumber?: HipNumberType, fullPedigree: boolean = false): Promise<string> {
+export async function generatePedigreePage(
+    id: number,
+    hipNumber?: HipNumberType,
+    fullPedigree: boolean = false
+): Promise<string> {
     if (await isMobileOS()) {
         console.debug(`%cpedigree.ts%c     Mobile OS Detected: skipping pedigree page generation`, 'color:#406e8e;font-weight:bold;', '');
         throw new Error('Pedigree catalogs are not supported on mobile');
@@ -762,20 +897,35 @@ export async function getEstimatedRuntime(pageCount: number): Promise<number> {
     return pageCount * telemetry.totalRunTime / telemetry.pagesGenerated;
 }
 
-function getKeyRaces(races: RaceList, ageRef?: Race, includeOpen?: boolean, includePreferred?: boolean): RaceList {
-    ageRef ??= races.findAgeRef();
-
+function getKeyRaces(
+    races: RaceList,
+    includeOpen?: boolean,
+    includePreferred?: boolean
+): RaceList {
     return races
         .filter(race => isKeyRace(race, includeOpen, includePreferred))
-        .sort((a, b) => (+b.stake! - +a.stake!) || (a.finish! - b.finish!) || (b.purse! - a.purse!) || (a.date!.valueOf() - b.date!.valueOf()));
+        .sort((a, b) =>
+            ((b.stake ? 1 : 0) - (a.stake ? 1 : 0))
+            || ((a.finish ?? Number.POSITIVE_INFINITY) - (b.finish ?? Number.POSITIVE_INFINITY))
+            || ((b.purse ?? Number.POSITIVE_INFINITY) - (a.purse ?? Number.POSITIVE_INFINITY))
+            || (
+                (a.date?.valueOf() ?? Number.POSITIVE_INFINITY)
+                - (b.date?.valueOf() ?? Number.POSITIVE_INFINITY)
+            )
+        );
 }
 
-function getKeyRaceString(races: RaceList, ageRef?: Race, includeOpen?: boolean, includePreferred?: boolean): string {
-    const output: string[] = [];
+function getKeyRaceString(
+    races: RaceList,
+    ageRef?: Race,
+    includeOpen?: boolean,
+    includePreferred?: boolean
+): string {
+    const output: Array<string> = [];
     ageRef ??= races.findAgeRef();
 
     const filteredRacesByAge = Map.groupBy(
-        getKeyRaces(races, ageRef, includeOpen, includePreferred),
+        getKeyRaces(races, includeOpen, includePreferred),
         race => races.findAge(race, ageRef)
     );
 
@@ -788,33 +938,41 @@ function getKeyRaceString(races: RaceList, ageRef?: Race, includeOpen?: boolean,
         }
     }
 
-    for (let [age, races] of Array.from(filteredRacesByAge.entries()).sort(([ageA], [ageB]) => (ageA ?? 99) - (ageB ?? 99))) {
-        const buffer: string[] = [];
-        let race: Race | undefined;
+    for (
+        // eslint-disable-next-line prefer-const
+        let [age, races] of Array.from(filteredRacesByAge.entries())
+            .sort(([ageA], [ageB]) => (ageA ?? 99) - (ageB ?? 99))
+    ) {
+        const buffer: Array<string> = [];
 
-        while (race = races[0]) {
+        while (races.length > 0) {
+            const race = races[0];
+
             const raceGroup = races.filter(r =>
-                r.name?.replace('Maiden ', '') === race!.name?.replace('Maiden ', '')
-                && (!r.stake || (r.date?.valueOf() ?? 0) - (race!.date?.valueOf() ?? 0) < 1_209_600_000)
-            ).sort((a, b) => b.date!.valueOf() - a.date!.valueOf());
+                r.name?.replace('Maiden ', '') === race.name?.replace('Maiden ', '')
+                && (
+                    !r.stake
+                    || (r.date?.valueOf() ?? 0) - (race.date?.valueOf() ?? 0) < 1_209_600_000
+                )
+            ).sort((a, b) => (b.date?.valueOf() ?? 1) - (a.date?.valueOf() ?? 0));
 
             if (race.stake) {
                 buffer.push(
-                    raceGroup.map(r => `${getFinishText(r.finish!).replace('of', 'in')} ${r.elim ? 'elim' : 'final'} of ${r.name}`)
+                    raceGroup.map(r => `${getFinishText(r.finish ?? Number.POSITIVE_INFINITY).replace('of', 'in')} ${r.elim ? 'elim' : 'final'} of ${r.name}`)
                         .join(' and ')
                         .trim()
                         .replace(/^(\S+) (in .*? and) \1/, '$1 $2')
                         .replace(` of ${race.name} and `, ' and ')
                         .replace(' and in ', ' and '));
             } else if (raceGroup.length > 1)
-                buffer.push(`${getFinishText(race.finish!)} ${race!.name!.replace('Maiden ', '')} (x${raceGroup.length})`.trim());
+                buffer.push(`${getFinishText(race.finish ?? Number.POSITIVE_INFINITY)} ${race.name?.replace('Maiden ', '') ?? ''} (x${raceGroup.length})`.trim());
             else
-                buffer.push(`${getFinishText(race.finish!)} ${race!.name!.replace('Maiden ', '')}`.trim());
+                buffer.push(`${getFinishText(race.finish ?? Number.POSITIVE_INFINITY)} ${race.name?.replace('Maiden ', '') ?? ''}`.trim());
 
             races = races.filter(r => !raceGroup.includes(r));
         }
 
-        output.push(`At ${age}, ${buffer.join('; ')}.`.replace(/^At undefined, (.)/, (_, c) => c.toUpperCase()));
+        output.push(`At ${age}, ${buffer.join('; ')}.`.replace(/^At undefined, (.)/, (_, c: string) => c.toUpperCase()));
     }
 
     return output.join(' ').trim();
@@ -822,44 +980,57 @@ function getKeyRaceString(races: RaceList, ageRef?: Race, includeOpen?: boolean,
 
 function getMarkString(races: RaceList, ageRef?: Race): string {
     ageRef ??= races.findAgeRef();
+
     const wins = races.filter(r => r.finish === 1);
     const fastestWin = wins.findFastestWin();
     const fastestWinAtTwo = wins.findFastestWin(race => races.findAge(race, ageRef) === 2);
     const fastestWinAtThree = wins.findFastestWin(race => races.findAge(race, ageRef) === 3);
     const fastestRace = races.findFastestRace();
-    const [starts, earnings] = races.getSummary().filter((_value, index, array) => index === 0 || index === array.length - 1);
+    const [starts, earnings] = races.getSummary()
+        .filter((_value, index, array) => index === 0 || index === array.length - 1);
 
     return [
         [
             formatMark(fastestWinAtTwo, 2),
             formatMark(fastestWinAtThree, 3),
-            !fastestWin || fastestWin == fastestWinAtTwo || fastestWin == fastestWinAtThree ? null : formatMark(fastestWin, races.findAge(fastestWin, ageRef)),
-            !fastestRace || fastestRace?.finish === 1 ? null : `BT${secondsToTime(fastestRace.time!)}`,
+            !fastestWin || fastestWin == fastestWinAtTwo || fastestWin == fastestWinAtThree
+                ? null
+                : formatMark(fastestWin, races.findAge(fastestWin, ageRef)),
+            !fastestRace?.time || fastestRace.finish === 1 ? null : `BT${secondsToTime(fastestRace.time)}`,
         ].filter(mark => mark?.trim()).join('; ').trim()
-            .replace(new RegExp(`${fastestWinAtTwo?.gait?.charAt(0)?.toLowerCase() ?? ' '},([^2],)`, 'ig'), '$1')
-            .replace(new RegExp(`${fastestWinAtThree?.gait?.charAt(0)?.toLowerCase() ?? ' '},([^23],)`, 'ig'), '$1'),
+            .replace(new RegExp(`${fastestWinAtTwo?.gait?.charAt(0).toLowerCase() ?? ' '},([^2],)`, 'ig'), '$1')
+            .replace(new RegExp(`${fastestWinAtThree?.gait?.charAt(0).toLowerCase() ?? ' '},([^23],)`, 'ig'), '$1'),
         starts < 1 ? null : `(${earningsFormatter.format(earnings)})`,
     ].filter(part => part?.trim()).join(' ');
 }
 
-function getParagraphPriority(horse: Horse, dam: DamLineAncestor, progeny: Progeny): ParagraphPriority {
-    if (progeny.id === horse.id || dam.progeny?.length === 1)
+function getParagraphPriority(
+    horse: Horse,
+    dam: DamLineAncestor,
+    progeny: Progeny
+): ParagraphPriority {
+    if (progeny.id === horse.id || dam.progeny.length === 1)
         return ParagraphPriority.Required;
 
-    if (progeny.races!.some(race => race.stake && race.finish === 1))
+    if (progeny.races?.some(race => race.stake && race.finish === 1) === true)
         return ParagraphPriority.VeryHigh;
 
-    if (progeny.overallAwardWinner || progeny.races!.some(race => isKeyRace(race)))
+    if (progeny.overallAwardWinner || progeny.races?.some(race => isKeyRace(race)) === true)
         return ParagraphPriority.High;
 
-    const earningsPerStart = progeny.races?.length ?? 0 > 0
-        ? progeny.earnings / progeny.races!.length
+    const earningsPerStart = progeny.races != null && progeny.races.length > 0
+        ? progeny.earnings / progeny.races.length
         : 0;
 
     if (progeny.conferenceAwardWinner || progeny.earnings >= 500_000 || earningsPerStart >= 20_000)
         return ParagraphPriority.Medium;
 
-    if ((progeny.age > 1 && progeny.age < 4) || progeny.earnings >= 250_000 || earningsPerStart >= 15_000 || progeny.races!.some(race => race.finish === 1))
+    if (
+        (progeny.age > 1 && progeny.age < 4)
+        || progeny.earnings >= 250_000
+        || earningsPerStart >= 15_000
+        || progeny.races?.some(race => race.finish === 1) === true
+    )
         return ParagraphPriority.Low;
 
     if (progeny.age > 1)
@@ -868,21 +1039,22 @@ function getParagraphPriority(horse: Horse, dam: DamLineAncestor, progeny: Proge
     return ParagraphPriority.OnlyIfNeeded;
 }
 
-async function getPedigree(id: number, csrfToken?: string): Promise<Ancestor[]> {
+async function getPedigree(id: number, csrfToken?: string): Promise<Array<Ancestor>> {
     return Array.from(
         (await api.getPedigree(id, csrfToken))
             .matchAll(/<a[^>]*\/horse\/(\d+)[^>]*>\s*(.*?)\s*<\/a[^>]*>|\b(Unknown)\b/gis)
     ).map((match: RegExpMatchArray): Ancestor => ({
-        id: match[1] ? parseInt(match[1]!) : undefined,
-        name: match[2] ?? match[3],
+        id: match[1] ? parseInt(match[1]) : undefined,
+        name: match[2] || match[3],
     }));
 }
 
-async function getProgeny(id: number, csrfToken?: string): Promise<Progeny[]> {
-    const progenyIds: number[] = [];
+async function getProgeny(id: number, csrfToken?: string): Promise<Array<Progeny>> {
+    const progenyIds: Array<number> = [];
 
     return Array.from(
         (await api.getProgenyList(id, csrfToken))
+            // eslint-disable-next-line @stylistic/max-len
             .matchAll(/<td[^>]*>\s*<a[^>]*\/horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*\/horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>(.*?)<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+\s*-\s*(\d+)\s*-\s*\d+\s*-\s*\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
     ).map(([match, id, name, sireId, sireName, age, gender, stable, wins, earnings]): Progeny => {
         const progenyId = parseInt(id);
@@ -909,7 +1081,9 @@ async function getProgeny(id: number, csrfToken?: string): Promise<Progeny[]> {
             overallAwardWinner: /trophyhorse\.png/i.test(match),
             conferenceAwardWinner: /trophyhorse_silver\.png/i.test(match),
         };
-    }).filter((progeny, index) => progenyIds.indexOf(progeny.id) === index).sort(sortProgeny);
+    })
+        .filter((progeny, index) => progenyIds.indexOf(progeny.id) === index)
+        .sort(sortProgeny);
 }
 
 function getWinText(wins: number, ageStart?: number, ageEnd?: number): string {
@@ -920,7 +1094,7 @@ function getWinText(wins: number, ageStart?: number, ageEnd?: number): string {
 
     if (ageStart && ageEnd) {
         if (ageStart !== ageEnd)
-            text += `, ${ageStart} ${ageEnd! - ageStart! > 1 ? 'thru' : 'and'} ${ageEnd}`;
+            text += `, ${ageStart} ${ageEnd - ageStart > 1 ? 'thru' : 'and'} ${ageEnd}`;
         else
             text += `, at ${ageStart}`;
     }
@@ -928,8 +1102,12 @@ function getWinText(wins: number, ageStart?: number, ageEnd?: number): string {
     return text;
 }
 
-function isKeyRace(race: Race, includeOpen: boolean = false, includePreferred: boolean = false): boolean {
-    return (race.finish! <= 3 && race.stake)
+function isKeyRace(
+    race: Race,
+    includeOpen: boolean = false,
+    includePreferred: boolean = false
+): boolean {
+    return (race.finish != null && race.finish <= 3 && race.stake === true)
         || (includeOpen && race.finish === 1 && /^(Maiden )?Open$/i.test(race.name ?? ''))
         || (includePreferred && race.finish === 1 && /^(Maiden )?(Open|Preferred)$/i.test(race.name ?? ''));
 }
@@ -952,7 +1130,10 @@ async function loadFonts(pdfDoc: PDFDocument): Promise<FontMap> {
     }));
 }
 
-async function populateAncestors(pedigree: Ancestor[], csrfToken?: string): Promise<Map<number | undefined, Ancestor>> {
+async function populateAncestors(
+    pedigree: Array<Ancestor | undefined>,
+    csrfToken?: string
+): Promise<Map<number | null | undefined, Ancestor>> {
     const tq = new TaskQueue(3);
     csrfToken ??= await api.getCSRFToken();
 
@@ -966,7 +1147,8 @@ async function populateAncestors(pedigree: Ancestor[], csrfToken?: string): Prom
                     let ancestor = ancestors.get(pedigree[i]?.id) ?? pedigree[i] ?? { name: 'Undefined' };
 
                     if (ancestor.id != null) {
-                        const races = ancestors.get(ancestor.id)?.races ?? await getRaces(ancestor.id, csrfToken);
+                        const races = ancestors.get(ancestor.id)?.races
+                            ?? await getRaces(ancestor.id, csrfToken);
 
                         if (!ancestors.has(ancestor.id)) {
                             ancestor.sireId = pedigree[2 * (i + 1)]?.id;
@@ -974,7 +1156,10 @@ async function populateAncestors(pedigree: Ancestor[], csrfToken?: string): Prom
                             ancestor.lifetimeMark = getLifetimeMark(races);
                         }
 
-                        if (showDamInfo(i) && (ancestor.progeny == null || ancestor.races == null)) {
+                        if (
+                            showDamInfo(i)
+                            && (ancestor.progeny == null || ancestor.races == null)
+                        ) {
                             const progeny = await getProgeny(ancestor.id, csrfToken);
                             ancestor = ancestors.get(pedigree[i]?.id) ?? pedigree[i] ?? { name: 'Undefined' };
                             ancestor.progeny = progeny;
@@ -991,16 +1176,13 @@ async function populateAncestors(pedigree: Ancestor[], csrfToken?: string): Prom
     return ancestors;
 }
 
-async function populateProgenyData(progeny: Progeny[], csrfToken?: string): Promise<void> {
+async function populateProgenyData(progeny: Array<Progeny>, csrfToken?: string): Promise<void> {
     const tq = new TaskQueue(3);
     csrfToken ??= await api.getCSRFToken();
 
     await Promise.all(
         progeny.map(prog =>
             tq.add(async () => {
-                if (prog?.id == null)
-                    return;
-
                 prog.races = await getRaces(prog.id, csrfToken);
                 prog.earnings = prog.races.getEarnings();
             })
@@ -1008,25 +1190,25 @@ async function populateProgenyData(progeny: Progeny[], csrfToken?: string): Prom
     )
 }
 
-async function recordTelemetry(start: number, pageCount: number): Promise<void> {
+function recordTelemetry(start: number, pageCount: number): void {
     if (pageCount < 1)
         return;
 
     const runtime = performance.now() - start;
 
-    chrome.storage.local.get('telemetry.pedigree').then(data => {
+    void chrome.storage.local.get('telemetry.pedigree').then(data => {
         const telemetry = (data['telemetry.pedigree'] ?? {
             totalRuns: 0,
             totalRunTime: 0,
             pagesGenerated: 0,
         }) as Telemetry;
 
-        chrome.storage.local.set({
-            'telemetry.pedigree': <Telemetry>{
+        void chrome.storage.local.set({
+            'telemetry.pedigree': {
                 totalRuns: telemetry.totalRuns + 1,
                 totalRunTime: telemetry.totalRunTime + runtime,
                 pagesGenerated: telemetry.pagesGenerated + pageCount,
-            }
+            },
         });
     });
 }

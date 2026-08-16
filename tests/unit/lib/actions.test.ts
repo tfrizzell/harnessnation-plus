@@ -5,17 +5,16 @@ import { expectInstanceOf } from '@tests/utils';
 describe(Action.name, () => {
     const type = ActionType.SearchHorses;
     const data: HorseSearchData = { term: 'Astronomical', maxGenerations: 4 };
-    const action = new Action<HorseSearchData>(type, data);
+    const action = new Action(type, data);
     const actionJson = JSON.stringify(action);
     const actionObj = JSON.parse(actionJson) as Record<string, unknown>;
 
     it(`correctly constructs new instances`, () => {
-        expect(new Action<HorseSearchData>(type, data)).toEqual(action);
+        expect(new Action(type, data)).toEqual(action);
     });
 
     it(`correctly identifies instances`, () => {
         expect(action instanceof Action).toBe(true);
-        expect({ __type: Action.name } instanceof Action).toBe(true);
     });
 
     it(`has the properties 'type' and 'data'`, () => {
@@ -30,40 +29,40 @@ describe(Action.name, () => {
     });
 
     test(`fromJSON(json) recreates the ${Action.name} instance`, () => {
-        const value = Action.fromJSON<HorseSearchData>(actionJson);
+        const value = Action.fromJSON(actionJson);
         expectInstanceOf(value, Action);
         expect(value.type).toBe(action.type);
         expect(value.data).toEqual(action.data);
     });
 
     test(`fromObject(object) recreates the ${Action.name} instance`, () => {
-        const value = Action.fromObject<HorseSearchData>(actionObj);
+        const value = Action.fromObject(actionObj);
         expectInstanceOf(value, Action);
         expect(value.type).toBe(action.type);
         expect(value.data).toEqual(action.data);
     });
 
     test(`fromObject(object) returns null if it doesn't get an ${Action.name} object`, () => {
-        const value = Action.fromObject<HorseSearchData>({});
+        const value = Action.fromObject({});
         expect(value).toBeNull();
     });
 
     test(`of(${Action.name}) recreates the ${Action.name} instance`, () => {
-        const value = Action.of<HorseSearchData>(action);
+        const value = Action.of(action);
         expectInstanceOf(value, Action);
         expect(value.type).toBe(action.type);
         expect(value.data).toEqual(action.data);
     });
 
     test(`of(object) recreates the ${Action.name} instance`, () => {
-        const value = Action.of<HorseSearchData>(actionObj);
+        const value = Action.of(actionObj);
         expectInstanceOf(value, Action);
         expect(value.type).toBe(action.type);
         expect(value.data).toEqual(action.data);
     });
 
     test(`of(string) recreates the ${Action.name} instance`, () => {
-        const value = Action.of<HorseSearchData>(actionJson);
+        const value = Action.of(actionJson);
         expectInstanceOf(value, Action);
         expect(value.type).toBe(action.type);
         expect(value.data).toEqual(action.data);
@@ -71,7 +70,7 @@ describe(Action.name, () => {
 });
 
 describe(ActionError.name, () => {
-    const action = new Action<HorseSearchData>(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 });
+    const action = new Action(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 });
     const message = 'Unsupported operation';
     const error = new ActionError(action, message);
     const errorJson = JSON.stringify(error);
@@ -84,7 +83,6 @@ describe(ActionError.name, () => {
 
     it(`correctly identifies instances`, () => {
         expect(error instanceof ActionError).toBe(true);
-        expect({ __type: ActionError.name } instanceof ActionError).toBe(true);
     });
 
     it(`has the properties 'action', 'message', and 'stack'`, () => {
@@ -148,19 +146,18 @@ describe(ActionError.name, () => {
 });
 
 describe(ActionResponse.name, () => {
-    const action = new Action<HorseSearchData>(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 });
+    const action = new Action(ActionType.SearchHorses, { term: 'Astronomical', maxGenerations: 4 });
     const data = 'Astronomical';
-    const response = new ActionResponse<RegExp | string>(action, data);
+    const response = new ActionResponse(action, data);
     const responseJson = JSON.stringify(response);
     const responseObj = JSON.parse(responseJson) as Record<string, unknown>;
 
     it(`correctly constructs new instances`, () => {
-        expect(new ActionResponse<RegExp | string>(action, data)).toEqual(response);
+        expect(new ActionResponse(action, data)).toEqual(response);
     });
 
     it(`correctly identifies instances`, () => {
         expect(response instanceof ActionResponse).toBe(true);
-        expect({ __type: ActionResponse.name } instanceof ActionResponse).toBe(true);
     });
 
     it(`has the properties 'action' and 'data'`, () => {
@@ -176,40 +173,41 @@ describe(ActionResponse.name, () => {
     });
 
     test(`fromJSON(json) recreates the ${ActionResponse.name} instance`, () => {
-        const value = ActionResponse.fromJSON<RegExp | string>(responseJson);
+        const value = ActionResponse.fromJSON(responseJson);
         expectInstanceOf(value, ActionResponse);
         expect(value.action).toEqual(response.action);
         expect(value.data).toEqual(response.data);
     });
 
     test(`fromObject(object) recreates the ${ActionResponse.name} instance`, () => {
-        const value = ActionResponse.fromObject<RegExp | string>(responseObj);
+        const value = ActionResponse.fromObject(responseObj);
         expectInstanceOf(value, ActionResponse);
         expect(value.action).toEqual(response.action);
         expect(value.data).toEqual(response.data);
     });
 
     test(`fromObject(object) returns null if it doesn't get an ${ActionResponse.name} object`, () => {
-        const value = ActionResponse.fromObject<RegExp | string>({});
+        const value = ActionResponse.fromObject({});
         expect(value).toBeNull();
     });
 
     test(`of(${ActionError.name}) recreates the ${ActionResponse.name} instance`, () => {
-        const value = ActionResponse.of<RegExp | string>(response);
+        const value = ActionResponse.of(response);
         expectInstanceOf(value, ActionResponse);
         expect(value.action).toEqual(response.action);
         expect(value.data).toEqual(response.data);
     });
 
     test(`of(object) recreates the ${ActionResponse.name} instance`, () => {
-        const value = ActionResponse.of<RegExp | string>(responseObj);
+        const value = ActionResponse.of(responseObj);
         expectInstanceOf(value, ActionResponse);
         expect(value.action).toEqual(response.action);
         expect(value.data).toEqual(response.data);
     });
 
     test(`of(string) recreates the ${ActionResponse.name} instance`, () => {
-        const value = ActionResponse.of<RegExp | string>(responseJson);
+        const value = ActionResponse.of(responseJson);
+        console.log(responseJson, '->', value);
         expectInstanceOf(value, ActionResponse);
         expect(value.action).toEqual(response.action);
         expect(value.data).toEqual(response.data);
@@ -221,10 +219,12 @@ describe(sendAction.name, () => {
         const sendMessageMock = chrome.runtime.sendMessage as Mock;
 
         sendMessageMock.mockImplementation(
-            (action: unknown): Promise<ActionResponse<RegExp | string>> => {
-                const _action = Action.of<HorseSearchData>(action);
+            (
+                action: Action<ActionType.SearchHorses>
+            ): Promise<ActionResponse<ActionType.SearchHorses>> => {
+                const _action = Action.of(action);
                 expectInstanceOf(_action, Action);
-                return Promise.resolve(new ActionResponse<RegExp | string>(_action, 'Astronomical'));
+                return Promise.resolve(new ActionResponse<ActionType.SearchHorses>(_action, 'Astronomical'));
             }
         );
 
@@ -240,7 +240,7 @@ describe(sendAction.name, () => {
 
         sendMessageMock.mockImplementation(
             (action: unknown): Promise<ActionError> => {
-                const _action = Action.of<HorseSearchData>(action);
+                const _action = Action.of(action);
                 expectInstanceOf(_action, Action);
                 return Promise.resolve(new ActionError(_action, 'Invalid action'));
             }

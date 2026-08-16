@@ -1,7 +1,9 @@
 import { TaskQueue } from './task-queue.js';
 import { isMobileOS } from './utils.js';
 
-/** Shared `TextEncoder` and `TextDecoder` instances used for encoding and decoding cached responses. */
+/**
+ * Shared `TextEncoder` and `TextDecoder` instances used for encoding and decoding cached responses.
+ */
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -78,8 +80,8 @@ export class HarnessNationAPI {
      * @param options - Configuration overrides for cache life and backoff behaviors.
      */
     constructor(options: HarnessNationAPIOptions = {}) {
-        this.#cacheTTL = options?.cacheTTL ?? this.#cacheTTL;
-        this.#backoffTimeout = options?.backoffTimeout ?? this.#backoffTimeout;
+        this.#cacheTTL = options.cacheTTL ?? this.#cacheTTL;
+        this.#backoffTimeout = options.backoffTimeout ?? this.#backoffTimeout;
 
         if (this.#cacheTTL < 60_000)
             console.warn(`%charnessnation.ts%c     cacheTTL=${this.#cacheTTL} is below minimum value of 60_000`, 'color:#406e8e;font-weight:bold;', '');
@@ -87,7 +89,7 @@ export class HarnessNationAPI {
         if (this.#backoffTimeout < 5_000)
             console.warn(`%charnessnation.ts%c     backoffTimeout=${this.#backoffTimeout} is below minimum value of 5_000`, 'color:#406e8e;font-weight:bold;', '');
 
-        this.#startUp = (typeof chrome === 'undefined' || chrome.runtime?.getPlatformInfo == null
+        this.#startUp = (typeof chrome === 'undefined'
             ? new Promise(resolve => {
                 this.#cacheTTL = 0;
                 resolve();
@@ -163,7 +165,8 @@ export class HarnessNationAPI {
     }
 
     /**
-     * A wrapper around the native fetch API that intercepts retriable response codes to trigger automatic exponential backoff retries.
+     * A wrapper around the native fetch API that intercepts retriable response codes to trigger
+     * automatic exponential backoff retries.
      * 
      * Response text is mutated to normalize some HTML entities such as `&nbsp;` and `&#039;`.
 
@@ -171,7 +174,10 @@ export class HarnessNationAPI {
      * @param init - The fetch request options.
      * @returns A promise that resolves with the normalized HTML string.
      */
-    async #fetch(input: string | URL | globalThis.Request, init?: HarnessNationAPIRequestInit): Promise<string> {
+    async #fetch(
+        input: string | URL | globalThis.Request,
+        init?: HarnessNationAPIRequestInit
+    ): Promise<string> {
         await this.#backoff;
 
         const res = await fetch(input, init);
@@ -240,7 +246,11 @@ export class HarnessNationAPI {
     }
 
     /** Provides a cache-first read method falling back to a network fetch on a cache miss. */
-    async #getOrCreateFromCache(key: string, input: string | URL | globalThis.Request, init?: HarnessNationAPIRequestInit): Promise<string> {
+    async #getOrCreateFromCache(
+        key: string,
+        input: string | URL | globalThis.Request,
+        init?: HarnessNationAPIRequestInit
+    ): Promise<string> {
         await this.#startUp;
         const cached = await this.#getFromCache(key);
 
@@ -254,7 +264,7 @@ export class HarnessNationAPI {
 
     /** Normalizes HTML content. */
     #normalizeHTML(html: string): string {
-        return html?.replace(/&nbsp;/g, ' ').replace(/&#039;/g, "'");
+        return html.replace(/&nbsp;/g, ' ').replace(/&#039;/g, "'");
     }
 
     /** Removes an entry from the IndexedDB store. */
@@ -331,7 +341,7 @@ export class HarnessNationAPI {
      * 
      */
     #shouldRetry(status: number, init?: HarnessNationAPIRequestInit): boolean {
-        if (init?.retryOn) return init?.retryOn(status);
+        if (init?.retryOn) return init.retryOn(status);
         return [408, 425, 429, 500, 502, 503, 504].includes(status);
     }
 
@@ -354,14 +364,16 @@ export class HarnessNationAPI {
 
         return this.#backoff = new Promise(resolve => {
             this.#retryCount++;
+
+            const retryAfter = res.headers.get('Retry-After');
             let timeout: number;
 
-            if (res.headers.has('Retry-After')) {
-                timeout = (parseFloat(res.headers.get('Retry-After')!) + 1) * 1000;
-                console.debug(`%charnessnation.ts%c     'Retry-After' header detected; retrying in ${Number(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
+            if (retryAfter) {
+                timeout = (parseFloat(retryAfter) + 1) * 1000;
+                console.debug(`%charnessnation.ts%c     'Retry-After' header detected; retrying in ${(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
             } else {
                 timeout = this.#backoffTimeout * Math.pow(2, this.#retryCount - 1);
-                console.debug(`%charnessnation.ts%c     Backing off; retry #${this.#retryCount} in ${Number(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
+                console.debug(`%charnessnation.ts%c     Backing off; retry #${this.#retryCount} in ${(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
             }
 
             setTimeout(() => {
@@ -379,7 +391,7 @@ export class HarnessNationAPI {
     async clearCache(): Promise<void> {
         await this.#startUp;
 
-        return await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             if (!this.#cache || this.#cacheTTL <= 0) {
                 resolve();
                 return;
@@ -424,19 +436,24 @@ export class HarnessNationAPI {
             this.#csrfRequest = (async () => {
                 try {
                     const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
-                    const csrfToken = html?.match(/setRequestHeader\((["'])X-CSRF-TOKEN\1,\s*(["'])(.*?)\2\)/i)?.[3];
+                    const csrfToken = html
+                        .match(/setRequestHeader\((["'])X-CSRF-TOKEN\1,\s*(["'])(.*?)\2\)/i)?.[3];
 
                     if (csrfToken != null)
                         await this.#setInCache('__x-csrf-token__', csrfToken);
 
                     return csrfToken;
-                } catch (err: any) {
-                    console.error(`%charnessnation.ts%c     Failed to fetch CSRF token: ${err?.message}`, 'color:#406e8e;font-weight:bold;', '');
+                } catch (e: unknown) {
+                    console.groupCollapsed(`%charnessnation.ts%c     Failed to fetch CSRF token`, 'color:#406e8e;font-weight:bold;', '')
 
-                    if (err)
-                        console.error(err)
+                    if (e instanceof Error) {
+                        console.error('Message:', e.message);
+                        console.error('Stack Trace:', e);
+                    } else
+                        console.error('Unknown Error:', e);
 
-                    return undefined;
+                    console.groupEnd();
+                    return;
                 }
             })();
 
@@ -476,7 +493,8 @@ export class HarnessNationAPI {
         if (refresh)
             await this.#removeFromCache(`/horses/${id}/pedigree`);
 
-        csrfToken ||= await this.getCSRFToken() ?? '';
+        if (!csrfToken || csrfToken.trim() == '')
+            csrfToken = (await this.getCSRFToken()) ?? '';
 
         return await this.#getOrCreateFromCache(
             `/horses/${id}/pedigree`,
@@ -489,7 +507,10 @@ export class HarnessNationAPI {
                     'X-Csrf-Token': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
-                body: new URLSearchParams({ _token: csrfToken, horseId: id.toString() }),
+                body: new URLSearchParams({
+                    _token: csrfToken,
+                    horseId: id.toString(),
+                }),
             }
         );
     }
@@ -502,16 +523,24 @@ export class HarnessNationAPI {
      * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
      * @returns A promise that resolves with the HTML content of the progeny list page.
      */
-    async getProgenyList(id: number, csrfToken?: string, refresh: boolean = false): Promise<string> {
-        csrfToken ||= await this.getCSRFToken() ?? '';
+    async getProgenyList(
+        id: number,
+        csrfToken?: string,
+        refresh: boolean = false
+    ): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/progeny/list`);
+
+        if (!csrfToken || csrfToken.trim() == '')
+            csrfToken = (await this.getCSRFToken()) ?? '';
 
         try {
-            return await this.#getProgenyListStandard(id, csrfToken, refresh);
+            return await this.#getProgenyListStandard(id, csrfToken);
         } catch (e: unknown) {
             if (!(e instanceof Error) || !e.message.includes('504'))
                 throw e;
 
-            const response = await this.#getProgenyListChunked(id, csrfToken, refresh);
+            const response = await this.#getProgenyListChunked(id, csrfToken);
             await this.#setInCache(`/horses/${id}/progeny/list`, response)
             return response;
         }
@@ -520,7 +549,7 @@ export class HarnessNationAPI {
     /**
      * Fetches a horse's progeny list using a chunked appraoch.
      */
-    async #getProgenyListChunked(id: number, csrfToken: string, refresh: boolean = false): Promise<string> {
+    async #getProgenyListChunked(id: number, csrfToken: string): Promise<string> {
         const tq = new TaskQueue(4);
 
         const tasks = [0, 1, 2, 3, 4]
@@ -553,10 +582,7 @@ export class HarnessNationAPI {
     /**
      * Fetches a horse's progeny list using the standard request.
      */
-    async #getProgenyListStandard(id: number, csrfToken: string, refresh: boolean = false): Promise<string> {
-        if (refresh)
-            await this.#removeFromCache(`/horses/${id}/progeny/list`);
-
+    async #getProgenyListStandard(id: number, csrfToken: string): Promise<string> {
         return await this.#getOrCreateFromCache(
             `/horses/${id}/progeny/list`,
             'https://www.harnessnation.com/api/progeny/list',
@@ -575,7 +601,7 @@ export class HarnessNationAPI {
                     filterGender: '',
                     filterStable: '',
                 }),
-                retryOn: (status) =>
+                retryOn: status =>
                     status !== 504 && this.#shouldRetry(status),
             }
         );
@@ -601,7 +627,9 @@ export class HarnessNationAPI {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     'Referer': 'https://www.harnessnation.com/',
                 },
-                body: new URLSearchParams({ horseId: id.toString() }),
+                body: new URLSearchParams({
+                    horseId: id.toString(),
+                }),
             });
     }
 
@@ -613,11 +641,16 @@ export class HarnessNationAPI {
      * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
      * @returns A promise that resolves with the HTML content of the race history page.
      */
-    async getRaceHistory(id: number, csrfToken?: string, refresh: boolean = false): Promise<string> {
+    async getRaceHistory(
+        id: number,
+        csrfToken?: string,
+        refresh: boolean = false
+    ): Promise<string> {
         if (refresh)
             await this.#removeFromCache(`/horses/${id}/races`);
 
-        csrfToken ||= await this.getCSRFToken() ?? '';
+        if (!csrfToken || csrfToken.trim() == '')
+            csrfToken = (await this.getCSRFToken()) ?? '';
 
         return await this.#getOrCreateFromCache(
             `/horses/${id}/races`,
@@ -630,7 +663,10 @@ export class HarnessNationAPI {
                     'X-Csrf-Token': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
-                body: new URLSearchParams({ _token: csrfToken, horseId: id.toString() }),
+                body: new URLSearchParams({
+                    _token: csrfToken,
+                    horseId: id.toString(),
+                }),
             }
         );
     }
@@ -655,7 +691,9 @@ export class HarnessNationAPI {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     'Referer': 'https://www.harnessnation.com/',
                 },
-                body: new URLSearchParams({ horseId: id.toString() }),
+                body: new URLSearchParams({
+                    horseId: id.toString(),
+                }),
             }
         );
     }
@@ -695,7 +733,7 @@ export class HarnessNationAPI {
             const req = store.index('expiresAt').openCursor(IDBKeyRange.upperBound(Date.now()));
 
             req.addEventListener('success', e => {
-                const cursor: IDBCursorWithValue | null = (e.target as IDBRequest).result;
+                const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>).result;
 
                 if (!cursor)
                     return;

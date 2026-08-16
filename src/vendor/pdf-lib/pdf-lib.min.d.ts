@@ -1,7 +1,7 @@
 // src/vendor/pdf-lib.d.ts
-export * from 'pdf-lib/ts3.4/es';
+export * from 'pdf-lib';
 
-import * as PDFLib from 'pdf-lib/ts3.4/es';
+import * as PDFLib from 'pdf-lib';
 
 declare global {
     interface Window {

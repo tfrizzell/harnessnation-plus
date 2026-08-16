@@ -8,10 +8,10 @@ import {
     terminate,
 } from '../vendor/firebasejs/firebase-firestore.js';
 
-try { self.window = self; } catch { }
+try { self.window = self; } catch { /* Do nothing */ }
 
 const firebase = initializeApp({
-    apiKey: '',
+    apiKey: 'AIzaSyDKTO4YNgByizsu7px3a81-F-1BKkHoXYY',
     authDomain: 'harnessnation-plus.firebaseapp.com',
     projectId: 'harnessnation-plus',
     storageBucket: 'harnessnation-plus.appspot.com',
@@ -36,8 +36,16 @@ export function reinitializeFirestore(): Firestore {
                 tabManager: persistentSingleTabManager({ forceOwnership: true }) ,
             }),
         });
-    } catch (error: unknown) {
-        console.warn(`%cfirestore.ts%c     Failed to initialize Firestore, falling back to existing instance`, 'color:#406e8e;font-weight:bold;', '');
+    } catch (e: unknown) {
+        console.groupCollapsed(`%cfirestore.ts%c     Failed to initialize Firestore, falling back to existing instance`, 'color:#406e8e;font-weight:bold;', '');
+
+        if (e instanceof Error) {
+            console.warn('Message:', e.message);
+            console.warn('Stack Trace:', e);
+        } else
+            console.warn('Unknown Error:', e);
+
+        console.groupEnd();
         firestoreInstance = getFirestore(firebase);
     }
 

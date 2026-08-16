@@ -19,6 +19,9 @@ document.querySelectorAll<HTMLDialogElement>('dialog').forEach(bindDialogEventLi
 document.querySelectorAll<HTMLAnchorElement>('a[role="dialog" i]').forEach(a => {
     const dialogName = a.getAttribute('href')?.replace(/^#/, '');
 
+    if (!dialogName)
+        return;
+
     a.addEventListener('click', e => {
         e.preventDefault();
         document.querySelector<HTMLDialogElement>(`dialog#${dialogName}`)?.showModal();

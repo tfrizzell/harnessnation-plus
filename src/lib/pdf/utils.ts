@@ -1,11 +1,17 @@
-import { PDFPage, PDFPageDrawTextOptions } from 'pdf-lib/ts3.4/es';
+import { PDFPage, PDFPageDrawTextOptions } from 'pdf-lib';
 
-export function drawTextCentered(page: PDFPage, text: string, options: PDFPageDrawTextOptions = {}): void {
-    const font = options?.font || (page as any).font;
-    const size = options?.size || (page as any).fontSize;
+type DrawTextCenteredOptions = Omit<PDFPageDrawTextOptions, 'font' | 'size'> & {
+    font: NonNullable<PDFPageDrawTextOptions['font']>;
+    size: NonNullable<PDFPageDrawTextOptions['size']>;
+};
 
+export function drawTextCentered(
+    page: PDFPage,
+    text: string,
+    options: DrawTextCenteredOptions
+): void {
     page.drawText(text, {
         ...options,
-        x: (page.getWidth() - font.widthOfTextAtSize(text, size)) / 2,
+        x: (page.getWidth() - options.font.widthOfTextAtSize(text, options.size)) / 2,
     });
 }

@@ -3,11 +3,17 @@ export enum EventType {
     Installed = 'installed.harnessnation-plus',
 }
 
-export function onInstalled(callback: EventListenerOrEventListenerObject, options?: AddEventListenerOptions): void {
+export function onInstalled(
+    callback: EventListenerOrEventListenerObject,
+    options?: AddEventListenerOptions
+): void {
     window.addEventListener(EventType.Installed, callback, { once: true, ...options });
 }
 
-export function onLoad(callback: EventListenerOrEventListenerObject, options?: AddEventListenerOptions | boolean): void {
+export function onLoad(
+    callback: EventListenerOrEventListenerObject,
+    options?: AddEventListenerOptions | boolean
+): void {
     if (document.readyState === 'loading') {
         window.addEventListener('DOMContentLoaded', callback, options);
         return;
