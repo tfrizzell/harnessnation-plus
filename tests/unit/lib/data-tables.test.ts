@@ -1,25 +1,9 @@
-import { type Mock, beforeAll, describe, expect, it } from 'vitest';
-import DataTables, { DataTablesMode, DataTablesOptions } from '@src/lib/data-tables';
+import { type Mock, beforeEach, describe, expect, it } from 'vitest';
+import DataTables, { DataTablesMode } from '@src/lib/data-tables';
 import { DataTablesSettings } from '@src/lib/settings';
 
 describe(`DataTables`, () => {
-    it(`exists`, () => {
-        expect(DataTables).not.toBeUndefined();
-    });
-
-    it(`is an object`, () => {
-        expect(typeof DataTables).toEqual('object');
-    });
-
     describe(`extend`, () => {
-        it(`exists`, () => {
-            expect(DataTables).toHaveProperty('extend');
-        });
-
-        it(`is a function`, () => {
-            expect(typeof DataTables.extend).toEqual('function');
-        });
-
         it(`resolves with the same script if the table isn't found`, async () => {
             const script: string = `
                 table = $('#test').DataTable({
@@ -78,7 +62,9 @@ describe(`DataTables`, () => {
                     "autoWidth": false,
                     "order":[[1,'ASC']],
                 });
-            `, <DataTablesOptions>{ saveState: true, stateDuration: 31557600 })).resolves.toEqual(`
+            `,
+                { saveState: true, stateDuration: 31557600 }
+            )).resolves.toEqual(`
                 table = $('#test').DataTable({
                     // HarnessNation
                     "paging":   false,
@@ -109,7 +95,9 @@ describe(`DataTables`, () => {
                     "autoWidth": false,
                     "order":[[1,'ASC']],
                 });
-            `, <DataTablesOptions>{ saveState: true, stateDuration: 31557600, saveSearch: false })).resolves.toEqual(`
+            `,
+                { saveState: true, stateDuration: 31557600, saveSearch: false }
+            )).resolves.toEqual(`
                 table = $('#test').DataTable({
                     // HarnessNation
                     "paging":   false,
@@ -132,36 +120,46 @@ describe(`DataTables`, () => {
     });
 
     describe(`getSettings`, () => {
-        const mockData: any = {
+        const mockData: Record<string, Record<string, unknown>> = {
             dt: {
-                test1: <DataTablesSettings>{ enabled: true, duration: 1, mode: DataTablesMode.Default },
-                test2: <DataTablesSettings>{ enabled: true, duration: 1, mode: DataTablesMode.Custom },
+                test1: {
+                    enabled: true,
+                    duration: 1,
+                    mode: DataTablesMode.Default
+                },
+                test2: {
+                    enabled: true,
+                    duration: 1,
+                    mode: DataTablesMode.Custom
+                },
             }
         };
 
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         const getMock = chrome.storage.sync.get as Mock;
 
-        beforeAll(() => {
-            getMock.mockImplementation((keys: string | string[] | object): Promise<object> => {
-                if (typeof keys === 'string')
-                    return Promise.resolve(keys in mockData ? { [keys]: mockData[keys] } : {});
+        beforeEach(() => {
+            getMock.mockImplementation(
+                (keys: string | Array<string> | object): Promise<Record<string, unknown>> => {
+                    if (typeof keys === 'string')
+                        return Promise.resolve(keys in mockData ? { [keys]: mockData[keys] } : {});
 
-                if (Array.isArray(keys))
-                    return Promise.resolve(keys.reduce((data, key) => key in mockData ? { ...data, [key]: mockData[key] } : data, {}));
+                    if (Array.isArray(keys))
+                        return Promise.resolve(keys
+                            .reduce((data: Record<string, unknown>, key: string) => key in mockData
+                                ? { ...data, [key]: mockData[key] }
+                                : data, {})
+                        );
 
-                if (typeof keys === 'object' && keys != null)
-                    return Promise.resolve(Object.keys(keys).reduce((data, key) => key in mockData ? { ...data, [key]: mockData[key] } : data, {}));
+                    if (typeof keys === 'object')
+                        return Promise.resolve(Object.keys(keys)
+                            .reduce((data, key) => key in mockData
+                                ? { ...data, [key]: mockData[key] }
+                                : data, {})
+                        );
 
-                return Promise.resolve(mockData);
-            });
-        });
-
-        it(`exists`, () => {
-            expect(DataTables).toHaveProperty('getSettings');
-        });
-
-        it(`is a function`, () => {
-            expect(typeof DataTables.getSettings).toEqual('function');
+                    return Promise.resolve(mockData);
+                });
         });
 
         it(`resolves with an object containing saveState if enabled is true and mode is DataTablesMode.Default`, async () => {
@@ -169,7 +167,7 @@ describe(`DataTables`, () => {
         });
 
         it(`resolves with an object containing saveState and stateDuration if enabled is true and mode is DataTablesMode.Custom`, async () => {
-            await expect(DataTables.getSettings('test2')).resolves.toEqual({ saveState: true, stateDuration: mockData.dt.test2.duration });
+            await expect(DataTables.getSettings('test2')).resolves.toEqual({ saveState: true, stateDuration: (mockData.dt.test2 as DataTablesSettings).duration });
         });
 
         it(`resolves with undefined if the key isn't found`, async () => {

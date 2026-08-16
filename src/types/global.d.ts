@@ -8,7 +8,7 @@ interface MapConstructor {
     groupBy<K, T>(
         items: Iterable<T>,
         keySelector: (item: T, index: number) => K,
-    ): Map<K, T[]>;
+    ): Map<K, Array<T>>;
 }
 
 interface ObjectConstructor {
@@ -20,5 +20,21 @@ interface ObjectConstructor {
     groupBy<K extends PropertyKey, T>(
         items: Iterable<T>,
         keySelector: (item: T, index: number) => K,
-    ): Partial<Record<K, T[]>>;
+    ): Partial<Record<K, Array<T>>>;
+}
+interface NavigatorUAData {
+    readonly brands: ReadonlyArray<{
+        brand: string;
+        version: string;
+    }>;
+    readonly mobile: boolean;
+    readonly platform: string;
+
+    getHighEntropyValues(
+        hints: ReadonlyArray<string>
+    ): Promise<Record<string, unknown>>;
+}
+
+interface Navigator {
+    readonly userAgentData?: NavigatorUAData;
 }

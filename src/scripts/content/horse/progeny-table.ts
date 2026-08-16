@@ -1,18 +1,12 @@
-/***************************************************************************************************
- *                                                                                                 *
- * This file duplicates horse-table.module.ts. When using `import('progeny-table.module.ts')`, the *
- * target script element is loaded before the script module, thus the functionality doesn't work.  *
- *                                                                                                 *
- ***************************************************************************************************/
-(async () => {
+void (async () => {
     const DataTables = window.DataTables;
     const { onInstalled } = window.Events;
     const settings = await DataTables.getSettings('progeny');
 
     function addPagedProgenyLoader(node: Node): void {
-        const totalFoals = parseInt(document.body.textContent?.match(/Total\s*Foals\s*:\s*([\d,]+)/)?.[1]?.replace(/\D/g, '') ?? '0');
+        const totalFoals = parseInt(document.body.textContent.match(/Total\s*Foals\s*:\s*([\d,]+)/)?.[1]?.replace(/\D/g, '') ?? '0');
 
-        if (!node?.textContent?.match(/\bfunction updateProgenyTableData\b/) || totalFoals < 600)
+        if (!node.textContent?.match(/\bfunction updateProgenyTableData\b/) || totalFoals < 600)
             return;
 
         const gaits = [null];
@@ -22,6 +16,7 @@
         const delay = 500;
 
         node.textContent = node.textContent.replace(
+            // eslint-disable-next-line @stylistic/max-len
             /(function updateProgenyTableData\(filterGait,filterAgeGroup,filterGender,filterStable, horseId\) \{)/,
             `
 async function updateProgenyTableDataPaged(horseId) {
@@ -105,7 +100,7 @@ async function updateProgenyTableDataPaged(horseId) {
     }
 
     async function updateDataTablesSettings(node: Node): Promise<void> {
-        if (!node?.textContent?.match(/\bfunction updateProgenyTableData\b/))
+        if (!node.textContent?.match(/\bfunction updateProgenyTableData\b/))
             return;
 
         node.textContent = await DataTables.extend(
@@ -119,18 +114,22 @@ async function updateProgenyTableDataPaged(horseId) {
         mutations.forEach(mutation => {
             if (
                 mutation.target.nodeType !== Node.ELEMENT_NODE
-                || (<HTMLElement>mutation.target).tagName !== 'SCRIPT'
-                || !(<HTMLElement>mutation.target).textContent?.match(/\bfunction updateProgenyTableData\b/)
+                || (mutation.target as HTMLElement).tagName !== 'SCRIPT'
+                || !(mutation.target as HTMLElement).textContent
+                    .match(/\bfunction updateProgenyTableData\b/)
             )
                 return;
 
-            mutation.addedNodes?.forEach(async node => {
-                await updateDataTablesSettings(node);
-                await addPagedProgenyLoader(node);
+            mutation.addedNodes.forEach(node => {
+                void updateDataTablesSettings(node)
+                    .then(() => { addPagedProgenyLoader(node); });
             });
         });
     });
 
     observer.observe(document, { childList: true, subtree: true });
-    onInstalled(() => observer.disconnect());
+
+    onInstalled(() => {
+        observer.disconnect();
+    });
 })();

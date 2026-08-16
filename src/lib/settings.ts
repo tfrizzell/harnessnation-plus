@@ -2,10 +2,10 @@ import { DataTablesMode } from './data-tables.js';
 
 export enum DataTablesDisplayUnits {
     Minutes = 60,
-    Hours = Minutes * 60,
-    Days = Hours * 24,
-    Weeks = Days * 7,
-    Years = Days * 365.25,
+    Hours = 3600,
+    Days = 86400,
+    Weeks = 604800,
+    Years = 31557600,
 }
 
 export interface DataTablesSettings {

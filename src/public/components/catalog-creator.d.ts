@@ -1,21 +1,25 @@
 export interface HNPlusCatalogData {
-    readonly data: (number | [number, string | number])[];
+    readonly data: Array<number | [number, string | number]>;
     readonly showHipNumbers: boolean;
     readonly fullPedigrees: boolean;
 }
 
-export interface HNPlusCatalogCreatorCustomEventMap {
+export interface HNPlusCatalogCreatorEvents extends HTMLElementEventMap {
     'submit': CustomEvent<HNPlusCatalogData>;
 }
 
 export interface HNPlusCatalogCreatorElement extends HTMLElement {
     disabled: boolean;
-    options?: [number, string][];
+    options?: Array<[number, string]>;
 
     addRow(): void;
     removeRow(row: HTMLDivElement): void;
     reset(): void;
 
-    addEventListener<K extends keyof HNPlusCatalogCreatorCustomEventMap>(type: K, listener: (this: HNPlusCatalogCreatorElement, ev: HNPlusCatalogCreatorCustomEventMap[K]) => void): void;
-    dispatchEvent<K extends keyof HNPlusCatalogCreatorCustomEventMap>(ev: HNPlusCatalogCreatorCustomEventMap[K]): any;
+    addEventListener<K extends keyof HNPlusCatalogCreatorEvents>(
+        type: K,
+        listener: (this: HNPlusCatalogCreatorElement, ev: HNPlusCatalogCreatorEvents[K]) => void
+    ): void;
+
+    dispatchEvent(ev: HNPlusCatalogCreatorEvents[keyof HNPlusCatalogCreatorEvents]): boolean;
 }

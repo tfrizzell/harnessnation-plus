@@ -44,7 +44,9 @@ function addButtons(row: Element): void {
         copySettingsToAll(row);
     });
 
-    row.querySelector('button.horseInfoBtn')!.parentNode?.append(wrapper);
+    row.querySelector('button.horseInfoBtn')
+        ?.parentNode
+        ?.append(wrapper);
 
     if (copiedSettings.has(getTrainingGroup(row)))
         addPasteButton(row);
@@ -79,16 +81,26 @@ function addPasteButton(row: Element): void {
 
 function copySettings(row: Element): void {
     copiedSettings.set(getTrainingGroup(row), getSettings(row));
+    const form = row.closest('form');
 
-    row.closest('form')?.querySelector(':is(.horseField, .horseFieldYearling).hn-plus-copy-source')?.classList.remove('hn-plus-copy-source');
-    row.closest('.horseField, .horseFieldYearling')?.classList.add('hn-plus-copy-source');
-    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach(addPasteButton);
+    row.closest('.horseField, .horseFieldYearling')
+        ?.classList
+        .add('hn-plus-copy-source');
+
+    form?.querySelector(':is(.horseField, .horseFieldYearling).hn-plus-copy-source')
+        ?.classList
+        .remove('hn-plus-copy-source');
+
+    form?.querySelectorAll('.horseField, .horseFieldYearling')
+        .forEach(addPasteButton);
 }
 
 function copySettingsToAll(row: Element): void {
     const settings: Map<string, string> = getSettings(row);
 
-    row.closest('form')?.querySelectorAll('.horseField, .horseFieldYearling').forEach(row => pasteSettings(row, settings));
+    row.closest('form')
+        ?.querySelectorAll('.horseField, .horseFieldYearling')
+        .forEach(row => { pasteSettings(row, settings); });
 }
 
 function getInputs(row: Element): NodeListOf<TrainingInputElement> {
@@ -106,8 +118,11 @@ function getTrainingGroup(row: Element): TrainingGroup {
 function getSettings(row: Element): Map<string, string> {
     const settings: Map<string, string> = new Map()
 
-    getInputs(row).forEach((el: TrainingInputElement): void => {
-        if (el.offsetParent != null && !/^input(HorseName|FastworkGait)(Yearling)?_\d+$/i.test(el.id))
+    getInputs(row).forEach(el => {
+        if (
+            el.offsetParent != null
+            && !/^input(HorseName|FastworkGait)(Yearling)?_\d+$/i.test(el.id)
+        )
             settings.set(getKey(el), el.value);
     });
 
@@ -115,17 +130,21 @@ function getSettings(row: Element): Map<string, string> {
 }
 
 function handleAutoSelect(e: Event): void {
-    const form = (<Element>e.target).closest('.pb-3 > .row')?.querySelector('form');
-
-    form?.querySelectorAll('.horseField, .horseFieldYearling').forEach(row => {
-        removeButtons(row);
-        addButtons(row);
-    });
+    (e.target as Element).closest('.pb-3 > .row')
+        ?.querySelector('form')
+        ?.querySelectorAll('.horseField, .horseFieldYearling')
+        .forEach(row => {
+            removeButtons(row);
+            addButtons(row);
+        });
 }
 
-function pasteSettings(row: Element, settings: Map<string, string> | undefined | null = null): void {
+function pasteSettings(
+    row: Element,
+    settings: Map<string, string> | undefined | null = null
+): void {
     if (settings === null)
-        return pasteSettings(row, copiedSettings.get(getTrainingGroup(row)));
+        pasteSettings(row, copiedSettings.get(getTrainingGroup(row)));
 
     if (settings == null)
         return;
@@ -134,38 +153,46 @@ function pasteSettings(row: Element, settings: Map<string, string> | undefined |
         const key = getKey(el);
 
         if (el.offsetParent != null && settings.has(key)) {
-            el.value = settings.get(key)!;
+            el.value = settings.get(key) ?? el.value;
             el.dispatchEvent(new Event('change'));
         }
     });
 }
 
-function removeButtons(row?: Element | undefined): void {
-    if (row != null)
-        row.querySelectorAll('.hn-plus-training-buttons').forEach(el => el.remove());
-    else
+function removeButtons(row?: Element): void {
+    if (row != null) {
+        row.querySelectorAll('.hn-plus-training-buttons')
+            .forEach(el => { el.remove(); });
+    } else
         removeAll('.hn-plus-training-buttons');
 }
 
 const observer = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
-        [].forEach.call(mutation.addedNodes, (node: HTMLElement) => {
-            if (node.classList?.contains('horseField') || node.classList?.contains('horseFieldYearling')) {
-                node.querySelectorAll<HTMLSelectElement>('select.horseNameSelect, select.horseNameSelectYearling')?.forEach(select => {
-                    select.addEventListener('change', (e: Event): void => {
-                        if (select.value)
-                            addButtons(node);
-                        else
-                            removeButtons(node)
+        [].forEach.call(mutation.addedNodes, (node: Node) => {
+            if (
+                node instanceof HTMLElement
+                && (node.classList.contains('horseField') || node.classList.contains('horseFieldYearling'))
+            ) {
+                node.querySelectorAll<HTMLSelectElement>('select.horseNameSelect, select.horseNameSelectYearling')
+                    .forEach(select => {
+                        select.addEventListener('change', () => {
+                            if (select.value)
+                                addButtons(node);
+                            else
+                                removeButtons(node)
+                        });
                     });
-                });
             }
         });
     });
 });
 
 observer.observe(document, { childList: true, subtree: true });
-onInstalled(() => observer.disconnect());
+
+onInstalled(() => {
+    observer.disconnect();
+});
 
 onLoad(() => {
     copiedSettings.clear();
@@ -177,6 +204,8 @@ onLoad(() => {
                 addButtons(row);
         });
 
-        form.closest('.pb-3 > .row')?.querySelectorAll('button.autoSelectHorses, button.autoSelectYearlings').forEach((button: Element): void => button.addEventListener('click', handleAutoSelect));
+        form.closest('.pb-3 > .row')
+            ?.querySelectorAll('button.autoSelectHorses, button.autoSelectYearlings')
+            .forEach(button => { button.addEventListener('click', handleAutoSelect); });
     });
 });

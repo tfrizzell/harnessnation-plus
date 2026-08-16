@@ -1,10 +1,4 @@
-/**************************************************************************************************
- *                                                                                                *
- * This file duplicates horse-table.module.ts. When using `import('horse-table.module.ts')`, the  *
- * target script element is loaded before the script module, thus the functionality doesn't work. *
- *                                                                                                *
- **************************************************************************************************/
-(async () => {
+void (async () => {
     const DataTables = window.DataTables;
     const { onInstalled } = window.Events;
 
@@ -15,23 +9,28 @@
         mutations.forEach(mutation => {
             if (
                 mutation.target.nodeType !== Node.ELEMENT_NODE
-                || (<HTMLElement>mutation.target).tagName !== 'SCRIPT'
-                || !(<HTMLElement>mutation.target).textContent?.match(/\bfunction loadHorses\b/)
+                || (mutation.target as HTMLElement).tagName !== 'SCRIPT'
+                || !(mutation.target as HTMLElement).textContent.match(/\bfunction loadHorses\b/)
             )
                 return;
 
-            mutation.addedNodes?.forEach(async node => {
-                if (node?.textContent?.match(/\bfunction loadHorses\b/)) {
-                    node.textContent = await DataTables.extend(
-                        `'#${page === 'breeding' ? 'breedingHorse' : 'horse'}Table_' + i`,
-                        node.textContent,
-                        settings
-                    );
-                }
+            mutation.addedNodes.forEach(node => {
+                void (async () => {
+                    if (node.textContent?.match(/\bfunction loadHorses\b/)) {
+                        node.textContent = await DataTables.extend(
+                            `'#${page === 'breeding' ? 'breedingHorse' : 'horse'}Table_' + i`,
+                            node.textContent,
+                            settings
+                        );
+                    }
+                })();
             });
         });
     });
 
     observer.observe(document, { childList: true, subtree: true });
-    onInstalled(() => observer.disconnect());
+
+    onInstalled(() => {
+        observer.disconnect();
+    });
 })();

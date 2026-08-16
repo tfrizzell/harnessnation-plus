@@ -2,6 +2,69 @@ import { Horse } from './horses.js';
 import { StudFeeFormula } from './settings.js';
 import { StallionScore } from './stallion-scores.js';
 
+type ActionData<T extends ActionType> = [ActionDataMap[T]] extends [undefined]
+    ? []
+    : [data: ActionDataMap[T]];
+
+export interface ActionDataMap {
+    [ActionType.CalculateStudFee]: CalculateStudFeeData;
+    [ActionType.ClearHorseCache]: undefined;
+    [ActionType.GenerateBroodmareReport]: BreedingReportData;
+    [ActionType.GeneratePedigreeCatalog]: PedigreeCatalogData;
+    [ActionType.GenerateStallionReport]: BreedingReportData;
+    [ActionType.GetHorse]: HorseIdData;
+    [ActionType.GetHorses]: undefined;
+    [ActionType.PreviewStallionScore]: HorseIdData;
+    [ActionType.SaveHorses]: Array<Horse>;
+    [ActionType.SearchHorses]: HorseSearchData;
+    [ActionType.UpdateStallionScores]: undefined;
+}
+
+type ActionErrorObject = {
+    __type: typeof ActionError.name;
+    action: ActionObjectUnion;
+    message: string;
+    stack?: string;
+};
+
+type ActionObject<T extends ActionType> = {
+    __type: typeof Action.name;
+    type: T;
+    data: ActionDataMap[T]
+};
+
+export type ActionObjectUnion = {
+    [T in ActionType]: ActionObject<T>
+}[ActionType];
+
+type ActionResponseData<T extends ActionType> = [ActionResponseMap[T]] extends [undefined]
+    ? []
+    : [data: ActionResponseMap[T]];
+
+type ActionResponseObject<T extends ActionType> = {
+    __type: typeof ActionResponse.name;
+    action: ActionObject<T>;
+    data: ActionResponseMap[T]
+};
+
+export interface ActionResponseMap {
+    [ActionType.CalculateStudFee]: number;
+    [ActionType.ClearHorseCache]: undefined;
+    [ActionType.GenerateBroodmareReport]: undefined;
+    [ActionType.GeneratePedigreeCatalog]: undefined;
+    [ActionType.GenerateStallionReport]: undefined;
+    [ActionType.GetHorse]: Horse | undefined;
+    [ActionType.GetHorses]: Array<Horse>;
+    [ActionType.PreviewStallionScore]: StallionScore | null;
+    [ActionType.SaveHorses]: undefined;
+    [ActionType.SearchHorses]: RegExp | string;
+    [ActionType.UpdateStallionScores]: undefined;
+}
+
+export type ActionResponseUnion = {
+    [T in ActionType]: ActionResponse<T>
+}[ActionType];
+
 export enum ActionType {
     CalculateStudFee = 'ACTION__CALCULATE_STUD_FEE',
     ClearHorseCache = 'ACTION__CLEAR_HORSE_CACHE',
@@ -16,8 +79,12 @@ export enum ActionType {
     UpdateStallionScores = 'ACTION__UPDATE_STALLION_SCORES',
 }
 
+type ActionUnion = {
+    [T in ActionType]: Action<T>
+}[ActionType];
+
 export interface BreedingReportData {
-    ids: number[];
+    ids: Array<number>;
     headers?: { [key: number]: string };
     filename?: string;
     mode?: BreedingReportMode;
@@ -40,194 +107,350 @@ export interface HorseSearchData {
 }
 
 export interface PedigreeCatalogData {
-    data: number[] | [number, number][];
+    data: Array<number | [number, string | number]>;
     showHipNumbers?: boolean;
     fullPedigrees?: boolean;
     filename?: string;
 }
 
-export interface SendResponse {
-    (data: ActionResponse<any> | ActionError | object): void;
+function isAction(value: unknown): value is ActionUnion {
+    return value instanceof Action;
 }
 
-export class Action<T> {
-    static [Symbol.hasInstance](instance: any): boolean {
-        return instance?.constructor === Action.prototype.constructor || instance?.__type === Action.name;
-    }
+function isActionError(value: unknown): value is ActionError {
+    return value instanceof ActionError;
+}
 
-    public static fromJSON<T>(json: string): Action<T> | null {
+function isActionResponse(value: unknown): value is ActionResponseUnion {
+    return value instanceof ActionResponse;
+}
+
+function isActionType(value: unknown): value is ActionType {
+    return Object.values(ActionType).includes(value as ActionType);
+}
+
+export class Action<T extends ActionType> {
+    public static fromJSON(json: string): ActionUnion | null {
         return Action.fromObject(JSON.parse(json));
     }
 
-    public static fromObject<T>(value: any): Action<T> | null {
-        return value?.__type !== Action.name ? null : new Action(value.type, value.data);
+    public static fromObject(value: unknown): ActionUnion | null {
+        if (typeof value != 'object' || value == null)
+            return null;
+
+        const object = value as Record<string, unknown>;
+
+        if (object.__type !== Action.name || !isActionType(object.type))
+            return null;
+
+        switch (object.type) {
+            case ActionType.CalculateStudFee:
+                return new Action(
+                    object.type,
+                    object.data as ActionDataMap[ActionType.CalculateStudFee]
+                );
+
+            case ActionType.ClearHorseCache:
+                return new Action(object.type);
+
+            case ActionType.GenerateBroodmareReport:
+                return new Action(
+                    object.type,
+                    object.data as ActionDataMap[ActionType.GenerateBroodmareReport]
+                );
+
+            case ActionType.GeneratePedigreeCatalog:
+                return new Action(
+                    object.type,
+                    object.data as ActionDataMap[ActionType.GeneratePedigreeCatalog]
+                );
+
+            case ActionType.GenerateStallionReport:
+                return new Action(
+                    object.type,
+                    object.data as ActionDataMap[ActionType.GenerateStallionReport]
+                );
+
+            case ActionType.GetHorse:
+                return new Action(
+                    object.type,
+                    object.data as ActionDataMap[ActionType.GetHorse]
+                );
+
+            case ActionType.GetHorses:
+                return new Action(object.type);
+
+            case ActionType.PreviewStallionScore:
+                return new Action(
+                    object.type,
+                    object.data as ActionDataMap[ActionType.PreviewStallionScore]
+                );
+
+            case ActionType.SaveHorses:
+                return new Action(
+                    object.type,
+                    object.data as ActionDataMap[ActionType.SaveHorses]
+                );
+
+            case ActionType.SearchHorses:
+                return new Action(
+                    object.type,
+                    object.data as ActionDataMap[ActionType.SearchHorses]
+                );
+
+            case ActionType.UpdateStallionScores:
+                return new Action(object.type);
+
+            default:
+                return null;
+        }
     }
 
-    public static of<T>(value: any): Action<T> | null {
+    public static of(value: unknown): ActionUnion | null {
+        if (isAction(value))
+            return value;
+
         if (typeof value === 'string')
             return Action.fromJSON(value);
-
-        if (value?.constructor === Action.prototype.constructor)
-            return value;
 
         return Action.fromObject(value);
     }
 
-    #type: ActionType;
-    #data: T;
+    #type: T;
+    #data: ActionDataMap[T];
 
-    public get type(): ActionType {
+    public get type(): T {
         return this.#type;
     }
 
-    public get data(): T {
+    public get data(): ActionDataMap[T] {
         return this.#data;
     }
 
-    public constructor(type: ActionType.CalculateStudFee, data: CalculateStudFeeData);
-    public constructor(type: ActionType.GenerateBroodmareReport, data: BreedingReportData);
-    public constructor(type: ActionType.GeneratePedigreeCatalog, data: PedigreeCatalogData);
-    public constructor(type: ActionType.GenerateStallionReport, data: BreedingReportData);
-    public constructor(type: ActionType.GetHorse, data: HorseIdData);
-    public constructor(type: ActionType.GetHorses, data: void);
-    public constructor(type: ActionType.PreviewStallionScore, data: HorseIdData);
-    public constructor(type: ActionType.SaveHorses, data: Horse[]);
-    public constructor(type: ActionType.SearchHorses, data: HorseSearchData);
-    public constructor(type: ActionType.UpdateStallionScores, data: void);
-    public constructor(type: ActionType, data: T);
-    public constructor(type: ActionType, data: T) {
+    public constructor(type: T, ...data: ActionData<T>) {
         this.#type = type;
-        this.#data = data;
+        this.#data = data[0] as ActionDataMap[T];
     }
 
-    public toJSON(): object {
+    public toJSON(): ActionObject<T> {
         return {
             '__type': this.constructor.name,
             'type': this.type,
-            'data': this.data,
+            data: this.data
         };
     }
 }
 
 export class ActionError extends Error {
-    static [Symbol.hasInstance](instance: any): boolean {
-        return instance?.constructor === ActionError.prototype.constructor || instance?.__type === ActionError.name;
-    }
-
     public static fromJSON(json: string): ActionError | null {
         return ActionError.fromObject(JSON.parse(json));
     }
 
-    public static fromObject(value: any): ActionError | null {
-        if (value?.__type === ActionError.name) {
-            const actionError: ActionError = new ActionError(Action.of(value.action)!, value.message);
-            actionError.stack = value.stack;
-            return actionError;
-        } else
+    public static fromObject(value: unknown): ActionError | null {
+        if (typeof value != 'object' || value == null)
             return null;
+
+        const object = value as Record<string, unknown>;
+
+        if (object.__type !== ActionError.name)
+            return null;
+
+        const action = Action.of(object.action);
+
+        if (action == null)
+            return null;
+
+        const actionError = new ActionError(
+            action,
+            object.message as string | Error | undefined
+        );
+
+        if (typeof object.stack === 'string')
+            actionError.stack = object.stack;
+
+        return actionError;
     }
 
-    public static of(value: any): ActionError | null {
+    public static of(value: unknown): ActionError | null {
+        if (isActionError(value)) {
+            const action = Action.of(value.action);
+
+            if (action == null)
+                return null;
+
+            const error = new ActionError(action, value.message);
+
+            if (value.stack)
+                error.stack = value.stack;
+
+            return error;
+        }
+
         if (typeof value === 'string')
             return ActionError.fromJSON(value);
-
-        if (value?.constructor === ActionError.prototype.constructor)
-            return value;
 
         return ActionError.fromObject(value);
     }
 
-    #action: Action<any>;
+    #action: ActionUnion;
 
-    public get action(): Action<any> {
+    public get action(): ActionUnion {
         return this.#action;
     }
 
-    public constructor(action: Action<any>);
-    public constructor(action: Action<any>, error: Error);
-    public constructor(action: Action<any>, message: string);
-    public constructor(action: Action<any>, errorOrMessage?: Error | string);
-    public constructor(action: Action<any>, errorOrMessage?: Error | string) {
-        super((errorOrMessage instanceof Error) ? errorOrMessage.message : errorOrMessage);
+    public constructor(action: ActionUnion, errorOrMessage?: Error | string) {
+        super(errorOrMessage instanceof Error ? errorOrMessage.message : errorOrMessage);
         this.#action = action;
         this.name = ActionError.name;
     }
 
-    public toJSON(): object {
+    public toJSON(): ActionErrorObject {
         return {
             '__type': this.constructor.name,
-            'action': this.action,
+            'action': this.action.toJSON(),
             'message': this.message,
             'stack': this.stack,
         };
     }
 }
 
-export class ActionResponse<T> {
-    static [Symbol.hasInstance](instance: any): boolean {
-        return instance?.constructor === ActionResponse.prototype.constructor || instance?.__type === ActionResponse.name;
-    }
-
-    public static fromJSON<T>(json: string): ActionResponse<T> | null {
+export class ActionResponse<T extends ActionType> {
+    public static fromJSON(json: string): ActionResponseUnion | null {
         return ActionResponse.fromObject(JSON.parse(json));
     }
 
-    public static fromObject<T>(value: any): ActionResponse<T> | null {
-        return value?.__type !== ActionResponse.name ? null : new ActionResponse(Action.of(value.action)!, value.data);
+    public static fromObject(value: unknown): ActionResponseUnion | null {
+        if (typeof value != 'object' || value == null)
+            return null;
+
+        const object = value as Record<string, unknown>;
+
+        if (object.__type !== ActionResponse.name)
+            return null;
+
+        const action = Action.of(object.action);
+
+        if (action == null)
+            return null;
+
+        switch (action.type) {
+            case ActionType.CalculateStudFee:
+                return new ActionResponse(
+                    action,
+                    object.data as ActionResponseMap[ActionType.CalculateStudFee]
+                );
+
+            case ActionType.ClearHorseCache:
+                return new ActionResponse(action);
+
+            case ActionType.GenerateBroodmareReport:
+                return new ActionResponse(action);
+
+            case ActionType.GeneratePedigreeCatalog:
+                return new ActionResponse(action);
+
+            case ActionType.GenerateStallionReport:
+                return new ActionResponse(action);
+
+            case ActionType.GetHorse:
+                return new ActionResponse(
+                    action,
+                    object.data as ActionResponseMap[ActionType.GetHorse]
+                );
+
+            case ActionType.GetHorses:
+                return new ActionResponse(
+                    action,
+                    object.data as ActionResponseMap[ActionType.GetHorses]
+                );
+
+            case ActionType.PreviewStallionScore:
+                return new ActionResponse(
+                    action,
+                    object.data as ActionResponseMap[ActionType.PreviewStallionScore]
+                );
+
+            case ActionType.SaveHorses:
+                return new ActionResponse(action);
+
+            case ActionType.SearchHorses:
+                return new ActionResponse(
+                    action,
+                    object.data as ActionResponseMap[ActionType.SearchHorses]
+                );
+
+            case ActionType.UpdateStallionScores:
+                return new ActionResponse(action);
+
+            default:
+                return null;
+        }
     }
 
-    public static of<T>(value: any): ActionResponse<T> | null {
+    public static of(value: unknown): ActionResponseUnion | null {
+        if (isActionResponse(value)) {
+            const action = Action.of(value.action);
+
+            if (action == null)
+                return null;
+
+            return ActionResponse.fromObject({
+                __type: ActionResponse.name,
+                action,
+                data: value.data,
+            });
+        }
+
         if (typeof value === 'string')
             return ActionResponse.fromJSON(value);
-
-        if (value?.constructor === ActionResponse.prototype.constructor)
-            return value;
 
         return ActionResponse.fromObject(value);
     }
 
-    #action: Action<any>;
-    #data: T | undefined;
+    #action: Action<T>;
+    #data: ActionResponseMap[T];
 
-    public get action(): Action<any> {
+    public get action(): Action<T> {
         return this.#action;
     }
 
-    public get data(): T | undefined {
+    public get data(): ActionResponseMap[T] {
         return this.#data;
     }
 
-    public constructor(action: Action<any>, data?: T | undefined) {
+    public constructor(action: Action<T>, ...data: ActionResponseData<T>) {
         this.#action = action;
-        this.#data = data;
+        this.#data = data[0] as ActionResponseMap[T];
     }
 
-    public toJSON(): object {
+    public toJSON(): ActionResponseObject<T> {
         return {
             '__type': this.constructor.name,
-            'action': this.action,
+            'action': this.action.toJSON(),
             'data': this.data,
         };
     }
 }
 
-export async function sendAction(type: ActionType.CalculateStudFee, data: CalculateStudFeeData): Promise<ActionResponse<number>>;
-export async function sendAction(type: ActionType.GenerateBroodmareReport, data: BreedingReportData): Promise<ActionResponse<void>>;
-export async function sendAction(type: ActionType.GeneratePedigreeCatalog, data: PedigreeCatalogData): Promise<ActionResponse<void>>;
-export async function sendAction(type: ActionType.GenerateStallionReport, data: BreedingReportData): Promise<ActionResponse<void>>;
-export async function sendAction(type: ActionType.GetHorse, data: HorseIdData): Promise<ActionResponse<Horse>>;
-export async function sendAction(type: ActionType.GetHorses): Promise<ActionResponse<Horse[]>>;
-export async function sendAction(type: ActionType.PreviewStallionScore, data: HorseIdData): Promise<ActionResponse<StallionScore | null>>;
-export async function sendAction(type: ActionType.SaveHorses, data: Horse[]): Promise<ActionResponse<void>>;
-export async function sendAction(type: ActionType.SearchHorses, data: HorseSearchData): Promise<ActionResponse<RegExp | string>>;
-export async function sendAction(type: ActionType.UpdateStallionScores): Promise<ActionResponse<void>>;
-export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>>;
-export async function sendAction<T>(type: ActionType, data?: any): Promise<ActionResponse<T>> {
-    const response = await chrome.runtime.sendMessage(new Action(type, data).toJSON());
+export async function sendAction<T extends ActionType>(
+    type: T,
+    ...data: ActionData<T>
+): Promise<ActionResponse<T>> {
+    const response = await chrome.runtime.sendMessage<
+        ActionObject<T>,
+        ActionResponseObject<T> | ActionErrorObject
+    >(new Action(type, ...data).toJSON());
 
-    if (response instanceof ActionError) {
-        throw ActionError.of(response);
-    }
+    const actionError = ActionError.of(response);
+    console.log(response);
 
-    return ActionResponse.of(response) ?? response;
+    if (actionError != null)
+        throw actionError;
+
+    const actionResponse = ActionResponse.of(response);
+
+    if (actionResponse == null || actionResponse.action.type !== type)
+        throw new Error(`Invalid response to action ${type}`);
+
+    return actionResponse as ActionResponse<T>;
 }

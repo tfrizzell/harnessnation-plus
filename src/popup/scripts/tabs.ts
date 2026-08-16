@@ -1,6 +1,9 @@
 document.querySelectorAll<HTMLAnchorElement>('#page-footer > nav > a').forEach(a => {
     const sectionName = a.getAttribute('href')?.replace(/^#/, '');
 
+    if (!sectionName)
+        return;
+
     a.addEventListener('click', e => {
         e.preventDefault();
 

@@ -4,18 +4,6 @@ import '@mocks/harnessnation';
 import { generateBreedingReport } from '@src/lib/reporting';
 
 describe(`generateBreedingReport`, () => {
-    it(`exists`, () => {
-        expect(generateBreedingReport).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof generateBreedingReport).toEqual('function');
-    });
-
-    it(`returns a promise`, () => {
-        expect(generateBreedingReport({ ids: [] })).toBeInstanceOf(Promise);
-    });
-
     it(`returns a breeding report with the requested horse info`, async () => {
         await expect(generateBreedingReport({
             ids: [14, 10474, 15729, 26326, 75756]

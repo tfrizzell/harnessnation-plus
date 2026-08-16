@@ -1,7 +1,7 @@
 import { default as settings, Settings } from '../../lib/settings.js';
 import { reduceChanges } from '../../lib/utils.js';
 
-chrome.storage.onChanged.addListener(async (changes, areaName) => {
+chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'sync')
         return;
 
@@ -12,35 +12,35 @@ chrome.storage.onChanged.addListener(async (changes, areaName) => {
         };
     };
 
-    await chrome.storage.sync.set(<Settings>{
+    void chrome.storage.sync.set({
         ...settings,
         ...Object.entries(changes).reduce(reduceChanges, {}),
         dt: {
             ...settings.dt,
-            ...typedChanges?.dt?.newValue,
+            ...typedChanges.dt?.newValue,
             breeding: {
                 ...settings.dt.breeding,
-                ...typedChanges?.dt?.newValue?.breeding,
+                ...typedChanges.dt?.newValue?.breeding,
             },
             main: {
                 ...settings.dt.main,
-                ...typedChanges?.dt?.newValue?.main,
+                ...typedChanges.dt?.newValue?.main,
             },
             progeny: {
                 ...settings.dt.progeny,
-                ...typedChanges?.dt?.newValue?.progeny,
+                ...typedChanges.dt?.newValue?.progeny,
             }
         },
         stallions: {
             ...settings.stallions,
-            ...typedChanges?.stallions?.newValue,
+            ...typedChanges.stallions?.newValue,
             management: {
                 ...settings.stallions.management,
-                ...typedChanges?.stallions?.newValue?.management,
+                ...typedChanges.stallions?.newValue?.management,
             },
             registry: {
                 ...settings.stallions.registry,
-                ...typedChanges?.stallions?.newValue?.registry,
+                ...typedChanges.stallions?.newValue?.registry,
             },
         },
     });

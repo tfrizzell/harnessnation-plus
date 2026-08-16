@@ -24,12 +24,13 @@ export interface Horse {
  */
 export async function calculateStudFee({ id, formula }: CalculateStudFeeData): Promise<number> {
     const report = await api.getProgenyReport(id);
-    const starters = parseInt(report?.match(/<b[^>]*>\s*Total\s*Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/i)?.pop() ?? '0');
+    const starters = parseInt(report.match(/<b[^>]*>\s*Total\s*Starters\s*:\s*<\/b[^>]*>\s*([\d,]+)/i)?.pop() ?? '0');
     let fee = 2500;
 
     if (starters > 0) {
-        const avgEarnings = parseCurrency(report?.match(/<b[^>]*>\s*Average\s*Earnings\s*per\s*Starter\s*:\s*<\/b[^>]*>\s*([$\d,\.]+(?:\.\d+)?)/i)?.pop() ?? '$0');
+        const avgEarnings = parseCurrency(report.match(/<b[^>]*>\s*Average\s*Earnings\s*per\s*Starter\s*:\s*<\/b[^>]*>\s*([$\d,.]+(?:\.\d+)?)/i)?.pop() ?? '$0');
 
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (formula) {
             case StudFeeFormula.Apex:
             default:
@@ -42,8 +43,12 @@ export async function calculateStudFee({ id, formula }: CalculateStudFeeData): P
         }
     } else {
         const info = await api.getHorse(id);
-        const [starts, earnings] = info?.match(/<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)(?:\s*-\s*[\d,]+){3}\s*\(([$\d,\.]+(?:\.\d+)?)\)/i)?.slice(1)?.map(parseCurrency) ?? [0, 0];
+        const [starts, earnings] = info.match(
+            // eslint-disable-next-line @stylistic/max-len
+            /<b[^>]*>\s*Lifetime\s+Race\s+Record\s*<\/b[^>]*>\s*<br[^>]*>\s*([\d,]+)(?:\s*-\s*[\d,]+){3}\s*\(([$\d,.]+(?:\.\d+)?)\)/i
+        )?.slice(1).map(parseCurrency) ?? [0, 0];
 
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (formula) {
             case StudFeeFormula.Apex:
             default:
@@ -68,10 +73,12 @@ export async function getHorse(id: number): Promise<Horse> {
     const html = await api.getHorse(id);
 
     return {
-        id: parseInt(html?.match(/<b[^>]*>\s*ID:\s*<\/b[^>]*>\s*(\d+)/is)?.[1]!),
-        name: html?.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1]?.trim(),
-        sireId: html?.match(/<b[^>]*>\s*Sire:\s*<\/b[^>]*>\s*<a[^>]*\/horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
-        damId: html?.match(/<b[^>]*>\s*Dam:\s*<\/b[^>]*>\s*<a[^>]*\/horse\/(\d+)[^>]*>/is)?.map(parseInt)?.[1] || null,
-        retired: !!html?.match(/<br[^>]*>\s*<br[^>]*>\s*Retired\s*<br[^>]*>/is)?.[0],
+        id: html.match(/<b[^>]*>\s*ID:\s*<\/b[^>]*>\s*(\d+)/is)?.map(parseInt)[1],
+        name: html.match(/<h1[^>]*>\s*(.*?)\s*<\/h1[^>]*>/is)?.[1]?.trim(),
+        sireId: html.match(/<b[^>]*>\s*Sire:\s*<\/b[^>]*>\s*<a[^>]*\/horse\/(\d+)[^>]*>/is)
+            ?.map(parseInt)[1] ?? null,
+        damId: html.match(/<b[^>]*>\s*Dam:\s*<\/b[^>]*>\s*<a[^>]*\/horse\/(\d+)[^>]*>/is)
+            ?.map(parseInt)[1] ?? null,
+        retired: !!html.match(/<br[^>]*>\s*<br[^>]*>\s*Retired\s*<br[^>]*>/is)?.[0],
     };
 }

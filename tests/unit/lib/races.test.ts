@@ -4,19 +4,7 @@ import '@mocks/harnessnation';
 import { getRaces, Race, RaceList } from '@src/lib/races';
 
 describe(`getRaces`, () => {
-    it(`exists`, () => {
-        expect(getRaces).not.toBeUndefined();
-    });
-
-    it(`is a function`, () => {
-        expect(typeof getRaces).toEqual('function');
-    });
-
-    it(`returns a promise`, () => {
-        expect(getRaces(-1)).toBeInstanceOf(Promise);
-    });
-
-    (<[number, Array<Race>][]>[
+    ([
         [
             14,
             [
@@ -264,7 +252,7 @@ describe(`getRaces`, () => {
                 { 'id': 695651, 'name': 'Open', 'stake': false, 'elim': false, 'age': '2yo', 'condition': 'Colts & Geldings', 'gait': 'trot', 'trackCondition': 'good', 'trackSize': 'full', 'purse': 50000, 'finish': 1, 'time': 124.45, 'date': new Date('2024-02-01T00:00:00.000Z') }
             ]
         ],
-    ]).forEach(([id, expected]) => {
+    ] as Array<[number, Array<Race>]>).forEach(([id, expected]) => {
         it(`resolves with the expected race list when given id=${id}`, async () => {
             const actual = await getRaces(id);
             expect(actual).toBeInstanceOf(RaceList);

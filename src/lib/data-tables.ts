@@ -1,4 +1,4 @@
-import { DataTablesSettings } from './settings.js';
+import { DataTablesSettings, Settings } from './settings.js';
 import { regexEscape } from './utils.js';
 
 export enum DataTablesMode {
@@ -13,7 +13,11 @@ export interface DataTablesOptions {
     stateDuration?: number
 }
 
-export function extend(selector: string, script: string, { indent, saveSearch, saveState, stateDuration }: DataTablesOptions = {}): Promise<string> {
+export function extend(
+    selector: string,
+    script: string,
+    { indent, saveSearch, saveState, stateDuration }: DataTablesOptions = {}
+): Promise<string> {
     if (!selector.match(/^\s*[''`]/))
         selector = `'${selector.replace(/'/g, `\\'`)}'`;
 
@@ -22,11 +26,16 @@ export function extend(selector: string, script: string, { indent, saveSearch, s
     if (table == null)
         return Promise.resolve(script);
 
-    const tableIndent = (table[2].match(/^[\r\n]*(\s*)/)?.[1] ?? '').replace(/^(\t|    )/, '');
+    const tableIndent = (table[2].match(/^[\r\n]*(\s*)/)?.[1] ?? '').replace(/^(\t| {4})/, '');
 
     return Promise.resolve(script.replace(table[0], `$(${selector}).DataTable({
     // HarnessNation
-    ${table[2].replace(/(^[\r\n]+|[,\s]+$)/g, '').split(/[\r\n]+/).map(l => l.trim()).join('\n    ')},
+    ${table[2]
+            .replace(/(^[\r\n]+|[,\s]+$)/g, '')
+            .split(/[\r\n]+/)
+            .map(l => l.trim())
+            .join('\n    ')
+        },
 
     // HarnessNation+
 ${JSON.stringify({ saveState, stateDuration }, null, 4).replace(/(^\{[\r\n]*|[\r\n]*$)/, '')
@@ -36,8 +45,15 @@ ${JSON.stringify({ saveState, stateDuration }, null, 4).replace(/(^\{[\r\n]*|[\r
 }
 
 export async function getSettings(key: string): Promise<DataTablesOptions | undefined> {
-    const settings: Record<string, any> = await chrome.storage.sync.get('dt');
-    const { enabled, duration, mode } = <DataTablesSettings>(key?.split('.').reduce<Record<string, any> | undefined>((data: Record<string, any> | undefined, key: string): object | undefined => data?.[key], settings.dt) ?? {});
+    const settings: Partial<Settings> = await chrome.storage.sync.get('dt');
+
+    const { enabled, duration, mode } = (
+        key.split('.')
+            .reduce<unknown>((data, key) =>
+                data && typeof data === 'object'
+                    ? (data as Record<string, unknown>)[key]
+                    : undefined, settings.dt)
+        ?? {}) as Partial<DataTablesSettings>;
 
     if (!enabled)
         return undefined;
@@ -45,7 +61,7 @@ export async function getSettings(key: string): Promise<DataTablesOptions | unde
     if (mode == DataTablesMode.Default)
         return { saveState: true };
 
-    return { saveState: true, stateDuration: +duration };
+    return { saveState: true, stateDuration: duration };
 }
 
 export default {

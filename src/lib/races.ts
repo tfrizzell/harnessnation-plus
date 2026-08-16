@@ -40,7 +40,11 @@ export class RaceList extends Array<Race> {
         }
     }
 
-    filter(predicate: (value: Race, index: number, array: Array<Race>) => unknown, thisArg?: any): RaceList {
+    filter(
+        predicate: (value: Race, index: number, array: Array<Race>) => boolean,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        thisArg?: any
+    ): RaceList {
         return new RaceList(...super.filter(predicate, thisArg));
     }
 
@@ -48,7 +52,7 @@ export class RaceList extends Array<Race> {
         return new RaceList(...super.slice(start, end));
     }
 
-    splice(start: number, deleteCount?: number, ...items: Race[]): RaceList {
+    splice(start: number, deleteCount?: number, ...items: Array<Race>): RaceList {
         const removed = deleteCount == null && items.length === 0
             ? super.splice(start)
             : super.splice(start, deleteCount ?? 0, ...items);
@@ -63,12 +67,20 @@ export class RaceList extends Array<Race> {
      * @param ageRef - A race to use as an age reference.
      * @returns The age the horse was during the race.
      */
-    findAge(race: Race, ageRef?: Race): number | undefined {
-        if (/^[23]yo$/i.test(race?.age ?? ''))
-            return parseInt(race.age!.charAt(0));
+    findAge(race: Race | undefined, ageRef?: Race): number | undefined {
+        if (race == undefined)
+            return undefined;
+
+        if (race.age != null && /^[23]yo$/i.test(race.age))
+            return parseInt(race.age.charAt(0));
 
         ageRef ??= this.findAgeRef();
-        return !ageRef || !race?.date ? undefined : parseInt(ageRef.age!.charAt(0)) + seasonsBetween(ageRef.date!, race.date!);
+
+        return (
+            !ageRef?.age || !ageRef.date || !race.date
+                ? undefined
+                : parseInt(ageRef.age.charAt(0)) + seasonsBetween(ageRef.date, race.date)
+        );
     }
 
     /**
@@ -79,7 +91,12 @@ export class RaceList extends Array<Race> {
     findAgeRef(): Race | undefined {
         return this.find((race, index, races) =>
             /^[23]yo$/i.test(race.age ?? '')
-            || (index < races.length - 1 && race.stake !== true && /^5yo\+$/i.test(race.age ?? '') && /^2-4yo$/i.test(races[index + 1].age ?? '')));
+            || (
+                index < races.length - 1
+                && race.stake !== true && /^5yo\+$/i.test(race.age ?? '')
+                && /^2-4yo$/i.test(races[index + 1].age ?? '')
+            )
+        );
     }
 
     /**
@@ -88,9 +105,11 @@ export class RaceList extends Array<Race> {
      * @param predicate - An optional predicate used to filter the races.
      * @returns The fastest race in the list, filtered by the predicate if given.
      */
-    findFastestRace(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): Race | undefined {
+    findFastestRace(
+        predicate?: (value: Race, index: number, array: Array<Race>) => boolean
+    ): Race | undefined {
         return (predicate == null ? this.slice() : this.filter(predicate))
-            .sort((a, b) => b.time! - a.time!)
+            .sort((a, b) => (b.time ?? 0) - (a.time ?? 0))
             .pop();
     }
 
@@ -100,10 +119,14 @@ export class RaceList extends Array<Race> {
      * @param predicate - An optional predicate used to filter the races.
      * @returns The fastest win in the race list, filtered by the predicate if given.
      */
-    findFastestWin(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): Race | undefined {
-        return this.filter((value: Race, index: number, array: Array<Race>) =>
-            value.finish === 1 && predicate?.(value, index, array) !== false)
-            .sort((a, b) => b.time! - a.time!)
+    findFastestWin(
+        predicate?: (value: Race, index: number, array: Array<Race>) => boolean
+    ): Race | undefined {
+        return this.filter(
+            (value: Race, index: number, array: Array<Race>): boolean =>
+                value.finish === 1 && predicate?.(value, index, array) !== false
+        )
+            .sort((a, b) => (b.time ?? 0) - (a.time ?? 0))
             .pop();
     }
 
@@ -113,9 +136,12 @@ export class RaceList extends Array<Race> {
      * @param predicate - An optional predicate used to filter the races.
      * @returns The total earnings of the race list, filtered by the predicate if given.
      */
-    getEarnings(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): number {
+    getEarnings(
+        predicate?: (value: Race, index: number, array: Array<Race>) => boolean
+    ): number {
         return (predicate == null ? this.slice() : this.filter(predicate))
-            .reduce((earnings, race) => earnings + this.#getEarnings(race.purse ?? 0, race.finish ?? 0), 0);
+            .reduce((earnings, race) =>
+                earnings + this.#getEarnings(race.purse ?? 0, race.finish ?? 0), 0);
     }
 
     /**
@@ -124,7 +150,9 @@ export class RaceList extends Array<Race> {
      * @param predicate - An optional predicate used to filter the races.
      * @returns The number of starts of the race list, filtered by the predicate if given.
      */
-    getStarts(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): number {
+    getStarts(predicate?: (
+        value: Race, index: number, array: Array<Race>) => boolean
+    ): number {
         return (predicate == null ? this.slice() : this.filter(predicate)).length;
     }
 
@@ -134,7 +162,9 @@ export class RaceList extends Array<Race> {
      * @param predicate - An optional predicate used to filter the races.
      * @returns The race summary of the race list, filtered by the predicate if given.
      */
-    getSummary(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): [number, number, number, number, number] {
+    getSummary(
+        predicate?: (value: Race, index: number, array: Array<Race>) => boolean
+    ): [number, number, number, number, number] {
         return (predicate == null ? this.slice() : this.filter(predicate))
             .reduce(([starts, firsts, seconds, thirds, earnings], race) => [
                 starts + 1,
@@ -151,9 +181,13 @@ export class RaceList extends Array<Race> {
      * @param predicate - An optional predicate used to filter the races.
      * @returns The number of wins of the race list, filtered by the predicate if given.
      */
-    getWins(predicate?: (value: Race, index: number, array: Array<Race>) => boolean): number {
-        return this.filter((value: Race, index: number, array: Array<Race>) =>
-            value.finish === 1 && predicate?.(value, index, array) !== false).length;
+    getWins(
+        predicate?: (value: Race, index: number, array: Array<Race>) => boolean
+    ): number {
+        return this.filter(
+            (value: Race, index: number, array: Array<Race>): boolean =>
+                value.finish === 1 && predicate?.(value, index, array) !== false
+        ).length;
     }
 }
 
@@ -167,15 +201,22 @@ export async function getRaces(id: number, token?: string): Promise<RaceList> {
     token ??= await api.getCSRFToken();
     const html = await api.getRaceHistory(id, token);
     const races: RaceList = new RaceList();
-    const raceIds: number[] = [];
+    const raceIds: Array<number> = [];
 
-    for (const data of html.matchAll(/<tr[^>]*>\s*<td[^>]*>\s*<a[^>]*data-attr-race-id="(\d+)"[^>]*>\s*<b[^>]*>(.*?)<\/b[^>]*>\s*<\/a[^>]*>\s*(<i[^>]*fa-star[^>]*>\s*<\/i[^>]*>)?.*?\s*<br[^>]*>\s*(\w+-Year-Old(?:\s*&(?:amp;)?\s*.*?)?)\s+(.*?)\s*<br[^>]*>\s*(Trotting|Pacing)\s+on\s+(\S+)\s+(Full|Half)\s+Mile\s*<\/td>\s*<td[^>]*>\s*<span[^>]*raceHistPurse[^>]*>\s*<\/span[^>]*>\s*(\$[\d,]+).*?<\/td[^>]*>\s*<td[^>]*>\s*<span[^>]*raceHistFinish[^>]*>\s*<\/span[^>]*>\s*(\d+)<sup[^>]*>\w+<\/sup[^>]*>.*?<br[^>]*>\s*(\d+:\d+(?:\.\d+)?).*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*<span[^>]*raceHistDate[^>]*>\s*<\/span[^>]*>\s*\w+\s+(\w+\s+\d+\w{2},\s+\d+).*?<\/td[^>]*>\s*<\/tr>/gis)) {
+    for (const data of html.matchAll(
+        // eslint-disable-next-line @stylistic/max-len
+        /<tr[^>]*>\s*<td[^>]*>\s*<a[^>]*data-attr-race-id="(\d+)"[^>]*>\s*<b[^>]*>(.*?)<\/b[^>]*>\s*<\/a[^>]*>\s*(<i[^>]*fa-star[^>]*>\s*<\/i[^>]*>)?.*?\s*<br[^>]*>\s*(\w+-Year-Old(?:\s*&(?:amp;)?\s*.*?)?)\s+(.*?)\s*<br[^>]*>\s*(Trotting|Pacing)\s+on\s+(\S+)\s+(Full|Half)\s+Mile\s*<\/td>\s*<td[^>]*>\s*<span[^>]*raceHistPurse[^>]*>\s*<\/span[^>]*>\s*(\$[\d,]+).*?<\/td[^>]*>\s*<td[^>]*>\s*<span[^>]*raceHistFinish[^>]*>\s*<\/span[^>]*>\s*(\d+)<sup[^>]*>\w+<\/sup[^>]*>.*?<br[^>]*>\s*(\d+:\d+(?:\.\d+)?).*?<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*<span[^>]*raceHistDate[^>]*>\s*<\/span[^>]*>\s*\w+\s+(\w+\s+\d+\w{2},\s+\d+).*?<\/td[^>]*>\s*<\/tr>/gis
+    )) {
         const raceId = parseInt(data[1]);
 
         if (raceIds.includes(raceId))
             continue;
 
-        const isStake = !!data[3] && !/^(Maiden )?(Open|Preferred|Claiming \$[\d,]+)$/i.test(data[2].trim());
+        const isStake = (
+            !!data[3]
+            && !/^(Maiden )?(Open|Preferred|Claiming \$[\d,]+)$/i.test(data[2].trim())
+        );
+
         raceIds.push(raceId);
 
         const age = data[4].trim().replace(/&amp;/gi, '&');
@@ -196,13 +237,17 @@ export async function getRaces(id: number, token?: string): Promise<RaceList> {
                             : /^Six-Year-Old & Older$/i.test(age)
                                 ? '6yo+'
                                 : undefined,
-            condition: data[5]?.replace(/(\\[rn]|[\r\n\s])+/gs, ' ')?.trim(),
+            condition: data[5].replace(/(\\[rn]|[\r\n\s])+/gs, ' ').trim(),
             gait: /^trot/i.test(data[6]) ? 'trot' : 'pace',
-            trackCondition: data[7]?.trim()?.toLowerCase(),
+            trackCondition: data[7].trim().toLowerCase(),
             trackSize: /^half/i.test(data[8]) ? 'half' : 'full',
             purse: parseCurrency(data[9]),
             finish: parseInt(data[10]),
-            time: data[11].split(':').map(parseFloat).reduce((seconds: number, time: number, index: number) => seconds + (index === 0 ? time * 60 : time), 0),
+            time: data[11]
+                .split(':')
+                .map(parseFloat)
+                .reduce((seconds: number, time: number, index: number) =>
+                    seconds + (index === 0 ? time * 60 : time), 0),
             date: new Date(data[12].replace(/(\d+)[A-Z]{2}/i, '$1')),
         });
     }

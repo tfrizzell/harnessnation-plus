@@ -21,7 +21,6 @@ export default defineConfig({
             reporter: ['text', 'json', 'html'],
             include: ['src/lib/*.ts'],
             exclude: [
-
                 'src/lib/pdf-lib/*.ts',
                 'src/lib/*.web.ts',
                 'src/lib/alarms.ts',
@@ -31,11 +30,5 @@ export default defineConfig({
                 'src/lib/pedigree.ts',
             ]
         },
-        // moduleNameMapper: {
-        //     '^@mocks/(.*)$': '<rootDir>/tests/mocks/$1',
-        //     '^@src/(.*)$': '<rootDir>/src/$1',
-        //     '^(\\.{1,2}/.*)\\.js$': '$1',
-        //     '([a-zA-Z_ ]+\\.html)\\?raw$': '$1.ts',
-        // },
     },
 });
