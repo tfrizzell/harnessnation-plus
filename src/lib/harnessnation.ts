@@ -369,7 +369,11 @@ export class HarnessNationAPI {
             let timeout: number;
 
             if (retryAfter) {
-                timeout = (parseFloat(retryAfter) + 1) * 1000;
+                if (/^\d+(\.\d+)?$/.test(retryAfter))
+                    timeout = parseFloat(retryAfter) * 1000;
+                else
+                    timeout = Date.parse(retryAfter) - Date.now().valueOf();
+
                 console.debug(`%charnessnation.ts%c     'Retry-After' header detected; retrying in ${(timeout / 1000).toFixed(0)} seconds...`, 'color:#406e8e;font-weight:bold;', '');
             } else {
                 timeout = this.#backoffTimeout * Math.pow(2, this.#retryCount - 1);
