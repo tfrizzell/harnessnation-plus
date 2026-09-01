@@ -442,7 +442,6 @@ export async function sendAction<T extends ActionType>(
     >(new Action(type, ...data).toJSON());
 
     const actionError = ActionError.of(response);
-    console.log(response);
 
     if (actionError != null)
         throw actionError;

@@ -207,7 +207,6 @@ describe(ActionResponse.name, () => {
 
     test(`of(string) recreates the ${ActionResponse.name} instance`, () => {
         const value = ActionResponse.of(responseJson);
-        console.log(responseJson, '->', value);
         expectInstanceOf(value, ActionResponse);
         expect(value.action).toEqual(response.action);
         expect(value.data).toEqual(response.data);
