@@ -571,7 +571,7 @@ async function addPedigreePage(
                         paragraphs.push(paragraph = new ParagraphBuilder(
                             Math.max(
                                 ParagraphPriority.VeryHigh,
-                                getParagraphPriority(horse, horse as DamLineAncestor, progeny) + 3
+                                getParagraphPriority(horse, horse as Ancestor, progeny) + 3
                             ),
                             fonts.Normal,
                             8.5,
@@ -628,7 +628,7 @@ async function addPedigreePage(
                 paragraphs.push(paragraph = new ParagraphBuilder(
                     Math.max(
                         ParagraphPriority.High,
-                        getParagraphPriority(horse, horse as DamLineAncestor, prog) + 3
+                        getParagraphPriority(horse, horse as Ancestor, prog) + 3
                     ),
                     fonts.Normal,
                     8.5,
@@ -1004,10 +1004,10 @@ function getMarkString(races: RaceList, ageRef?: Race): string {
 
 function getParagraphPriority(
     horse: Horse,
-    dam: DamLineAncestor,
+    dam: Ancestor,
     progeny: Progeny
 ): ParagraphPriority {
-    if (progeny.id === horse.id || dam.progeny.length === 1)
+    if (progeny.id === horse.id || dam.progeny?.length === 1)
         return ParagraphPriority.Required;
 
     if (progeny.races?.some(race => race.stake && race.finish === 1) === true)
