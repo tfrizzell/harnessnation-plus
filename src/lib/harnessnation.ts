@@ -247,7 +247,7 @@ export class HarnessNationAPI {
         const csrfToken = await this._getCSRFToken();
 
         if (!csrfToken)
-            throw new TypeError('Failed to obtain CSRF token');
+            throw new Error('Failed to obtain CSRF token');
 
         return await this.#getOrCreateFromCache(
             `/horses/${id}/pedigree`,
@@ -277,25 +277,52 @@ export class HarnessNationAPI {
         if (refresh)
             await this.#removeFromCache(`/horses/${id}/progeny/list`);
 
-        const bearerToken = await this._getBearerToken();
+        let bearerToken = await this._getBearerToken();
 
         if (!bearerToken)
-            throw new TypeError('Failed to obtain bearer token');
+            throw new Error('Failed to obtain bearer token');
 
-        const csrfToken = await this._getCSRFToken();
+        let csrfToken = await this._getCSRFToken();
 
         if (!csrfToken)
-            throw new TypeError('Failed to obtain CSRF token');
+            throw new Error('Failed to obtain CSRF token');
+
+        const fetchProgeny = async (id: number,
+            bearerToken: string,
+            csrfToken: string
+        ): Promise<string> => {
+            try {
+                return await this.#getProgenyListStandard(id, bearerToken, csrfToken);
+            } catch (e: unknown) {
+                if (!(e instanceof Error) || !e.message.includes('504'))
+                    throw e;
+
+                const response = await this.#getProgenyListChunked(id, bearerToken, csrfToken);
+                await this.#setInCache(`/horses/${id}/progeny/list`, response)
+                return response;
+            }
+        };
 
         try {
-            return await this.#getProgenyListStandard(id, bearerToken, csrfToken);
+            return await fetchProgeny(id, bearerToken, csrfToken)
         } catch (e: unknown) {
-            if (!(e instanceof Error) || !e.message.includes('504'))
+            if (!(e instanceof Error) || !e.message.includes('401'))
                 throw e;
 
-            const response = await this.#getProgenyListChunked(id, bearerToken, csrfToken);
-            await this.#setInCache(`/horses/${id}/progeny/list`, response)
-            return response;
+            await this.#removeFromCache('__bearer-token__');
+            await this.#removeFromCache('__x-csrf-token__');
+
+            bearerToken = await this._getBearerToken();
+
+            if (!bearerToken)
+                throw new Error('Failed to obtain bearer token', { cause: e });
+
+            csrfToken = await this._getCSRFToken();
+
+            if (!csrfToken)
+                throw new Error('Failed to obtain CSRF token', { cause: e });
+
+            return await fetchProgeny(id, bearerToken, csrfToken);
         }
     }
 
@@ -407,7 +434,7 @@ export class HarnessNationAPI {
         const csrfToken = await this._getCSRFToken();
 
         if (!csrfToken)
-            throw new TypeError('Failed to obtain CSRF token');
+            throw new Error('Failed to obtain CSRF token');
 
         return await this.#getOrCreateFromCache(
             `/horses/${id}/races`,
