@@ -63,11 +63,6 @@ export interface HarnessNationAPIRequestInit extends RequestInit {
  * Static headers to be applied to all requests.
  */
 const STATIC_HEADERS: Array<[string, string]> = [
-    ['Origin', 'https://www.harnessnation.com/'],
-    ['Referer', 'https://www.harnessnation.com/'],
-    ['Sec-Fetch-Dest', 'empty'],
-    ['Sec-Fetch-Mode', 'cors'],
-    ['Sec-Fetch-Site', 'same-origin'],
     ['X-Requested-With', 'XMLHttpRequest'],
 ]
 
@@ -515,7 +510,7 @@ export class HarnessNationAPI {
         let bearerToken = await this.#getFromCache('__bearer-token__')
 
         if (bearerToken == null) {
-            this.#bearerRequest = (async () => {
+            this.#bearerRequest ??= (async () => {
                 try {
                     const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
 
@@ -524,7 +519,7 @@ export class HarnessNationAPI {
                         .match(/setRequestHeader\((["'])Authorization\1,\s*(["'])Bearer\s*(.*?)\2\)/i)?.[3];
 
                     if (bearerToken != null)
-                        await this.#setInCache('____bearer-token____', bearerToken);
+                        await this.#setInCache('__bearer-token__', bearerToken);
 
                     return bearerToken;
                 } catch (e: unknown) {
@@ -542,7 +537,7 @@ export class HarnessNationAPI {
             })();
 
             bearerToken = await this.#bearerRequest;
-            this.#csrfRequest = undefined;
+            this.#bearerRequest = undefined;
         }
 
         return bearerToken;
@@ -560,7 +555,7 @@ export class HarnessNationAPI {
         let csrfToken = await this.#getFromCache('__x-csrf-token__')
 
         if (csrfToken == null) {
-            this.#csrfRequest = (async () => {
+            this.#csrfRequest ??= (async () => {
                 try {
                     const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
 
@@ -608,7 +603,11 @@ export class HarnessNationAPI {
     ): Promise<string> {
         await this.#backoff;
 
-        const res = await fetch(input, init);
+        const res = await fetch(input, {
+            referrer: 'https://www.harnessnation.com/',
+            ...init
+        });
+
         this.#lastRequestAt = new Date();
         this.#requestCount++;
 
