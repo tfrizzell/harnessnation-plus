@@ -570,9 +570,9 @@ export class HarnessNationAPI {
 
             this.#bearerToken = await this.#bearerRequest;
             this.#bearerRequest = undefined;
-            setTimeout(() => { this.#bearerToken = undefined; }, 86400000);
         }
 
+        setTimeout(() => { this.#bearerToken = undefined; }, 86400000);
         return this.#bearerToken;
     }
 
@@ -618,9 +618,9 @@ export class HarnessNationAPI {
 
             this.#csrfToken = await this.#csrfRequest;
             this.#csrfRequest = undefined;
-            setTimeout(() => { this.#csrfToken = undefined; }, 86400000);
         }
 
+        setTimeout(() => { this.#csrfToken = undefined; }, 86400000);
         return this.#csrfToken;
     }
 
