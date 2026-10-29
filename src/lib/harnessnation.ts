@@ -82,8 +82,10 @@ export class HarnessNationAPI {
 
     #backoff?: Promise<void>;
     #bearerRequest?: Promise<string | undefined>;
+    #bearerToken?: string | undefined;
     #cache?: IDBDatabase;
     #csrfRequest?: Promise<string | undefined>;
+    #csrfToken?: string | undefined;
     #retryCount: number = 0;
     #startUp?: Promise<void>;
 
@@ -531,12 +533,15 @@ export class HarnessNationAPI {
      * @returns A promise that resolves with the bearer token.
      */
     private async _getBearerToken(): Promise<string | undefined> {
+        if (this.#bearerToken)
+            return Promise.resolve(this.#bearerToken);
+        
         if (this.#bearerRequest)
             return this.#bearerRequest;
 
-        let bearerToken = await this.#getFromCache('__bearer-token__')
+        this.#bearerToken = await this.#getFromCache('__bearer-token__')
 
-        if (bearerToken == null) {
+        if (this.#bearerToken == null) {
             this.#bearerRequest ??= (async () => {
                 try {
                     const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
@@ -563,11 +568,12 @@ export class HarnessNationAPI {
                 }
             })();
 
-            bearerToken = await this.#bearerRequest;
+            this.#bearerToken = await this.#bearerRequest;
             this.#bearerRequest = undefined;
+            setTimeout(() => { this.#bearerToken = undefined; }, 86400000);
         }
 
-        return bearerToken;
+        return this.#bearerToken;
     }
 
     /**
@@ -576,12 +582,15 @@ export class HarnessNationAPI {
      * @returns A promise that resolves with the CSRF token.
      */
     private async _getCSRFToken(): Promise<string | undefined> {
+        if (this.#csrfToken)
+            return Promise.resolve(this.#csrfToken);
+
         if (this.#csrfRequest)
             return this.#csrfRequest;
 
-        let csrfToken = await this.#getFromCache('__x-csrf-token__')
+        this.#csrfToken = await this.#getFromCache('__x-csrf-token__')
 
-        if (csrfToken == null) {
+        if (this.#csrfToken == null) {
             this.#csrfRequest ??= (async () => {
                 try {
                     const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
@@ -607,11 +616,12 @@ export class HarnessNationAPI {
                 }
             })();
 
-            csrfToken = await this.#csrfRequest;
+            this.#csrfToken = await this.#csrfRequest;
             this.#csrfRequest = undefined;
+            setTimeout(() => { this.#csrfToken = undefined; }, 86400000);
         }
 
-        return csrfToken;
+        return this.#csrfToken;
     }
 
     /**
