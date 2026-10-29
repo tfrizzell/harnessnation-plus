@@ -120,8 +120,7 @@ export async function getBreedingReport(
     };
 
     if (mode === 'enhanced') {
-        const csrfToken = await api.getCSRFToken();
-        const progeny = await api.getProgenyList(id, csrfToken);
+        const progeny = await api.getProgenyList(id);
 
         const candidates = Array.from(progeny
             .replace(/\s*data-[^\s=]+="[^"]*"/g, '')

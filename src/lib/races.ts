@@ -194,12 +194,10 @@ export class RaceList extends Array<Race> {
 /**
  * Gets the array of `Race` objects for the given horse.
  * @param {number} id - the id of the horse.
- * @param {string} token - the CSRF token to sign the request with.
  * @returns {Promise<Race[]>} A `Promise` that resulves with the array of `Race` objects.
  */
-export async function getRaces(id: number, token?: string): Promise<RaceList> {
-    token ??= await api.getCSRFToken();
-    const html = await api.getRaceHistory(id, token);
+export async function getRaces(id: number): Promise<RaceList> {
+    const html = await api.getRaceHistory(id);
     const races: RaceList = new RaceList();
     const raceIds: Array<number> = [];
 
