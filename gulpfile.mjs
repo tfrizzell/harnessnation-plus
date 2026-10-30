@@ -82,7 +82,12 @@ const bundle = browser => async () => {
     const zipFile = `hn-plus-${browser}.zip`;
     await deleteAsync(zipFile);
 
-    return gulp.src([...FILES, `manifests/manifest-${browser}.json`], { base: './' })
+    return gulp.src(
+        [...FILES, `manifests/manifest-${browser}.json`],
+        {
+            base: './',
+            encoding: false,
+        })
         .pipe(rename(path => {
             path.dirname = path.dirname.replace(/^dist[/\\]+/, '').replace(/^dist$/, '.');
 
