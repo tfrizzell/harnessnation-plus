@@ -60,6 +60,14 @@ export interface HarnessNationAPIRequestInit extends RequestInit {
 }
 
 /**
+ * Interface defining the HarnessNation authentication tokens.
+ */
+interface HarnessNationAuthTokens {
+    bearer?: string;
+    csrf?: string;
+}
+
+/**
  * Static headers to be applied to all requests.
  */
 const STATIC_HEADERS: Array<[string, string]> = [
@@ -80,11 +88,10 @@ export class HarnessNationAPI {
     #lastRequestAt?: Date;
     #requestCount: number = 0;
 
+    #authTokenRequest?: Promise<HarnessNationAuthTokens>;
     #backoff?: Promise<void>;
-    #bearerRequest?: Promise<string | undefined>;
     #bearerToken?: string | undefined;
     #cache?: IDBDatabase;
-    #csrfRequest?: Promise<string | undefined>;
     #csrfToken?: string | undefined;
     #retryCount: number = 0;
     #startUp?: Promise<void>;
@@ -246,9 +253,9 @@ export class HarnessNationAPI {
         if (refresh)
             await this.#removeFromCache(`/horses/${id}/pedigree`);
 
-        const csrfToken = await this._getCSRFToken();
+        await this._getAuthTokens();
 
-        if (!csrfToken)
+        if (!this.#csrfToken)
             throw new Error('Failed to obtain CSRF token');
 
         return await this.#getOrCreateFromCache(
@@ -258,10 +265,9 @@ export class HarnessNationAPI {
                 method: 'POST',
                 headers: await this.#getRequestHeaders({
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'X-Csrf-Token': csrfToken,
                 }),
                 body: new URLSearchParams({
-                    _token: csrfToken,
+                    _token: this.#csrfToken,
                     horseId: id.toString(),
                 }),
             }
@@ -279,10 +285,7 @@ export class HarnessNationAPI {
         if (refresh)
             await this.#removeFromCache(`/horses/${id}/progeny/list`);
 
-        await Promise.all([
-            this._getBearerToken(),
-            this._getCSRFToken(),
-        ]);
+        await this._getAuthTokens();
 
         const fetchProgeny = async (id: number): Promise<string> => {
             try {
@@ -303,11 +306,7 @@ export class HarnessNationAPI {
             if (!(e instanceof Error) || !e.message.includes('401'))
                 throw e;
 
-            await Promise.all([
-                this._clearBearerToken(),
-                this._clearCSRFToken(),
-            ]);
-
+            await this._clearAuthTokens();
             return await fetchProgeny(id);
         }
     }
@@ -405,9 +404,9 @@ export class HarnessNationAPI {
         if (refresh)
             await this.#removeFromCache(`/horses/${id}/races`);
 
-        const csrfToken = await this._getCSRFToken();
+        await this._getAuthTokens();
 
-        if (!csrfToken)
+        if (!this.#csrfToken)
             throw new Error('Failed to obtain CSRF token');
 
         return await this.#getOrCreateFromCache(
@@ -417,10 +416,9 @@ export class HarnessNationAPI {
                 method: 'POST',
                 headers: await this.#getRequestHeaders({
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'X-Csrf-Token': csrfToken
                 }),
                 body: new URLSearchParams({
-                    _token: csrfToken,
+                    _token: this.#csrfToken,
                     horseId: id.toString(),
                 }),
             }
@@ -500,41 +498,41 @@ export class HarnessNationAPI {
     }
 
     /**
-     * Fetches the session's bearer token.
+     * Fetches the session's authentication tokens.
      * 
-     * @returns A promise that resolves when the token has been cleared.
+     * @returns A promise that resolves when the tokens have been cleared.
      */
-    private async _clearBearerToken(): Promise<void> {
+    private async _clearAuthTokens(): Promise<void> {
         this.#bearerToken = undefined
-        await this.#removeFromCache('__bearer-token__');
-    }
-
-    /**
-     * Clears the session's CSRF token.
-     * 
-     * @returns A promise that resolves when the token has been cleared.
-     */
-    private async _clearCSRFToken(): Promise<void> {
         this.#csrfToken = undefined;
+        await this.#removeFromCache('__bearer-token__');
         await this.#removeFromCache('__x-csrf-token__');
     }
 
     /**
-     * Fetches the session's bearer token.
+     * Fetches the session's authentication tokens.
      * 
-     * @returns A promise that resolves with the bearer token.
+     * @returns A promise that resolves with the authentication tokens.
      */
-    private async _getBearerToken(): Promise<string | undefined> {
-        if (this.#bearerToken)
-            return Promise.resolve(this.#bearerToken);
+    private async _getAuthTokens(): Promise<void> {
+        if (this.#bearerToken && this.#csrfToken)
+            return Promise.resolve();
 
-        if (this.#bearerRequest)
-            return this.#bearerRequest;
+        if (this.#authTokenRequest)
+            return this.#authTokenRequest.then();
 
-        this.#bearerToken = await this.#getFromCache('__bearer-token__');
+        let sessionTokenTimeout: number = this.#cacheTTL;
 
-        if (this.#bearerToken == null) {
-            this.#bearerRequest ??= (async () => {
+        [
+            this.#bearerToken,
+            this.#csrfToken,
+        ] = await Promise.all([
+            this.#getFromCache('__bearer-token__'),
+            this.#getFromCache('__x-csrf-token__')
+        ])
+
+        if (this.#bearerToken == null || this.#csrfToken == null) {
+            this.#authTokenRequest ??= (async () => {
                 try {
                     const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
 
@@ -545,7 +543,16 @@ export class HarnessNationAPI {
                     if (bearerToken != null)
                         await this.#setInCache('__bearer-token__', bearerToken);
 
-                    return bearerToken;
+                    const csrfToken = html
+                        .match(/setRequestHeader\((["'])X-CSRF-TOKEN\1,\s*(["'])(.*?)\2\)/i)?.[3];
+
+                    if (csrfToken != null)
+                        await this.#setInCache('__x-csrf-token__', csrfToken);
+
+                    return {
+                        bearer: bearerToken,
+                        csrf: csrfToken
+                    };
                 } catch (e: unknown) {
                     console.groupCollapsed(`%charnessnation.ts%c     Failed to fetch bearer token`, 'color:#406e8e;font-weight:bold;', '')
 
@@ -556,66 +563,24 @@ export class HarnessNationAPI {
                         console.error('Unknown Error:', e);
 
                     console.groupEnd();
-                    return;
+                    return {};
                 }
             })();
 
-            this.#bearerToken = await this.#bearerRequest;
-            this.#bearerRequest = undefined;
-            setTimeout(() => { this.#bearerToken = undefined; }, 14400000);
-        } else
-            setTimeout(() => { this.#bearerToken = undefined; }, this.#cacheTTL);
+            ({
+                bearer: this.#bearerToken,
+                csrf: this.#csrfToken,
+            } = await this.#authTokenRequest);
 
-        return this.#bearerToken;
-    }
+            this.#authTokenRequest = undefined;
+            sessionTokenTimeout = 14400000;
+        }
 
-    /**
-     * Fetches the session's CSRF token.
-     * 
-     * @returns A promise that resolves with the CSRF token.
-     */
-    private async _getCSRFToken(): Promise<string | undefined> {
-        if (this.#csrfToken)
-            return Promise.resolve(this.#csrfToken);
+        setTimeout(() => {
+            this.#bearerToken = undefined;
+            this.#csrfToken = undefined;
+        }, sessionTokenTimeout);
 
-        if (this.#csrfRequest)
-            return this.#csrfRequest;
-
-        this.#csrfToken = await this.#getFromCache('__x-csrf-token__');
-
-        if (this.#csrfToken == null) {
-            this.#csrfRequest ??= (async () => {
-                try {
-                    const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
-
-                    const csrfToken = html
-                        .match(/setRequestHeader\((["'])X-CSRF-TOKEN\1,\s*(["'])(.*?)\2\)/i)?.[3];
-
-                    if (csrfToken != null)
-                        await this.#setInCache('__x-csrf-token__', csrfToken);
-
-                    return csrfToken;
-                } catch (e: unknown) {
-                    console.groupCollapsed(`%charnessnation.ts%c     Failed to fetch CSRF token`, 'color:#406e8e;font-weight:bold;', '')
-
-                    if (e instanceof Error) {
-                        console.error('Message:', e.message);
-                        console.error('Stack Trace:', e);
-                    } else
-                        console.error('Unknown Error:', e);
-
-                    console.groupEnd();
-                    return;
-                }
-            })();
-
-            this.#csrfToken = await this.#csrfRequest;
-            this.#csrfRequest = undefined;
-            setTimeout(() => { this.#csrfToken = undefined; }, 14400000);
-        } else
-            setTimeout(() => { this.#csrfToken = undefined; }, this.#cacheTTL);
-
-        return this.#csrfToken;
     }
 
     /**
@@ -667,10 +632,10 @@ export class HarnessNationAPI {
         }
 
         if (!headers.has('Authorization')) {
-            const bearerToken = await this._getBearerToken();
+            await this._getAuthTokens();
 
-            if (bearerToken)
-                headers.set('Authorization', `Bearer ${bearerToken}`);
+            if (this.#bearerToken)
+                headers.set('Authorization', `Bearer ${this.#bearerToken}`);
         }
 
         return headers;
@@ -751,10 +716,10 @@ export class HarnessNationAPI {
         }
 
         if (!headers.has('X-Csrf-Token')) {
-            const csrfToken = await this._getCSRFToken();
+            await this._getAuthTokens();
 
-            if (csrfToken)
-                headers.set('X-Csrf-Token', csrfToken);
+            if (this.#csrfToken)
+                headers.set('X-Csrf-Token', this.#csrfToken);
         }
 
         return headers;

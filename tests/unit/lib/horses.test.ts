@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import '@mocks/harnessnation';
+import '@mocks/fetch';
 
 import { calculateStudFee, getHorse, Horse } from '@src/lib/horses';
 import { StudFeeFormula } from '@src/lib/settings';
