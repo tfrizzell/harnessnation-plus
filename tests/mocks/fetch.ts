@@ -33,6 +33,9 @@ beforeAll(() => {
             } else if (url.startsWith('https://www.harnessnation.com/horse/')) {
                 const horseId = url.split('/').pop();
                 file = path.join(__dirname, '..', 'fixtures', 'horse', `${horseId}.html`);
+            } else if (url.startsWith('https://www.harnessnation.com/stable/')) {
+                const page = url.split('/').pop();
+                file = path.join(__dirname, '..', 'fixtures', 'stable', `${page}.html`);
             }
 
             if (!file)

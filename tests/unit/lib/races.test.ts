@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import '@mocks/harnessnation';
+import '@mocks/fetch';
 
 import { getRaces, Race, RaceList } from '@src/lib/races';
 

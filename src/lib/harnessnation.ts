@@ -60,6 +60,26 @@ export interface HarnessNationAPIRequestInit extends RequestInit {
 }
 
 /**
+ * Interface defining the HarnessNation authentication tokens.
+ */
+interface HarnessNationAuthTokens {
+    bearer?: string;
+    csrf?: string;
+}
+
+/**
+ * Static headers to be applied to all requests.
+ */
+const STATIC_HEADERS: Array<[string, string]> = [
+    ['X-Requested-With', 'XMLHttpRequest'],
+]
+
+/**
+ * Static headers to be applied to API requests.
+ */
+const STATIC_API_HEADERS: Array<[string, string]> = [];
+
+/**
  * Client interface for managing, routing, and caching HTTP requests to HarnessNation.
  */
 export class HarnessNationAPI {
@@ -68,9 +88,11 @@ export class HarnessNationAPI {
     #lastRequestAt?: Date;
     #requestCount: number = 0;
 
+    #authTokenRequest?: Promise<HarnessNationAuthTokens>;
     #backoff?: Promise<void>;
+    #bearerToken?: string | undefined;
     #cache?: IDBDatabase;
-    #csrfRequest?: Promise<string | undefined>;
+    #csrfToken?: string | undefined;
     #retryCount: number = 0;
     #startUp?: Promise<void>;
 
@@ -165,6 +187,403 @@ export class HarnessNationAPI {
     }
 
     /**
+     * Clears all entries from the api response cache.
+     * 
+     * @returns A promise that resolves once the cache has been cleared.
+     */
+    async clearCache(): Promise<void> {
+        await this.#startUp;
+
+        await new Promise<void>((resolve, reject) => {
+            if (!this.#cache || this.#cacheTTL <= 0) {
+                resolve();
+                return;
+            }
+
+            const tx = this.#cache.transaction(['responses'], 'readwrite');
+
+            tx.addEventListener('abort', e => {
+                const error = (e.target as IDBTransaction).error;
+                const msg = `Failed to clear api response cache: ${error?.message ?? 'transaction aborted'}`;
+                cacheError(msg, error);
+                reject(error ?? new Error(msg));
+            });
+
+            tx.addEventListener('error', e => {
+                const error = (e.target as IDBTransaction).error;
+                const msg = `Failed to clear api response cache: ${error?.message ?? 'unknown error'}`;
+                cacheError(msg, error);
+                reject(error ?? new Error(msg));
+            });
+
+            tx.addEventListener('complete', () => {
+                resolve();
+            });
+
+            tx.objectStore('responses').clear();
+        });
+    }
+
+    /**
+     * Fetches a horse's info page.
+     * 
+     * @param id - The id of the horse.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the info page.
+     */
+    async getHorse(id: number, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}`);
+
+        return await this.#getOrCreateFromCache(
+            `/horses/${id}`,
+            `https://www.harnessnation.com/horse/${id}`
+        );
+    }
+
+    /**
+     * Fetches a horse's pedigree.
+     * 
+     * @param id - The id of the horse.
+     * @param csrfToken - The token used to sign the request.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the pedigree page.
+     */
+    async getPedigree(id: number, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/pedigree`);
+
+        await this._getAuthTokens();
+
+        if (!this.#csrfToken)
+            throw new Error('Failed to obtain CSRF token');
+
+        return await this.#getOrCreateFromCache(
+            `/horses/${id}/pedigree`,
+            'https://www.harnessnation.com/horse/pedigree',
+            {
+                method: 'POST',
+                headers: await this.#getRequestHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                }),
+                body: new URLSearchParams({
+                    _token: this.#csrfToken,
+                    horseId: id.toString(),
+                }),
+            }
+        );
+    }
+
+    /**
+     * Fetches a horse's progeny list.
+     * 
+     * @param id - The id of the horse.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the progeny list page.
+     */
+    async getProgenyList(id: number, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/progeny/list`);
+
+        await this._getAuthTokens();
+
+        const fetchProgeny = async (id: number): Promise<string> => {
+            try {
+                return await this.#getProgenyListStandard(id);
+            } catch (e: unknown) {
+                if (!(e instanceof Error) || !e.message.includes('504'))
+                    throw e;
+
+                const response = await this.#getProgenyListChunked(id);
+                await this.#setInCache(`/horses/${id}/progeny/list`, response)
+                return response;
+            }
+        };
+
+        try {
+            return await fetchProgeny(id)
+        } catch (e: unknown) {
+            if (!(e instanceof Error) || !e.message.includes('401'))
+                throw e;
+
+            await this._clearAuthTokens();
+            return await fetchProgeny(id);
+        }
+    }
+
+    /**
+     * Fetches a horse's progeny list using a chunked appraoch.
+     */
+    async #getProgenyListChunked(id: number): Promise<string> {
+        const tq = new TaskQueue(4);
+
+        const headers = await this.#getAPIRequestHeaders({
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        });
+
+        const tasks = [0, 1, 2, 3, 4]
+            .flatMap(ageGroup => [0, 1, 2, 3, 4].map(gender => ({ ageGroup, gender })))
+            .map(({ ageGroup, gender }) =>
+                tq.add(() =>
+                    this.#fetch(
+                        'https://www.harnessnation.com/api/progeny/list', {
+                        method: 'POST',
+                        headers,
+                        body: new URLSearchParams({
+                            horseId: id.toString(),
+                            filterGait: '',
+                            filterAgeGroup: ageGroup.toString(),
+                            filterGender: gender.toString(),
+                            filterStable: '',
+                        }),
+                    })
+                )
+            );
+
+        return (await Promise.all(tasks)).join('\n');
+    }
+
+    /**
+     * Fetches a horse's progeny list using the standard request.
+     */
+    async #getProgenyListStandard(id: number): Promise<string> {
+        return await this.#getOrCreateFromCache(
+            `/horses/${id}/progeny/list`,
+            'https://www.harnessnation.com/api/progeny/list',
+            {
+                method: 'POST',
+                headers: await this.#getAPIRequestHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                }),
+                body: new URLSearchParams({
+                    horseId: id.toString(),
+                    filterGait: '',
+                    filterAgeGroup: '',
+                    filterGender: '',
+                    filterStable: '',
+                }),
+                retryOn: status =>
+                    status !== 504 && this.#shouldRetry(status),
+            }
+        );
+    }
+
+    /**
+     * Fetches a horse's progeny report.
+     * 
+     * @param id - The id of the horse.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the progeny report page.
+     */
+    async getProgenyReport(id: number, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/progeny/report`);
+
+        return await this.#getOrCreateFromCache(
+            `/horses/${id}/progeny/report`,
+            'https://www.harnessnation.com/api/progeny/report',
+            {
+                method: 'POST',
+                headers: await this.#getAPIRequestHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                }),
+                body: new URLSearchParams({
+                    horseId: id.toString(),
+                }),
+            });
+    }
+
+    /**
+     * Fetches a horse's race history.
+     * 
+     * @param id - The id of the horse.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the race history page.
+     */
+    async getRaceHistory(id: number, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/races`);
+
+        await this._getAuthTokens();
+
+        if (!this.#csrfToken)
+            throw new Error('Failed to obtain CSRF token');
+
+        return await this.#getOrCreateFromCache(
+            `/horses/${id}/races`,
+            'https://www.harnessnation.com/horse/api/race-history',
+            {
+                method: 'POST',
+                headers: await this.#getRequestHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                }),
+                body: new URLSearchParams({
+                    _token: this.#csrfToken,
+                    horseId: id.toString(),
+                }),
+            }
+        );
+    }
+
+    /**
+     * Fetches a horse's sibling list.
+     * 
+     * @param id - The id of the horse.
+     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
+     * @returns A promise that resolves with the HTML content of the sibling list page.
+     */
+    async getSiblings(id: number, refresh: boolean = false): Promise<string> {
+        if (refresh)
+            await this.#removeFromCache(`/horses/${id}/siblings`);
+
+        return await this.#getOrCreateFromCache(
+            `/horses/${id}/siblings`,
+            'https://www.harnessnation.com/horse/api/siblings',
+            {
+                method: 'POST',
+                headers: await this.#getRequestHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                }),
+                body: new URLSearchParams({
+                    horseId: id.toString(),
+                }),
+            }
+        );
+    }
+
+    /**
+     * Prunes expired entries from the api response cache.
+     * 
+     * @returns A promise that resolves once the cache has been pruned.
+     */
+    async pruneCache(): Promise<void> {
+        await this.#startUp;
+
+        await new Promise<void>((resolve, reject) => {
+            if (!this.#cache || this.#cacheTTL <= 0) {
+                resolve();
+                return;
+            }
+
+            const tx = this.#cache.transaction(['responses'], 'readwrite');
+
+            tx.addEventListener('abort', e => {
+                const error = (e.target as IDBTransaction).error;
+                const msg = `Failed to prune api response cache: ${error?.message ?? 'transaction aborted'}`;
+                cacheError(msg, error);
+                reject(error ?? new Error(msg));
+            });
+
+            tx.addEventListener('error', e => {
+                const error = (e.target as IDBTransaction).error;
+                const msg = `Failed to prune api response cache: ${error?.message ?? 'unknown error'}`;
+                cacheError(msg, error);
+                reject(error ?? new Error(msg));
+            });
+
+            tx.addEventListener('complete', () => resolve());
+            const store = tx.objectStore('responses');
+            const req = store.index('expiresAt').openCursor(IDBKeyRange.upperBound(Date.now()));
+
+            req.addEventListener('success', e => {
+                const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>).result;
+
+                if (!cursor)
+                    return;
+
+                store.delete(cursor.primaryKey);
+                cursor.continue();
+            });
+        });
+    }
+
+    /**
+     * Fetches the session's authentication tokens.
+     * 
+     * @returns A promise that resolves when the tokens have been cleared.
+     */
+    private async _clearAuthTokens(): Promise<void> {
+        this.#bearerToken = undefined
+        this.#csrfToken = undefined;
+        await this.#removeFromCache('__bearer-token__');
+        await this.#removeFromCache('__x-csrf-token__');
+    }
+
+    /**
+     * Fetches the session's authentication tokens.
+     * 
+     * @returns A promise that resolves with the authentication tokens.
+     */
+    private async _getAuthTokens(): Promise<void> {
+        if (this.#bearerToken && this.#csrfToken)
+            return Promise.resolve();
+
+        if (this.#authTokenRequest)
+            return this.#authTokenRequest.then();
+
+        let sessionTokenTimeout: number = this.#cacheTTL;
+
+        [
+            this.#bearerToken,
+            this.#csrfToken,
+        ] = await Promise.all([
+            this.#getFromCache('__bearer-token__'),
+            this.#getFromCache('__x-csrf-token__')
+        ])
+
+        if (this.#bearerToken == null || this.#csrfToken == null) {
+            this.#authTokenRequest ??= (async () => {
+                try {
+                    const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
+
+                    const bearerToken = html
+                        // eslint-disable-next-line @stylistic/max-len
+                        .match(/setRequestHeader\((["'])Authorization\1,\s*(["'])Bearer\s*(.*?)\2\)/i)?.[3];
+
+                    if (bearerToken != null)
+                        await this.#setInCache('__bearer-token__', bearerToken);
+
+                    const csrfToken = html
+                        .match(/setRequestHeader\((["'])X-CSRF-TOKEN\1,\s*(["'])(.*?)\2\)/i)?.[3];
+
+                    if (csrfToken != null)
+                        await this.#setInCache('__x-csrf-token__', csrfToken);
+
+                    return {
+                        bearer: bearerToken,
+                        csrf: csrfToken
+                    };
+                } catch (e: unknown) {
+                    console.groupCollapsed(`%charnessnation.ts%c     Failed to fetch bearer token`, 'color:#406e8e;font-weight:bold;', '')
+
+                    if (e instanceof Error) {
+                        console.error('Message:', e.message);
+                        console.error('Stack Trace:', e);
+                    } else
+                        console.error('Unknown Error:', e);
+
+                    console.groupEnd();
+                    return {};
+                }
+            })();
+
+            ({
+                bearer: this.#bearerToken,
+                csrf: this.#csrfToken,
+            } = await this.#authTokenRequest);
+
+            this.#authTokenRequest = undefined;
+            sessionTokenTimeout = 14400000;
+        }
+
+        setTimeout(() => {
+            this.#bearerToken = undefined;
+            this.#csrfToken = undefined;
+        }, sessionTokenTimeout);
+
+    }
+
+    /**
      * A wrapper around the native fetch API that intercepts retriable response codes to trigger
      * automatic exponential backoff retries.
      * 
@@ -180,7 +599,11 @@ export class HarnessNationAPI {
     ): Promise<string> {
         await this.#backoff;
 
-        const res = await fetch(input, init);
+        const res = await fetch(input, {
+            referrer: 'https://www.harnessnation.com/',
+            ...init
+        });
+
         this.#lastRequestAt = new Date();
         this.#requestCount++;
 
@@ -196,6 +619,26 @@ export class HarnessNationAPI {
             this.#retryCount = 0;
 
         return this.#normalizeHTML(await res.text());
+    }
+
+    /** Builds the necessary headers for an /api request. */
+    async #getAPIRequestHeaders(headers: HeadersInit = {}): Promise<Headers> {
+        await this.#startUp;
+        headers = await this.#getRequestHeaders(headers);
+
+        for (const [header, value] of STATIC_API_HEADERS) {
+            if (!headers.has(header))
+                headers.set(header, value);
+        }
+
+        if (!headers.has('Authorization')) {
+            await this._getAuthTokens();
+
+            if (this.#bearerToken)
+                headers.set('Authorization', `Bearer ${this.#bearerToken}`);
+        }
+
+        return headers;
     }
 
     /** Reads the value of an entry from the IndexedDB store. */
@@ -260,6 +703,26 @@ export class HarnessNationAPI {
         const value = await this.#fetch(input, init);
         await this.#setInCache(key, value);
         return value;
+    }
+
+    /** Builds the necessary headers for an web request. */
+    async #getRequestHeaders(headers: HeadersInit = {}): Promise<Headers> {
+        await this.#startUp;
+        headers = new Headers(headers);
+
+        for (const [header, value] of STATIC_HEADERS) {
+            if (!headers.has(header))
+                headers.set(header, value);
+        }
+
+        if (!headers.has('X-Csrf-Token')) {
+            await this._getAuthTokens();
+
+            if (this.#csrfToken)
+                headers.set('X-Csrf-Token', this.#csrfToken);
+        }
+
+        return headers;
     }
 
     /** Normalizes HTML content. */
@@ -387,367 +850,6 @@ export class HarnessNationAPI {
                 this.#backoff = undefined;
                 resolve();
             }, timeout);
-        });
-    }
-
-    /**
-     * Clears all entries from the api response cache.
-     * 
-     * @returns A promise that resolves once the cache has been cleared.
-     */
-    async clearCache(): Promise<void> {
-        await this.#startUp;
-
-        await new Promise<void>((resolve, reject) => {
-            if (!this.#cache || this.#cacheTTL <= 0) {
-                resolve();
-                return;
-            }
-
-            const tx = this.#cache.transaction(['responses'], 'readwrite');
-
-            tx.addEventListener('abort', e => {
-                const error = (e.target as IDBTransaction).error;
-                const msg = `Failed to clear api response cache: ${error?.message ?? 'transaction aborted'}`;
-                cacheError(msg, error);
-                reject(error ?? new Error(msg));
-            });
-
-            tx.addEventListener('error', e => {
-                const error = (e.target as IDBTransaction).error;
-                const msg = `Failed to clear api response cache: ${error?.message ?? 'unknown error'}`;
-                cacheError(msg, error);
-                reject(error ?? new Error(msg));
-            });
-
-            tx.addEventListener('complete', () => {
-                resolve();
-            });
-
-            tx.objectStore('responses').clear();
-        });
-    }
-
-    /**
-     * Fetches the session's CSRF token.
-     * 
-     * @returns A promise that resolves with the CSRF token.
-     */
-    async getCSRFToken(): Promise<string | undefined> {
-        if (this.#csrfRequest)
-            return this.#csrfRequest;
-
-        let csrfToken = await this.#getFromCache('__x-csrf-token__')
-
-        if (csrfToken == null) {
-            this.#csrfRequest = (async () => {
-                try {
-                    const html = await this.#fetch(`https://www.harnessnation.com/stable/dashboard`);
-                    const csrfToken = html
-                        .match(/setRequestHeader\((["'])X-CSRF-TOKEN\1,\s*(["'])(.*?)\2\)/i)?.[3];
-
-                    if (csrfToken != null)
-                        await this.#setInCache('__x-csrf-token__', csrfToken);
-
-                    return csrfToken;
-                } catch (e: unknown) {
-                    console.groupCollapsed(`%charnessnation.ts%c     Failed to fetch CSRF token`, 'color:#406e8e;font-weight:bold;', '')
-
-                    if (e instanceof Error) {
-                        console.error('Message:', e.message);
-                        console.error('Stack Trace:', e);
-                    } else
-                        console.error('Unknown Error:', e);
-
-                    console.groupEnd();
-                    return;
-                }
-            })();
-
-            csrfToken = await this.#csrfRequest;
-            this.#csrfRequest = undefined;
-        }
-
-        return csrfToken;
-    }
-
-    /**
-     * Fetches a horse's info page.
-     * 
-     * @param id - The id of the horse.
-     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
-     * @returns A promise that resolves with the HTML content of the info page.
-     */
-    async getHorse(id: number, refresh: boolean = false): Promise<string> {
-        if (refresh)
-            await this.#removeFromCache(`/horses/${id}`);
-
-        return await this.#getOrCreateFromCache(
-            `/horses/${id}`,
-            `https://www.harnessnation.com/horse/${id}`
-        );
-    }
-
-    /**
-     * Fetches a horse's pedigree.
-     * 
-     * @param id - The id of the horse.
-     * @param csrfToken - The token used to sign the request.
-     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
-     * @returns A promise that resolves with the HTML content of the pedigree page.
-     */
-    async getPedigree(id: number, csrfToken?: string, refresh: boolean = false): Promise<string> {
-        if (refresh)
-            await this.#removeFromCache(`/horses/${id}/pedigree`);
-
-        if (!csrfToken || csrfToken.trim() == '')
-            csrfToken = (await this.getCSRFToken()) ?? '';
-
-        return await this.#getOrCreateFromCache(
-            `/horses/${id}/pedigree`,
-            'https://www.harnessnation.com/horse/pedigree',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'Referer': 'https://www.harnessnation.com/',
-                    'X-Csrf-Token': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: new URLSearchParams({
-                    _token: csrfToken,
-                    horseId: id.toString(),
-                }),
-            }
-        );
-    }
-
-    /**
-     * Fetches a horse's progeny list.
-     * 
-     * @param id - The id of the horse.
-     * @param csrfToken - The token used to sign the request.
-     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
-     * @returns A promise that resolves with the HTML content of the progeny list page.
-     */
-    async getProgenyList(
-        id: number,
-        csrfToken?: string,
-        refresh: boolean = false
-    ): Promise<string> {
-        if (refresh)
-            await this.#removeFromCache(`/horses/${id}/progeny/list`);
-
-        if (!csrfToken || csrfToken.trim() == '')
-            csrfToken = (await this.getCSRFToken()) ?? '';
-
-        try {
-            return await this.#getProgenyListStandard(id, csrfToken);
-        } catch (e: unknown) {
-            if (!(e instanceof Error) || !e.message.includes('504'))
-                throw e;
-
-            const response = await this.#getProgenyListChunked(id, csrfToken);
-            await this.#setInCache(`/horses/${id}/progeny/list`, response)
-            return response;
-        }
-    }
-
-    /**
-     * Fetches a horse's progeny list using a chunked appraoch.
-     */
-    async #getProgenyListChunked(id: number, csrfToken: string): Promise<string> {
-        const tq = new TaskQueue(4);
-
-        const tasks = [0, 1, 2, 3, 4]
-            .flatMap(ageGroup => [0, 1, 2, 3, 4].map(gender => ({ ageGroup, gender })))
-            .map(({ ageGroup, gender }) =>
-                tq.add(() =>
-                    this.#fetch(
-                        'https://www.harnessnation.com/api/progeny/list', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                            'Referer': 'https://www.harnessnation.com/',
-                            'X-Csrf-Token': csrfToken,
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                        body: new URLSearchParams({
-                            horseId: id.toString(),
-                            filterGait: '',
-                            filterAgeGroup: ageGroup.toString(),
-                            filterGender: gender.toString(),
-                            filterStable: '',
-                        }),
-                    })
-                )
-            );
-
-        return (await Promise.all(tasks)).join('\n');
-    }
-
-    /**
-     * Fetches a horse's progeny list using the standard request.
-     */
-    async #getProgenyListStandard(id: number, csrfToken: string): Promise<string> {
-        return await this.#getOrCreateFromCache(
-            `/horses/${id}/progeny/list`,
-            'https://www.harnessnation.com/api/progeny/list',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'Referer': 'https://www.harnessnation.com/',
-                    'X-Csrf-Token': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: new URLSearchParams({
-                    horseId: id.toString(),
-                    filterGait: '',
-                    filterAgeGroup: '',
-                    filterGender: '',
-                    filterStable: '',
-                }),
-                retryOn: status =>
-                    status !== 504 && this.#shouldRetry(status),
-            }
-        );
-    }
-
-    /**
-     * Fetches a horse's progeny report.
-     * 
-     * @param id - The id of the horse.
-     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
-     * @returns A promise that resolves with the HTML content of the progeny report page.
-     */
-    async getProgenyReport(id: number, refresh: boolean = false): Promise<string> {
-        if (refresh)
-            await this.#removeFromCache(`/horses/${id}/progeny/report`);
-
-        return await this.#getOrCreateFromCache(
-            `/horses/${id}/progeny/report`,
-            'https://www.harnessnation.com/api/progeny/report',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'Referer': 'https://www.harnessnation.com/',
-                },
-                body: new URLSearchParams({
-                    horseId: id.toString(),
-                }),
-            });
-    }
-
-    /**
-     * Fetches a horse's race history.
-     * 
-     * @param id - The id of the horse.
-     * @param csrfToken - The token used to sign the request.
-     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
-     * @returns A promise that resolves with the HTML content of the race history page.
-     */
-    async getRaceHistory(
-        id: number,
-        csrfToken?: string,
-        refresh: boolean = false
-    ): Promise<string> {
-        if (refresh)
-            await this.#removeFromCache(`/horses/${id}/races`);
-
-        if (!csrfToken || csrfToken.trim() == '')
-            csrfToken = (await this.getCSRFToken()) ?? '';
-
-        return await this.#getOrCreateFromCache(
-            `/horses/${id}/races`,
-            'https://www.harnessnation.com/horse/api/race-history',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'Referer': 'https://www.harnessnation.com/',
-                    'X-Csrf-Token': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: new URLSearchParams({
-                    _token: csrfToken,
-                    horseId: id.toString(),
-                }),
-            }
-        );
-    }
-
-    /**
-     * Fetches a horse's sibling list.
-     * 
-     * @param id - The id of the horse.
-     * @param refresh - A flag to control whether to force a cache refresh. Defaults to `false`.
-     * @returns A promise that resolves with the HTML content of the sibling list page.
-     */
-    async getSiblings(id: number, refresh: boolean = false): Promise<string> {
-        if (refresh)
-            await this.#removeFromCache(`/horses/${id}/siblings`);
-
-        return await this.#getOrCreateFromCache(
-            `/horses/${id}/siblings`,
-            'https://www.harnessnation.com/horse/api/siblings',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'Referer': 'https://www.harnessnation.com/',
-                },
-                body: new URLSearchParams({
-                    horseId: id.toString(),
-                }),
-            }
-        );
-    }
-
-    /**
-     * Prunes expired entries from the api response cache.
-     * 
-     * @returns A promise that resolves once the cache has been pruned.
-     */
-    async pruneCache(): Promise<void> {
-        await this.#startUp;
-
-        await new Promise<void>((resolve, reject) => {
-            if (!this.#cache || this.#cacheTTL <= 0) {
-                resolve();
-                return;
-            }
-
-            const tx = this.#cache.transaction(['responses'], 'readwrite');
-
-            tx.addEventListener('abort', e => {
-                const error = (e.target as IDBTransaction).error;
-                const msg = `Failed to prune api response cache: ${error?.message ?? 'transaction aborted'}`;
-                cacheError(msg, error);
-                reject(error ?? new Error(msg));
-            });
-
-            tx.addEventListener('error', e => {
-                const error = (e.target as IDBTransaction).error;
-                const msg = `Failed to prune api response cache: ${error?.message ?? 'unknown error'}`;
-                cacheError(msg, error);
-                reject(error ?? new Error(msg));
-            });
-
-            tx.addEventListener('complete', () => resolve());
-            const store = tx.objectStore('responses');
-            const req = store.index('expiresAt').openCursor(IDBKeyRange.upperBound(Date.now()));
-
-            req.addEventListener('success', e => {
-                const cursor = (e.target as IDBRequest<IDBCursorWithValue | null>).result;
-
-                if (!cursor)
-                    return;
-
-                store.delete(cursor.primaryKey);
-                cursor.continue();
-            });
         });
     }
 }

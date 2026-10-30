@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import '@mocks/harnessnation';
+import '@mocks/fetch';
 
 import { Horse } from '@src/lib/horses';
 import { BreedingScore, calculateBloodlineScore, calculateBreedingScore, calculateRacingScore, calculateStallionScore, createStallionScoreBadge, StallionScore } from '@src/lib/stallion-scores';

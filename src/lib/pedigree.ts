@@ -121,7 +121,6 @@ class ParagraphBuilder extends PDFParagraphBuilder {
  * @param {number} hipNumber - the hip number of the horse, if desired.
  * @param {boolean} fullPedigree - if true, the page height will be extended as needed to fit the
  *                                 content.
- * @param {token} csrfToken - the CSRF token to sign requests.
  * @param {FontMap} fonts - the map of fonts to use in the pdf page.
  * @returns {Promise<void>} A `Promise` that resolves when the page has been added.
  */
@@ -130,7 +129,6 @@ async function addPedigreePage(
     horse: Horse,
     hipNumber?: string | number,
     fullPedigree: boolean = false,
-    csrfToken?: string,
     fonts?: FontMap
 ): Promise<void> {
     if (horse.id == null)
@@ -248,14 +246,13 @@ async function addPedigreePage(
     page.moveTo(margin.left, page.getHeight() - margin.top);
 
     const info = await api.getHorse(horse.id);
-    csrfToken ??= await api.getCSRFToken();
 
     const [races, pedigree] = await Promise.all([
-        getRaces(horse.id, csrfToken),
-        getPedigree(horse.id, csrfToken),
+        getRaces(horse.id),
+        getPedigree(horse.id),
     ]);
 
-    const ancestors = await populateAncestors(pedigree, csrfToken);
+    const ancestors = await populateAncestors(pedigree);
 
     const damIds: Array<(number | undefined)> = pedigree
         .slice(0, 2 ** (PEDIGREE_GENERATIONS + 1) - 2)
@@ -390,7 +387,7 @@ async function addPedigreePage(
 
         // Dam Info
         const dam = ancestor as DamLineAncestor;
-        await populateProgenyData(dam.progeny, csrfToken);
+        await populateProgenyData(dam.progeny);
         dam.progeny.sort(sortProgeny);
 
         const generation = damIds.indexOf(ancestor.id) + 1;
@@ -448,8 +445,8 @@ async function addPedigreePage(
 
             if (mayBeBroodmare(progeny)) {
                 const xProgeny = progeny as ProgenyExtended;
-                xProgeny.progeny = await getProgeny(progeny.id, csrfToken);
-                await populateProgenyData(xProgeny.progeny, csrfToken);
+                xProgeny.progeny = await getProgeny(progeny.id);
+                await populateProgenyData(xProgeny.progeny);
                 xProgeny.progeny.sort(sortProgeny)
 
                 let count = 0;
@@ -457,8 +454,8 @@ async function addPedigreePage(
                 for (const grandProgeny of xProgeny.progeny) {
                     if (mayBeBroodmare(grandProgeny)) {
                         const xGrandProgeny = grandProgeny as ProgenyExtended;
-                        xGrandProgeny.progeny = await getProgeny(grandProgeny.id, csrfToken);
-                        await populateProgenyData(xGrandProgeny.progeny, csrfToken);
+                        xGrandProgeny.progeny = await getProgeny(grandProgeny.id);
+                        await populateProgenyData(xGrandProgeny.progeny);
                         xGrandProgeny.progeny.sort(sortProgeny)
                     }
 
@@ -790,16 +787,14 @@ export async function generatePedigreeCatalog(
 
     const start = performance.now();
     const tq = new TaskQueue(3);
-    let csrfToken: string | undefined;
 
     const horses = await Promise.all(
         ids.map((row, i) =>
             tq.add(async () => {
                 const [id, hipNumber] = (Array.isArray(row) ? row : [row, i + 1]);
                 const horse = await getHorse(id);
-                csrfToken ??= await api.getCSRFToken();
 
-                if (horse.id !== id || csrfToken == null)
+                if (horse.id !== id)
                     throw new ReferenceError(`Failed to generate sale catalog: could not parse info for horse ${id}`);
 
                 return [
@@ -823,7 +818,6 @@ export async function generatePedigreeCatalog(
                         ? hipNumber
                         : undefined,
                     fullPedigrees,
-                    csrfToken,
                     fonts
                 )
             )
@@ -857,14 +851,13 @@ export async function generatePedigreePage(
 
     const start = performance.now();
     const horse = await getHorse(id);
-    const csrfToken = await api.getCSRFToken();
 
-    if (horse.id !== id || csrfToken == null)
+    if (horse.id !== id)
         throw new ReferenceError(`Failed to generate sale catalog: could not parse info for horse ${id}`);
 
 
     const pdfDoc = await createPDF();
-    await addPedigreePage(pdfDoc, horse, convertHipNumber(hipNumber), fullPedigree, csrfToken);
+    await addPedigreePage(pdfDoc, horse, convertHipNumber(hipNumber), fullPedigree);
     await addWatermark(pdfDoc);
 
     const dataUri = await pdfDoc.saveAsBase64({ dataUri: true });
@@ -1037,9 +1030,9 @@ function getParagraphPriority(
     return ParagraphPriority.OnlyIfNeeded;
 }
 
-async function getPedigree(id: number, csrfToken?: string): Promise<Array<Ancestor>> {
+async function getPedigree(id: number): Promise<Array<Ancestor>> {
     return Array.from(
-        (await api.getPedigree(id, csrfToken))
+        (await api.getPedigree(id))
             .matchAll(/<a[^>]*\/horse\/(\d+)[^>]*>\s*(.*?)\s*<\/a[^>]*>|\b(Unknown)\b/gis)
     ).map((match: RegExpMatchArray): Ancestor => ({
         id: match[1] ? parseInt(match[1]) : undefined,
@@ -1047,11 +1040,11 @@ async function getPedigree(id: number, csrfToken?: string): Promise<Array<Ancest
     }));
 }
 
-async function getProgeny(id: number, csrfToken?: string): Promise<Array<Progeny>> {
+async function getProgeny(id: number): Promise<Array<Progeny>> {
     const progenyIds: Array<number> = [];
 
     return Array.from(
-        (await api.getProgenyList(id, csrfToken))
+        (await api.getProgenyList(id))
             // eslint-disable-next-line @stylistic/max-len
             .matchAll(/<td[^>]*>\s*<a[^>]*\/horse\/(\d+)[^>]*><span[^>]*>(.*?)<\/span[^>]*><\/a[^>]*>.*?<a[^>]*\/horse\/(\d+)[^>]*>(.*?)<\/a[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*(\d+)\s*<\/td[^>]*>\s*<td[^>]*>\s*<i[^>]*fa-(mars|venus|neuter)[^>]*>\s*<\/i[*>]*>\s*<\/td[^>]*>\s*<td[^>]*>(.*?)<\/td[^>]*>\s*<td[^>]*>.*?<\/td[^>]*>\s*<td[^>]*>\s*\d+\s*-\s*(\d+)\s*-\s*\d+\s*-\s*\d+\s*<\/td[^>]*>\s*<td[^>]*>\s*(\$[\d,]+)?\s*<\/td[^>]*>/gis)
     ).map(([match, id, name, sireId, sireName, age, gender, stable, wins, earnings]): Progeny => {
@@ -1129,12 +1122,9 @@ async function loadFonts(pdfDoc: PDFDocument): Promise<FontMap> {
 }
 
 async function populateAncestors(
-    pedigree: Array<Ancestor | undefined>,
-    csrfToken?: string
+    pedigree: Array<Ancestor | undefined>
 ): Promise<Map<number | null | undefined, Ancestor>> {
     const tq = new TaskQueue(3);
-    csrfToken ??= await api.getCSRFToken();
-
     const ancestors = new Map<number | undefined, Ancestor>();
 
     await Promise.all(
@@ -1146,7 +1136,7 @@ async function populateAncestors(
 
                     if (ancestor.id != null) {
                         const races = ancestors.get(ancestor.id)?.races
-                            ?? await getRaces(ancestor.id, csrfToken);
+                            ?? await getRaces(ancestor.id);
 
                         if (!ancestors.has(ancestor.id)) {
                             ancestor.sireId = pedigree[2 * (i + 1)]?.id;
@@ -1158,7 +1148,7 @@ async function populateAncestors(
                             showDamInfo(i)
                             && (ancestor.progeny == null || ancestor.races == null)
                         ) {
-                            const progeny = await getProgeny(ancestor.id, csrfToken);
+                            const progeny = await getProgeny(ancestor.id);
                             ancestor = ancestors.get(pedigree[i]?.id) ?? pedigree[i] ?? { name: 'Undefined' };
                             ancestor.progeny = progeny;
                             ancestor.races = races;
@@ -1174,14 +1164,13 @@ async function populateAncestors(
     return ancestors;
 }
 
-async function populateProgenyData(progeny: Array<Progeny>, csrfToken?: string): Promise<void> {
+async function populateProgenyData(progeny: Array<Progeny>): Promise<void> {
     const tq = new TaskQueue(3);
-    csrfToken ??= await api.getCSRFToken();
 
     await Promise.all(
         progeny.map(prog =>
             tq.add(async () => {
-                prog.races = await getRaces(prog.id, csrfToken);
+                prog.races = await getRaces(prog.id);
                 prog.earnings = prog.races.getEarnings();
             })
         )

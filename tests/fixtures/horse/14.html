@@ -11,7 +11,7 @@
         gtag('js', new Date());
 
         gtag('config', 'UA-50727313-1');
-        gtag('set', {'user_id': '4'});
+        gtag('set', {'user_id': 'user-id'});
     </script>
 
     <meta charset="utf-8">
@@ -76,7 +76,7 @@
             <!--/. Logo -->
             <!--Search Form-->
             <li>
-                <form method="POST" action="https://www.harnessnation.com/search" accept-charset="UTF-8" class="search-form" role="search"><input name="_token" type="hidden" value="nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak">
+                <form method="POST" action="https://www.harnessnation.com/search" accept-charset="UTF-8" class="search-form" role="search"><input name="_token" type="hidden" value="csrf-token">
                 <div class="form-group md-form mt-0 pt-1 waves-light">
                     <input type="text" class="form-control" placeholder="Search" name="inputSearchTerm" style='font-family:"Roboto"'>
                 </div>
@@ -620,7 +620,7 @@
                 timeout: 30000,
                 async: true,
                 beforeSend: function(request) {
-                    request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                    request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
                     $("#pastRaceRecordsModalContent").hide();
                     $("#pastRaceRecordsModalLoadingContainer").show();
                 },
@@ -730,7 +730,7 @@
                 timeout: 30000,
                 async: true,
                 beforeSend: function(request) {
-                    request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                    request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
                     $("#idealGradedStakesModalContent").hide();
                     $("#idealGradedStakesModalLoadingContainer").show();
                 },
@@ -1364,7 +1364,7 @@
                 timeout: 50000,
                 async: true,
                 beforeSend: function (request) {
-                    request.setRequestHeader('X-CSRF-TOKEN', 'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                    request.setRequestHeader('X-CSRF-TOKEN', 'csrf-token');
                 },
                 error: function () {
                     $("#viewHorseRaceHistoryContainer").remove();
@@ -1387,7 +1387,7 @@
                 timeout: 50000,
                 async: true,
                 beforeSend: function (request) {
-                    request.setRequestHeader('X-CSRF-TOKEN', 'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                    request.setRequestHeader('X-CSRF-TOKEN', 'csrf-token');
                 },
                 error: function () {
                     $("#viewHorseTrainingHistoryContainer").remove();
@@ -1413,8 +1413,8 @@
                     timeout: 10000,
                     async: true,
                     beforeSend: function (request) {
-                        request.setRequestHeader('X-CSRF-TOKEN', 'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
-                        request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                        request.setRequestHeader('X-CSRF-TOKEN', 'csrf-token');
+                        request.setRequestHeader('Authorization', 'Bearer bearer-token');
                     },
                     success: function (data) {
                         if (!data.error) {
@@ -1426,13 +1426,13 @@
                                     $.ajax({
                                         type: 'POST',
                                         url:'/api/watchlist/add/start',
-                                        data: {'_token':'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak','horseId':curHorse},
+                                        data: {'_token':'csrf-token','horseId':curHorse},
                                         cache: 'false',
                                         timeout: 10000,
                                         async: true,
                                         beforeSend: function(request) {
-                                            request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
-                                            request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                                            request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
+                                            request.setRequestHeader('Authorization', 'Bearer bearer-token');
                                             $("#watchlistAddContainer").hide();
                                             $("#watchlistAddLoadingContainer").show();
                                         },
@@ -1462,13 +1462,13 @@
                                     $.ajax({
                                         type: 'POST',
                                         url:'/api/watchlist/remove',
-                                        data: {'_token':'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak','horseId':curHorse},
+                                        data: {'_token':'csrf-token','horseId':curHorse},
                                         cache: 'false',
                                         timeout: 10000,
                                         async: true,
                                         beforeSend: function(request) {
-                                            request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
-                                            request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                                            request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
+                                            request.setRequestHeader('Authorization', 'Bearer bearer-token');
                                             $("#watchlistModalContainer").hide();
                                             $("#watchlistModalLoadingContainer").show();
                                         },
@@ -1537,7 +1537,7 @@
             timeout: 10000,
             async: true,
             beforeSend: function(request) {
-                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
                 $(".modalPedigreeContainer").hide();
                 $("#modalPedigreeLoadingContainer").show();
             },
@@ -1593,7 +1593,7 @@
             timeout: 30000,
             async: true,
             beforeSend: function(request) {
-                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
                 $("#siblingsModalLoadingContainer").show();
                 $("#siblingsModalContainer").hide();
             },
@@ -1645,12 +1645,12 @@
             $.ajax({
                 type: 'POST',
                 url:'https://www.harnessnation.com/horse/api/race-history',
-                data: {'_token':'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak','horseId':curHorse},
+                data: {'_token':'csrf-token','horseId':curHorse},
                 cache: 'false',
                 timeout: 50000,
                 async: true,
                 beforeSend: function(request) {
-                    request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                    request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
                     $("#raceHistoryModalLoadingContainer").show();
                     $("#raceHistoryModalContainer").hide();
                 },
@@ -1709,12 +1709,12 @@
             $.ajax({
                 type: 'POST',
                 url:'https://www.harnessnation.com/horse/api/training-history',
-                data: {'_token':'nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak','horseId':curHorse},
+                data: {'_token':'csrf-token','horseId':curHorse},
                 cache: 'false',
                 timeout: 50000,
                 async: true,
                 beforeSend: function(request) {
-                    request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
+                    request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
                     $("#trainingHistoryModalLoadingContainer").show();
                     $("#trainingHistoryModalContainer").hide();
                 },
@@ -1871,8 +1871,8 @@
             timeout: 30000,
             async: true,
             beforeSend: function(request) {
-                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
-                request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
+                request.setRequestHeader('Authorization', 'Bearer bearer-token');
                 $("#progenyModalContainer").hide();
                 $("#progenyModalLoadingContainer").show();
             },
@@ -2020,8 +2020,8 @@
             timeout: 30000,
             async: true,
             beforeSend: function(request) {
-                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
-                request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
+                request.setRequestHeader('Authorization', 'Bearer bearer-token');
                 $("#progenyReportModalContainer").hide();
                 $("#progenyReportLoadingContainer").show();
             },
@@ -2055,8 +2055,8 @@
             timeout: 30000,
             async: true,
             beforeSend: function(request) {
-                request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
-                request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
+                request.setRequestHeader('Authorization', 'Bearer bearer-token');
                 $("#progenyReportModalContainer").hide();
                 $("#progenyReportLoadingContainer").show();
             },
@@ -2119,8 +2119,8 @@
                timeout: 20000,
                async: true,
                beforeSend: function(request) {
-                   request.setRequestHeader('X-CSRF-TOKEN','nDW8IIeRRJhFrdJG58dmzTCkEOkngi9QKH5hriak');
-                   request.setRequestHeader('Authorization', 'Bearer QdpBnyxO1pmrCfr1Ekc1MEye9otNlGO9CCG4tqGWjoEV2YVYXiWABPpLToWX');
+                   request.setRequestHeader('X-CSRF-TOKEN','csrf-token');
+                   request.setRequestHeader('Authorization', 'Bearer bearer-token');
                    $("#_switchStableModalLoadingContainer").show();
                    $("#_switchStableModalContainer").hide();
                },
